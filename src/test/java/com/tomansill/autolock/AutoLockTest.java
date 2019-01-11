@@ -1,7 +1,5 @@
-package com.tomansill.autolock.test;
+package com.tomansill.autolock;
 
-import com.tomansill.autolock.AutoLock;
-import com.tomansill.autolock.LockedAutoLock;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
