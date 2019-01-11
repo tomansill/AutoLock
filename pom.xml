@@ -7,6 +7,25 @@
     <groupId>com.tomansill</groupId>
     <artifactId>AutoLock</artifactId>
     <version>0.1.0</version>
+    <packaging>jar</packaging>
+
+    <name>${project.groupId}:${project.artifactId}</name>
+
+    <description>Library that extends Java Locks for use with Try-With-Resources </description>
+    <url>https://github.com/tomansill/AutoLock</url>
+
+    <scm>
+        <connection>scm:git:git://github.com/tomansill/autolock.git</connection>
+        <developerConnection>scm:git:ssh://github.com:tomansill/autolock.git</developerConnection>
+        <url>http://github.com/tomansill/autolock/tree/master</url>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
 
     <build>
         <plugins>
@@ -26,11 +45,12 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>RELEASE</version>
-        </dependency><dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-api</artifactId>
-        <version>RELEASE</version>
-        <scope>test</scope>
-    </dependency>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>RELEASE</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
