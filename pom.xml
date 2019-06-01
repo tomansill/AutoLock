@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -11,7 +11,7 @@
 
     <name>${project.groupId}:${project.artifactId}</name>
 
-    <description>Library that extends Java Locks for use with Try-With-Resources </description>
+    <description>Library that extends Java Locks for use with Try-With-Resources</description>
     <url>https://github.com/tomansill/AutoLock</url>
 
     <scm>
@@ -62,6 +62,11 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <version>5.3.2</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.0</version>
         </dependency>
     </dependencies>
 </project>
