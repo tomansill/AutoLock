@@ -34,6 +34,7 @@ So I created this library.
 
 * Java 8 or better
 * Maven
+* [My Java Validation library](https://github.com/tomansill/JavaValidation)
 
 ## Download
 
