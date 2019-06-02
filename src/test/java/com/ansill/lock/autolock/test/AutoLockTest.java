@@ -3,7 +3,6 @@ package com.ansill.lock.autolock.test;
 import com.ansill.lock.autolock.ALock;
 import com.ansill.lock.autolock.AutoLock;
 import com.ansill.lock.autolock.LockedAutoLock;
-import com.ansill.lock.autolock.MultiLock;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -86,8 +85,8 @@ class AutoLockTest{
         // Create lock
         ReentrantLock rl = new ReentrantLock();
 
-        // Create MultiLock
-        MultiLock al = new MultiLock(rl);
+        // Create AutoLock
+        AutoLock al = new ALock(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doTryLock(1, TimeUnit.MILLISECONDS)){

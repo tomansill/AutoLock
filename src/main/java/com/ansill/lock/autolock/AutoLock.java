@@ -5,11 +5,11 @@ import javax.annotation.Nonnull;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/** Autolock class that creates LockedAutoLock object AutoCloseable resource that can be used in Try-with-resouces scope */
+/** AutoLock class that creates LockedAutoLock object AutoCloseable resource that can be used in Try-with-resources scope */
 public interface AutoLock{
 
     /**
-     * Locks this MultiLock and creates AutoCloseable LockedAutoLock resource
+     * Locks this AutoLock and creates AutoCloseable LockedAutoLock resource
      *
      * @return LockedAutoLock resource
      */
@@ -17,7 +17,7 @@ public interface AutoLock{
     LockedAutoLock doLock();
 
     /**
-     * Locks this MultiLock and creates AutoCloseable LockedAutoLock resource
+     * Locks this AutoLock and creates AutoCloseable LockedAutoLock resource
      *
      * @return LockedAutoLock resource
      * @throws InterruptedException thrown when the locking process was interrupted
@@ -26,7 +26,7 @@ public interface AutoLock{
     LockedAutoLock doLockInterruptibly() throws InterruptedException;
 
     /**
-     * Attempts to lock this MultiLock and creates AutoCloseable LockedAutoLock resource if successful. TimeoutException will be
+     * Attempts to lock this AutoLock and creates AutoCloseable LockedAutoLock resource if successful. TimeoutException will be
      * thrown if the lock cannot be obtained
      *
      * @return LockedAutoLock resource
@@ -36,7 +36,7 @@ public interface AutoLock{
     LockedAutoLock doTryLock() throws TimeoutException;
 
     /**
-     * Attempts to lock this MultiLock and creates AutoCloseable LockedAutoLock resource if successful. TimeoutException will be
+     * Attempts to lock this AutoLock and creates AutoCloseable LockedAutoLock resource if successful. TimeoutException will be
      * thrown if the lock cannot be obtained
      *
      * @param time timeout duration
