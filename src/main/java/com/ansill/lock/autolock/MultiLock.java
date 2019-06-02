@@ -1,4 +1,6 @@
-package com.tomansill.autolock;
+package com.ansill.lock.autolock;
+
+import com.ansill.validation.Validation;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
@@ -8,28 +10,32 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
-/** AutoLock class that implements methods that returns an AutoCloseable Lock for convenience with try-with-resources */
-public class AutoLock implements Lock{
+/** MultiLock class that handles multiple locks */
+public class MultiLock implements Lock, AutoLock{
 
     /** Locks */
     private final Lock[] locks;
 
+    /** Lock state */
+    private AtomicBoolean lock_state = new AtomicBoolean(false);
+
     /**
-     * Creates an AutoLock
+     * Creates an MultiLock
      *
      * @param locks one or many locks
      * @throws IllegalArgumentException thrown if the value that was passed in 'locks' parameter is invalid
      */
-    public AutoLock(@Nonnull Lock... locks) throws IllegalArgumentException{
+    public MultiLock(@Nonnull Lock... locks) throws IllegalArgumentException{
 
         // Assert not null
-        //if(locks == null) throw new IllegalArgumentException("'locks' input cannot be null.");
+        Validation.assertNonnullElements(locks, false);
 
         // Lock Queue to be collected later
-        Queue<AutoLock> lock_queue = new LinkedList<>();
+        Queue<MultiLock> lock_queue = new LinkedList<>();
 
         // Assert not null in any member
         Set<Lock> test = new HashSet<>();
@@ -37,39 +43,44 @@ public class AutoLock implements Lock{
 
             // Make sure not null
             if(locks[i] == null){
-                throw new IllegalArgumentException("Lock at index " +
-                                                   i +
-                                                   " in 'locks' array is null. All locks in the array must be not null.");
+                String message = "Lock at index " + i + " in 'locks' array is null.";
+                message += " All locks in the array must be not null.";
+                throw new IllegalArgumentException(message);
             }
 
             // Make sure no duplicate locks (not guaranteed to work however)
-            if(test.contains(locks[i])) throw new IllegalArgumentException("Duplicate lock found at index " +
-                                                                           i +
-                                                                           " in 'locks' array.");
+            if(test.contains(locks[i])){
+                String message = "Duplicate lock found at index " + i + " in 'locks' array.";
+                throw new IllegalArgumentException(message);
+            }
+
+            // Add it to the list
             else test.add(locks[i]);
 
-            // Add to queue if it's an AutoLock (so we can dig deeper and find any duplicates)
-            if(locks[i] instanceof AutoLock) lock_queue.add((AutoLock) locks[i]);
+            // Add to queue if it's an MultiLock (so we can dig deeper and find any duplicates)
+            if(locks[i] instanceof MultiLock) lock_queue.add((MultiLock) locks[i]);
         }
 
         // Test inner locks
         while(!lock_queue.isEmpty()){
 
             // Get it
-            AutoLock auto_lock = lock_queue.poll();
+            MultiLock auto_lock = lock_queue.poll();
 
             // Iterate through its locks collection
             for(Lock inner_lock : auto_lock.locks){
 
                 // Make sure no duplicate locks (not guaranteed to work however)
-                if(test.contains(inner_lock)) throw new IllegalArgumentException(
-                        "Duplicate lock found deep in a lock in 'locks' array.");
+                if(test.contains(inner_lock)){
+                    String message = "Duplicate lock found deep in a lock in 'locks' array.";
+                    throw new IllegalArgumentException(message);
+                }
 
                 // Add to test set
                 test.add(inner_lock);
 
-                // If AutoLock, throw it in the queue
-                if(inner_lock instanceof AutoLock) lock_queue.offer((AutoLock) inner_lock);
+                // If MultiLock, throw it in the queue
+                if(inner_lock instanceof MultiLock) lock_queue.offer((MultiLock) inner_lock);
             }
         }
 
@@ -78,40 +89,46 @@ public class AutoLock implements Lock{
     }
 
     /**
-     * Locks this AutoLock and creates AutoCloseable LockedAutoLock resource
+     * Locks this MultiLock and creates AutoCloseable LockedAutoLock resource
      *
      * @return LockedAutoLock resource
      */
+    @Nonnull
     public LockedAutoLock doLock(){
         this.lock();
-        return new LockedAutoLock(this);
+        this.lock_state.set(true);
+        return new Locked(this, this.lock_state);
     }
 
     /**
-     * Locks this AutoLock and creates AutoCloseable LockedAutoLock resource
+     * Locks this MultiLock and creates AutoCloseable LockedAutoLock resource
      *
      * @return LockedAutoLock resource
      * @throws InterruptedException thrown when the locking process was interrupted
      */
+    @Nonnull
     public LockedAutoLock doLockInterruptibly() throws InterruptedException{
         this.lockInterruptibly();
-        return new LockedAutoLock(this);
+        this.lock_state.set(true);
+        return new Locked(this, this.lock_state);
     }
 
     /**
-     * Attempts to lock this AutoLock and creates AutoCloseable LockedAutoLock resource if successful. TimeoutException will be
+     * Attempts to lock this MultiLock and creates AutoCloseable LockedAutoLock resource if successful. TimeoutException will be
      * thrown if the lock cannot be obtained
      *
      * @return LockedAutoLock resource
      * @throws TimeoutException thrown if the lock cannot be obtained
      */
+    @Nonnull
     public LockedAutoLock doTryLock() throws TimeoutException{
         if(!this.tryLock()) throw new TimeoutException("Failed to obtain lock!");
-        return new LockedAutoLock(this);
+        this.lock_state.set(true);
+        return new Locked(this, this.lock_state);
     }
 
     /**
-     * Attempts to lock this AutoLock and creates AutoCloseable LockedAutoLock resource if successful. TimeoutException will be
+     * Attempts to lock this MultiLock and creates AutoCloseable LockedAutoLock resource if successful. TimeoutException will be
      * thrown if the lock cannot be obtained
      *
      * @param time timeout duration
@@ -120,9 +137,27 @@ public class AutoLock implements Lock{
      * @throws TimeoutException     thrown if the lock cannot be obtained
      * @throws InterruptedException thrown when the locking process was interrupted
      */
-    public LockedAutoLock doTryLock(long time, TimeUnit unit) throws TimeoutException, InterruptedException{
+    @Nonnull
+    public LockedAutoLock doTryLock(@Nonnegative long time, @Nonnull TimeUnit unit)
+    throws TimeoutException, InterruptedException{
+
+        // Assert parameters
+        Validation.assertNonnegative(time, "time");
+        Validation.assertNonnull(unit, "unit");
+
+        // Do it
         if(!this.tryLock(time, unit)) throw new TimeoutException("Failed to obtain lock!");
-        return new LockedAutoLock(this);
+
+        // Set state
+        this.lock_state.set(true);
+
+        // Return new LockedAutoLock
+        return new Locked(this, this.lock_state);
+    }
+
+    @Override
+    public boolean isLocked(){
+        return this.lock_state.get();
     }
 
     @Override
@@ -154,6 +189,9 @@ public class AutoLock implements Lock{
 
             // If unsuccessful, unlock all in reverse order
             if(!successful) for(Lock lock : locked) lock.unlock();
+
+            // Successful
+            if(successful) this.lock_state.set(true);
 
         }
     }
@@ -188,6 +226,9 @@ public class AutoLock implements Lock{
             // If unsuccessful, unlock all in reverse order
             if(!successful) for(Lock lock : locked) lock.unlock();
 
+            // Successful
+            if(successful) this.lock_state.set(true);
+
         }
     }
 
@@ -221,6 +262,9 @@ public class AutoLock implements Lock{
             // If unsuccessful, unlock all in reverse order
             if(!successful) for(Lock lock : locked) lock.unlock();
 
+            // Successful
+            if(successful) this.lock_state.set(true);
+
         }
 
         // Return success
@@ -229,6 +273,10 @@ public class AutoLock implements Lock{
 
     @Override
     public synchronized boolean tryLock(@Nonnegative long time, @Nonnull TimeUnit unit) throws InterruptedException{
+
+        // Assert parameters
+        Validation.assertNonnegative(time, "time");
+        Validation.assertNonnull(unit, "unit");
 
         // Keep track of successful locks
         LinkedList<Lock> locked = new LinkedList<>();
@@ -267,6 +315,9 @@ public class AutoLock implements Lock{
             // If unsuccessful, unlock all in reverse order
             if(!successful) for(Lock lock : locked) lock.unlock();
 
+            // Successful
+            if(successful) this.lock_state.set(true);
+
         }
 
         // Return success
@@ -276,6 +327,7 @@ public class AutoLock implements Lock{
     @Override
     public synchronized void unlock(){
         for(Lock lock : this.locks) lock.unlock();
+        this.lock_state.set(false);
     }
 
     @Override

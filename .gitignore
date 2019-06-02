@@ -1,2 +1,4 @@
 .idea/
 **/*.iml
+.attach_pid*
+target/

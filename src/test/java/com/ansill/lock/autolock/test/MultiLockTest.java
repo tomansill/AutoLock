@@ -1,7 +1,8 @@
-package com.tomansill.autolock.test;
+package com.ansill.lock.autolock.test;
 
-import com.tomansill.autolock.AutoLock;
-import com.tomansill.autolock.LockedAutoLock;
+import com.ansill.lock.autolock.AutoLock;
+import com.ansill.lock.autolock.LockedAutoLock;
+import com.ansill.lock.autolock.MultiLock;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -14,52 +15,52 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AutoLockTest{
+class MultiLockTest{
 
     @Test
     void testNullLock(){
 
-        // Create AutoLock
-        assertThrows(IllegalArgumentException.class, () -> new AutoLock((Lock) null));
+        // Create MultiLock
+        assertThrows(IllegalArgumentException.class, () -> new MultiLock((Lock) null));
     }
 
     @Test
     void testNullLocks(){
 
-        // Create AutoLock
-        assertThrows(IllegalArgumentException.class, () -> new AutoLock(new ReentrantLock(), null));
+        // Create MultiLock
+        assertThrows(IllegalArgumentException.class, () -> new MultiLock(new ReentrantLock(), null));
     }
 
     @Test
-    void testDuplicateLock(){
+    void testDuplicateLock(){ 
 
         // Single lock
         ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        assertThrows(IllegalArgumentException.class, () -> new AutoLock(rl, rl));
+        // Create MultiLock
+        assertThrows(IllegalArgumentException.class, () -> new MultiLock(rl, rl));
     }
 
     @Test
-    void testInnerDuplicateLock(){
+    void testInnerDuplicateLock(){ 
 
         // Single lock
         ReentrantLock rl = new ReentrantLock();
 
-        AutoLock al = new AutoLock(new ReentrantLock(), rl);
+        MultiLock al = new MultiLock(new ReentrantLock(), rl);
 
-        // Create AutoLock
-        assertThrows(IllegalArgumentException.class, () -> new AutoLock(rl, new ReentrantLock(), al));
+        // Create MultiLock
+        assertThrows(IllegalArgumentException.class, () -> new MultiLock(rl, new ReentrantLock(), al));
     }
 
     @Test
-    void testAutoLock(){
+    void testMultiLock(){ 
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new AutoLock(rl);
+        // Create MultiLock
+        MultiLock al = new MultiLock(rl);
 
         // Lock it
         al.lock();
@@ -81,7 +82,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new AutoLock(rl);
+        AutoLock al = new MultiLock(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLock()){
@@ -102,7 +103,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new AutoLock(rl);
+        AutoLock al = new MultiLock(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLockInterruptibly()){
@@ -123,7 +124,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new AutoLock(rl);
+        AutoLock al = new MultiLock(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doTryLock()){
@@ -143,8 +144,8 @@ class AutoLockTest{
         // Create lock
         ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new AutoLock(rl);
+        // Create MultiLock
+        MultiLock al = new MultiLock(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doTryLock(1, TimeUnit.MILLISECONDS)){
@@ -165,10 +166,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new AutoLock(rl);
-
-        // Create second AutoLock
-        AutoLock al1 = new AutoLock(rl);
+        AutoLock al = new MultiLock(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLock()){
@@ -184,7 +182,7 @@ class AutoLockTest{
 
             // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
             new Thread(() -> {
-                result.set(al1.tryLock());
+                result.set(rl.tryLock());
                 cdl.countDown();
             }).start();
 
@@ -194,6 +192,9 @@ class AutoLockTest{
             // Assert
             assertFalse(result.get());
         }
+
+        // Assert that lock is unlocked
+        assertFalse(al.isLocked());
 
         // Assert that lock is unlocked
         assertFalse(rl.isLocked());
@@ -206,10 +207,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new AutoLock(rl);
-
-        // Create second AutoLock
-        AutoLock al1 = new AutoLock(rl);
+        AutoLock al = new MultiLock(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLock()){
@@ -226,7 +224,7 @@ class AutoLockTest{
             // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
             new Thread(() -> {
                 try{
-                    result.set(al1.tryLock(1, TimeUnit.MILLISECONDS));
+                    result.set(rl.tryLock(1, TimeUnit.MILLISECONDS));
                 }catch(InterruptedException e){
                     e.printStackTrace();
                 }
@@ -241,6 +239,9 @@ class AutoLockTest{
         }
 
         // Assert that lock is unlocked
+        assertFalse(al.isLocked());
+
+        // Assert that lock is unlocked
         assertFalse(rl.isLocked());
     }
 
@@ -251,7 +252,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new AutoLock(rl);
+        AutoLock al = new MultiLock(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLock()){
@@ -297,7 +298,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new AutoLock(rl);
+        AutoLock al = new MultiLock(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLock()){
