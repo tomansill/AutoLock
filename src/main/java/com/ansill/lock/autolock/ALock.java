@@ -37,8 +37,7 @@ public class ALock implements AutoLock{
     @Nonnull
     public static LockedAutoLock doLock(@Nonnull Lock lock){
         Validation.assertNonnull(lock, "lock");
-        ALock aLock = new ALock(lock);
-        return aLock.doLock();
+        return new ALock(lock).doLock();
     }
 
     /**
@@ -51,8 +50,7 @@ public class ALock implements AutoLock{
     @Nonnull
     public static LockedAutoLock doLockInterruptibly(@Nonnull Lock lock) throws InterruptedException{
         Validation.assertNonnull(lock, "lock");
-        ALock aLock = new ALock(lock);
-        return aLock.doLockInterruptibly();
+        return new ALock(lock).doLockInterruptibly();
     }
 
     /**
@@ -65,8 +63,7 @@ public class ALock implements AutoLock{
     @Nonnull
     public static LockedAutoLock doTryLock(@Nonnull Lock lock) throws TimeoutException{
         Validation.assertNonnull(lock, "lock");
-        ALock aLock = new ALock(lock);
-        return aLock.doTryLock();
+        return new ALock(lock).doTryLock();
     }
 
     /**
@@ -81,8 +78,7 @@ public class ALock implements AutoLock{
     public static LockedAutoLock doTryLock(@Nonnull Lock lock, long time, @Nonnull TimeUnit unit)
     throws TimeoutException, InterruptedException{
         Validation.assertNonnull(lock, "lock");
-        ALock aLock = new ALock(lock);
-        return aLock.doTryLock(time, unit);
+        return new ALock(lock).doTryLock(time, unit);
     }
 
     @Nonnull
