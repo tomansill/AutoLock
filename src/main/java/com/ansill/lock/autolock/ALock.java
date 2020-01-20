@@ -24,8 +24,7 @@ public class ALock implements AutoLock{
      * @param lock lock
      */
     public ALock(@Nonnull Lock lock){
-        Validation.assertNonnull(lock, "lock");
-        this.lock = lock;
+        this.lock = Validation.assertNonnull(lock, "lock");
     }
 
     /**
@@ -36,8 +35,7 @@ public class ALock implements AutoLock{
      */
     @Nonnull
     public static LockedAutoLock doLock(@Nonnull Lock lock){
-        Validation.assertNonnull(lock, "lock");
-        return new ALock(lock).doLock();
+        return new ALock(Validation.assertNonnull(lock, "lock")).doLock();
     }
 
     /**
@@ -50,7 +48,7 @@ public class ALock implements AutoLock{
     @Nonnull
     public static LockedAutoLock doLockInterruptibly(@Nonnull Lock lock) throws InterruptedException{
         Validation.assertNonnull(lock, "lock");
-        return new ALock(lock).doLockInterruptibly();
+        return new ALock(Validation.assertNonnull(lock, "lock")).doLockInterruptibly();
     }
 
     /**
@@ -63,7 +61,7 @@ public class ALock implements AutoLock{
     @Nonnull
     public static LockedAutoLock doTryLock(@Nonnull Lock lock) throws TimeoutException{
         Validation.assertNonnull(lock, "lock");
-        return new ALock(lock).doTryLock();
+        return new ALock(Validation.assertNonnull(lock, "lock")).doTryLock();
     }
 
     /**
@@ -77,8 +75,7 @@ public class ALock implements AutoLock{
     @Nonnull
     public static LockedAutoLock doTryLock(@Nonnull Lock lock, long time, @Nonnull TimeUnit unit)
     throws TimeoutException, InterruptedException{
-        Validation.assertNonnull(lock, "lock");
-        return new ALock(lock).doTryLock(time, unit);
+        return new ALock(Validation.assertNonnull(lock, "lock")).doTryLock(time, unit);
     }
 
     @Nonnull
