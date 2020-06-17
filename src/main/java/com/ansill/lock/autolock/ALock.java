@@ -2,18 +2,21 @@ package com.ansill.lock.autolock;
 
 import com.ansill.validation.Validation;
 
+import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /** AutoLock Implementation */
-public class ALock implements AutoLock{
+class ALock implements AutoLock{
 
     /** Lock */
     @Nonnull
     private final Lock lock;
+
     /** Lock state */
     @Nonnull
     private final AtomicBoolean lock_state = new AtomicBoolean(false);
@@ -23,61 +26,14 @@ public class ALock implements AutoLock{
      *
      * @param lock lock
      */
-    public ALock(@Nonnull Lock lock){
+    ALock(@Nonnull Lock lock){
         this.lock = Validation.assertNonnull(lock, "lock");
     }
 
     /**
-     * Locks and creates a LockedAutoLock reference
-     *
-     * @param lock lock to lock on
+     * Locks and create a LockAutoLock reference
      * @return LockedAutoLock
      */
-    @Nonnull
-    public static LockedAutoLock doLock(@Nonnull Lock lock){
-        return new ALock(Validation.assertNonnull(lock, "lock")).doLock();
-    }
-
-    /**
-     * Locks and creates a LockedAutoLock reference
-     *
-     * @param lock lock to lock on
-     * @return LockedAutoLock
-     * @throws InterruptedException thrown if the thread was interrupted
-     */
-    @Nonnull
-    public static LockedAutoLock doLockInterruptibly(@Nonnull Lock lock) throws InterruptedException{
-        Validation.assertNonnull(lock, "lock");
-        return new ALock(Validation.assertNonnull(lock, "lock")).doLockInterruptibly();
-    }
-
-    /**
-     * Locks and creates a LockedAutoLock reference
-     *
-     * @param lock lock to lock on
-     * @return LockedAutoLock
-     * @throws TimeoutException thrown if lock has failed to lock
-     */
-    @Nonnull
-    public static LockedAutoLock doTryLock(@Nonnull Lock lock) throws TimeoutException{
-        Validation.assertNonnull(lock, "lock");
-        return new ALock(Validation.assertNonnull(lock, "lock")).doTryLock();
-    }
-
-    /**
-     * Locks and creates a LockedAutoLock reference
-     *
-     * @param lock lock to lock on
-     * @return LockedAutoLock
-     * @throws TimeoutException     thrown if lock has failed to lock
-     * @throws InterruptedException thrown if the thread was interrupted
-     */
-    @Nonnull
-    public static LockedAutoLock doTryLock(@Nonnull Lock lock, long time, @Nonnull TimeUnit unit)
-    throws TimeoutException, InterruptedException{
-        return new ALock(Validation.assertNonnull(lock, "lock")).doTryLock(time, unit);
-    }
-
     @Nonnull
     @Override
     public LockedAutoLock doLock(){
@@ -86,6 +42,12 @@ public class ALock implements AutoLock{
         return new Locked(this.lock, this.lock_state);
     }
 
+    /**
+     * Locks and create a LockAutoLock reference
+     *
+     * @return LockedAutoLock
+     * @throws InterruptedException thrown if the thread was interrupted
+     */
     @Nonnull
     @Override
     public LockedAutoLock doLockInterruptibly() throws InterruptedException{
@@ -94,6 +56,12 @@ public class ALock implements AutoLock{
         return new Locked(this.lock, this.lock_state);
     }
 
+    /**
+     * Attempts to lock. If lock is obtained, then a LockedAutoLock reference is created.
+     *
+     * @return LockedAutoLock
+     * @throws TimeoutException thrown if lock has failed to lock
+     */
     @Nonnull
     @Override
     public LockedAutoLock doTryLock() throws TimeoutException{
@@ -102,14 +70,45 @@ public class ALock implements AutoLock{
         return new Locked(this.lock, this.lock_state);
     }
 
+    /**
+     * Attempts to lock. If lock is obtained, then a LockedAutoLock reference is created.
+     *
+     * @param time amount of time for lock to be attempted before timing out
+     * @param unit unit for parameter 'time'
+     * @return LockedAutoLock
+     * @throws TimeoutException     thrown if lock has failed to lock
+     * @throws InterruptedException thrown if the thread was interrupted
+     */
     @Nonnull
     @Override
-    public LockedAutoLock doTryLock(long time, @Nonnull TimeUnit unit) throws TimeoutException, InterruptedException{
+    public LockedAutoLock doTryLock(@Nonnegative long time, @Nonnull TimeUnit unit)
+    throws TimeoutException, InterruptedException{
         if(!this.lock.tryLock(time, unit)) throw new TimeoutException("Timed out");
         this.lock_state.set(true);
         return new Locked(this.lock, this.lock_state);
     }
 
+    /**
+     * Attempts to lock. If lock is obtained, then a LockedAutoLock reference is created.
+     *
+     * @param duration duration of the lock attempt
+     * @return LockedAutoLock
+     * @throws TimeoutException     thrown if lock has failed to lock
+     * @throws InterruptedException thrown if the thread was interrupted
+     */
+    @Override
+    @Nonnull
+    public LockedAutoLock doTryLock(@Nonnull Duration duration) throws TimeoutException, InterruptedException{
+        if(!this.lock.tryLock(duration.toMillis(), TimeUnit.MILLISECONDS)) throw new TimeoutException("Timed out");
+        this.lock_state.set(true);
+        return new Locked(this.lock, this.lock_state);
+    }
+
+    /**
+     * Get lock's state
+     *
+     * @return true if lock is currently locked, false it is not currently locked
+     */
     @Override
     public boolean isLocked(){
         return this.lock_state.get();

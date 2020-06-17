@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /** LockedAutoLock implementation */
-public class Locked implements LockedAutoLock{
+class Locked implements LockedAutoLock{
 
     /** Lock object */
     @Nonnull

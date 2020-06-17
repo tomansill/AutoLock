@@ -1,10 +1,10 @@
 package com.ansill.lock.autolock.test;
 
-import com.ansill.lock.autolock.ALock;
 import com.ansill.lock.autolock.AutoLock;
 import com.ansill.lock.autolock.LockedAutoLock;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -23,7 +23,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLock()){
@@ -44,7 +44,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLockInterruptibly()){
@@ -65,7 +65,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doTryLock()){
@@ -86,10 +86,31 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doTryLock(1, TimeUnit.MILLISECONDS)){
+
+            // Assert that lock is locked
+            assertTrue(rl.isLocked());
+
+        }
+
+        // Assert that lock is unlocked
+        assertFalse(rl.isLocked());
+    }
+
+    @Test
+    void testAutoLockDoTryLockDurationAlt() throws Exception{
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Create AutoLock
+        AutoLock al = AutoLock.create(rl);
+
+        // Lock it
+        try(LockedAutoLock ignored = al.doTryLock(Duration.ofMillis(1))){
 
             // Assert that lock is locked
             assertTrue(rl.isLocked());
@@ -107,7 +128,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLock()){
@@ -148,7 +169,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLock()){
@@ -193,7 +214,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLock()){
@@ -239,7 +260,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
         try(LockedAutoLock ignored = al.doLock()){
@@ -280,6 +301,54 @@ class AutoLockTest{
         assertFalse(rl.isLocked());
     }
 
+    @Test
+    void testAutoLockDoTryLockDurationTimeoutAlt() throws Exception{
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Create AutoLock
+        AutoLock al = AutoLock.create(rl);
+
+        // Lock it
+        try(LockedAutoLock ignored = al.doLock()){
+
+            // Assert that lock is locked
+            assertTrue(rl.isLocked());
+
+            // CDL
+            CountDownLatch cdl = new CountDownLatch(1);
+
+            // AtomicBoolean
+            AtomicReference<TimeoutException> result = new AtomicReference<>();
+
+            // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
+            new Thread(() -> {
+                try{
+                    al.doTryLock(Duration.ofMillis(1));
+                }catch(TimeoutException e){
+                    result.set(e);
+                }catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+                cdl.countDown();
+            }).start();
+
+            // Wait
+            cdl.await();
+
+            // Assert
+            assertThrows(TimeoutException.class, () -> {
+                TimeoutException te = result.get();
+                if(te == null) return;
+                throw te;
+            });
+        }
+
+        // Assert that lock is unlocked
+        assertFalse(rl.isLocked());
+    }
+
 
     @Test
     void testStaticAutoLockDoLock(){
@@ -288,7 +357,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Lock it
-        try(LockedAutoLock ignored = ALock.doLock(rl)){
+        try(LockedAutoLock ignored = AutoLock.doLock(rl)){
 
             // Assert that lock is locked
             assertTrue(rl.isLocked());
@@ -306,7 +375,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Lock it
-        try(LockedAutoLock ignored = ALock.doLockInterruptibly(rl)){
+        try(LockedAutoLock ignored = AutoLock.doLockInterruptibly(rl)){
 
             // Assert that lock is locked
             assertTrue(rl.isLocked());
@@ -324,7 +393,7 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Lock it
-        try(LockedAutoLock ignored = ALock.doTryLock(rl)){
+        try(LockedAutoLock ignored = AutoLock.doTryLock(rl)){
 
             // Assert that lock is locked
             assertTrue(rl.isLocked());
@@ -342,7 +411,26 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Lock it
-        try(LockedAutoLock ignored = ALock.doTryLock(rl, 1, TimeUnit.MILLISECONDS)){
+        try(LockedAutoLock ignored = AutoLock.doTryLock(rl, 1, TimeUnit.MILLISECONDS)){
+
+            // Assert that lock is locked
+            assertTrue(rl.isLocked());
+
+        }
+
+        // Assert that lock is unlocked
+        assertFalse(rl.isLocked());
+    }
+
+
+    @Test
+    void testStaticAutoLockDoTryLockDurationAlt() throws Exception{
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Lock it
+        try(LockedAutoLock ignored = AutoLock.doTryLock(rl, Duration.ofMillis(1))){
 
             // Assert that lock is locked
             assertTrue(rl.isLocked());
@@ -360,10 +448,10 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
-        try(LockedAutoLock ignored = ALock.doLock(rl)){
+        try(LockedAutoLock ignored = AutoLock.doLock(rl)){
 
             // Assert that lock is locked
             assertTrue(rl.isLocked());
@@ -401,10 +489,10 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
-        try(LockedAutoLock ignored = ALock.doLock(rl)){
+        try(LockedAutoLock ignored = AutoLock.doLock(rl)){
 
             // Assert that lock is locked
             assertTrue(rl.isLocked());
@@ -446,10 +534,10 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
-        try(LockedAutoLock ignored = ALock.doLock(rl)){
+        try(LockedAutoLock ignored = AutoLock.doLock(rl)){
 
             // Assert that lock is locked
             assertTrue(rl.isLocked());
@@ -492,10 +580,10 @@ class AutoLockTest{
         ReentrantLock rl = new ReentrantLock();
 
         // Create AutoLock
-        AutoLock al = new ALock(rl);
+        AutoLock al = AutoLock.create(rl);
 
         // Lock it
-        try(LockedAutoLock ignored = ALock.doLock(rl)){
+        try(LockedAutoLock ignored = AutoLock.doLock(rl)){
 
             // Assert that lock is locked
             assertTrue(rl.isLocked());
@@ -510,6 +598,54 @@ class AutoLockTest{
             new Thread(() -> {
                 try{
                     al.doTryLock(1, TimeUnit.MILLISECONDS);
+                }catch(TimeoutException e){
+                    result.set(e);
+                }catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+                cdl.countDown();
+            }).start();
+
+            // Wait
+            cdl.await();
+
+            // Assert
+            assertThrows(TimeoutException.class, () -> {
+                TimeoutException te = result.get();
+                if(te == null) return;
+                throw te;
+            });
+        }
+
+        // Assert that lock is unlocked
+        assertFalse(rl.isLocked());
+    }
+
+    @Test
+    void testStaticAutoLockDoTryLockDurationTimeoutAlt() throws Exception{
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Create AutoLock
+        AutoLock al = AutoLock.create(rl);
+
+        // Lock it
+        try(LockedAutoLock ignored = AutoLock.doLock(rl)){
+
+            // Assert that lock is locked
+            assertTrue(rl.isLocked());
+
+            // CDL
+            CountDownLatch cdl = new CountDownLatch(1);
+
+            // AtomicBoolean
+            AtomicReference<TimeoutException> result = new AtomicReference<>();
+
+            // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
+            new Thread(() -> {
+                try{
+                    al.doTryLock(Duration.ofMillis(1));
                 }catch(TimeoutException e){
                     result.set(e);
                 }catch(InterruptedException e){
