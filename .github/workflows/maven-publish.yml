@@ -5,10 +5,10 @@ name: Maven Package
 
 on:
   pull_request:
-    branches: 
+    branches:
       - master
-  #release:
-    #types: [created]
+  release:
+    types: [created]
 
 jobs:
   build:
