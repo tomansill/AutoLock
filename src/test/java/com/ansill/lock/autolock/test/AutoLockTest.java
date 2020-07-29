@@ -119,7 +119,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully double-unlock")
     @Test
-    void testAutoLockDoubleUnlock(){
+    void testDoubleUnlock(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -154,7 +154,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform doLock() method")
     @Test
-    void testAutoLockDoLock(){
+    void testDoLock(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -185,7 +185,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform doLockInterruptibly() method")
     @Test
-    void testAutoLockDoLockInterruptibly() throws InterruptedException{
+    void testDoLockInterruptibly() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -218,7 +218,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform doTryLock() method")
     @Test
-    void testAutoLockDoTryLock() throws TimeoutException{
+    void testDoTryLock() throws TimeoutException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -251,7 +251,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform doTryLock(long,TimeUnit) method")
     @Test
-    void testAutoLockDoTryLockWithLongTimeUnitTimeout(){
+    void testDoTryLockWithLongTimeUnitTimeout(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -286,7 +286,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform doTryLock(Duration) method")
     @Test
-    void testAutoLockDoTryLockWithDurationTimeout(){
+    void testDoTryLockWithDurationTimeout(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -321,7 +321,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doLockInterruptibly() method and call interrupt")
     @Test
-    void testAutoLockDoLockInterruptiblyInterrupt() throws InterruptedException{
+    void testDoLockInterruptiblyInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -365,7 +365,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doTryLock(long,TimeUnit) method and call interrupt")
     @Test
-    void testAutoLockDoTryLockTimeUnitInterrupt() throws InterruptedException{
+    void testDoTryLockTimeUnitInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -415,7 +415,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doTryLock(Duration) method and call interrupt")
     @Test
-    void testAutoLockDoTryLockDurationInterrupt() throws InterruptedException{
+    void testDoTryLockDurationInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -465,7 +465,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doTryLock() method and force it to time out")
     @Test
-    void testAutoLockDoTryLockTimeout() throws InterruptedException{
+    void testDoTryLockTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -514,7 +514,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doTryLock(long,TimeUnit) method and force it to time out")
     @Test
-    void testAutoLockDoTryLockTimeUnitTimeout() throws InterruptedException{
+    void testDoTryLockTimeUnitTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -564,7 +564,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doTryLock(Duration) method and force it to time out")
     @Test
-    void testAutoLockDoTryLockDurationTimeout() throws InterruptedException{
+    void testDoTryLockDurationTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -618,7 +618,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform doLock(Lock) method")
     @Test
-    void testAutoLockDoLock(){
+    void testDoLock(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -642,7 +642,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform doLockInterruptibly(Lock) method")
     @Test
-    void testAutoLockDoLockInterruptibly() throws InterruptedException{
+    void testDoLockInterruptibly() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -666,7 +666,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform doTryLock(Lock) method")
     @Test
-    void testAutoLockDoTryLock() throws TimeoutException{
+    void testDoTryLock() throws TimeoutException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -691,7 +691,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doLockInterruptibly(Lock) method and call interrupt")
     @Test
-    void testAutoLockDoLockInterruptiblyInterrupt() throws InterruptedException{
+    void testDoLockInterruptiblyInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -732,7 +732,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doTryLock(Lock,long,TimeUnit) method and call interrupt")
     @Test
-    void testAutoLockDoTryLockTimeUnitInterrupt() throws InterruptedException{
+    void testDoTryLockTimeUnitInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -779,7 +779,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doTryLock(Lock,Duration) method and call interrupt")
     @Test
-    void testAutoLockDoTryLockDurationInterrupt() throws InterruptedException{
+    void testDoTryLockDurationInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -826,7 +826,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform doTryLock(Lock,long,TimeUnit) method")
     @Test
-    void testAutoLockDoTryLockWithLongTimeUnitTimeout(){
+    void testDoTryLockWithLongTimeUnitTimeout(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -852,7 +852,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform doTryLock(Lock,Duration) method")
     @Test
-    void testAutoLockDoTryLockWithDurationTimeout(){
+    void testDoTryLockWithDurationTimeout(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -878,7 +878,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doTryLock(Lock) method and force it to time out")
     @Test
-    void testAutoLockDoTryLockTimeout() throws InterruptedException{
+    void testDoTryLockTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -924,7 +924,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doTryLock(Lock,long,TimeUnit) method and force it to time out")
     @Test
-    void testAutoLockDoTryLockTimeUnitTimeout() throws InterruptedException{
+    void testDoTryLockTimeUnitTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -974,7 +974,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform doTryLock(Lock,Duration) method and force it to time out")
     @Test
-    void testAutoLockDoTryLockDurationTimeout() throws InterruptedException{
+    void testDoTryLockDurationTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1053,7 +1053,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform lockAndPerform(Lock,Runnable) method")
     @Test
-    void testAutoLockLockAndPerform() throws ExecutionException{
+    void testLockAndPerform() throws ExecutionException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1073,7 +1073,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform lockAndGet(Lock,Supplier) method")
     @Test
-    void testAutoLockLockAndGet() throws ExecutionException{
+    void testLockAndGet() throws ExecutionException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1102,7 +1102,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform lockInterruptiblyAndPerform(Lock,Runnable) method")
     @Test
-    void testAutoLockLockInterruptiblyAndPerform() throws InterruptedException, ExecutionException{
+    void testLockInterruptiblyAndPerform() throws InterruptedException, ExecutionException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1122,7 +1122,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform lockInterruptiblyAndGet(Lock,Supplier) method")
     @Test
-    void testAutoLockLockInterruptiblyAndGet() throws InterruptedException, ExecutionException{
+    void testLockInterruptiblyAndGet() throws InterruptedException, ExecutionException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1151,7 +1151,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform lockInterruptiblyAndPerform(Lock,Runnable) method and call interrupt")
     @Test
-    void testAutoLockLockInterruptiblyAndPerformInterrupt() throws InterruptedException{
+    void testLockInterruptiblyAndPerformInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1194,7 +1194,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform lockInterruptiblyAndGet(Lock,Supplier) method and call interrupt")
     @Test
-    void testAutoLockLockInterruptiblyAndGetInterrupt() throws InterruptedException{
+    void testLockInterruptiblyAndGetInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1240,7 +1240,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform tryLockAndPerform(Lock,long,TimeUnit,Runnable) method and call interrupt")
     @Test
-    void testAutoLockTryLockAndPerformTimeUnitInterrupt() throws InterruptedException{
+    void testTryLockAndPerformTimeUnitInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1287,7 +1287,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform tryLockAndGet(Lock,long,TimeUnit,Supplier) method and call interrupt")
     @Test
-    void testAutoLockTryLockAndGetTimeUnitInterrupt() throws InterruptedException{
+    void testTryLockAndGetTimeUnitInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1337,7 +1337,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform tryLockAndPerform(Lock,Duration,Runnable) method and call interrupt")
     @Test
-    void testAutoLockTryLockAndPerformDurationInterrupt() throws InterruptedException{
+    void testTryLockAndPerformDurationInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1384,7 +1384,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform tryLockAndGet(Lock,Duration,Supplier) method and call interrupt")
     @Test
-    void testAutoLockTryLockAndGetDurationInterrupt() throws InterruptedException{
+    void testTryLockAndGetDurationInterrupt() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1434,7 +1434,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform tryLockAndPerform(Lock,Runnable) method")
     @Test
-    void testAutoLockTryLockAndPerform() throws TimeoutException, ExecutionException{
+    void testTryLockAndPerform() throws TimeoutException, ExecutionException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1459,7 +1459,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform tryLockAndGet(Lock,Supplier) method")
     @Test
-    void testAutoLockTryLockAndGet() throws TimeoutException, ExecutionException{
+    void testTryLockAndGet() throws TimeoutException, ExecutionException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1492,7 +1492,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform tryLockAndPerform(Lock,long,TimeUnit,Runnable) method")
     @Test
-    void testAutoLockTryLockAndPerformTimeUnit(){
+    void testTryLockAndPerformTimeUnit(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1517,7 +1517,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform tryLockAndGet(Lock,long,TimeUnit,Supplier) method")
     @Test
-    void testAutoLockTryLockAndGetTimeUnit(){
+    void testTryLockAndGetTimeUnit(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1552,7 +1552,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform tryLockAndPerform(Lock,Duration,Runnable) method")
     @Test
-    void testAutoLockTryLockAndPerformDuration(){
+    void testTryLockAndPerformDuration(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1576,7 +1576,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to successfully perform tryLockAndGet(Lock,Duration,Supplier) method")
     @Test
-    void testAutoLockTryLockAndGetDuration(){
+    void testTryLockAndGetDuration(){
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1611,7 +1611,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform tryLockAndPerform(Lock,Runnable) method and force it to time out")
     @Test
-    void testAutoLockTryLockAndPerformTimeout() throws InterruptedException{
+    void testTryLockAndPerformTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1657,7 +1657,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform tryLockAndGet(Lock,Supplier) method and force it to time out")
     @Test
-    void testAutoLockTryLockAndGetTimeout() throws InterruptedException{
+    void testTryLockAndGetTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1706,7 +1706,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform tryLockAndPerform(Lock,long,TimeUnit,Runnable) method and force it to time out")
     @Test
-    void testAutoLockTryLockAndPerformTimeUnitTimeout() throws InterruptedException{
+    void testTryLockAndPerformTimeUnitTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1756,7 +1756,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform tryLockAndGet(Lock,long,TimeUnit,Supplier) method and force it to time out")
     @Test
-    void testAutoLockTryLockAndGetTimeUnitTimeout() throws InterruptedException{
+    void testTryLockAndGetTimeUnitTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1809,7 +1809,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform tryLockAndPerform(Lock,Duration,Runnable) method and force it to time out")
     @Test
-    void testAutoLockTryLockAndPerformDurationTimeout() throws InterruptedException{
+    void testTryLockAndPerformDurationTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -1856,7 +1856,7 @@ class AutoLockTest{
 
     @DisplayName("Attempt to perform tryLockAndGet(Lock,Duration,Supplier) method and force it to time out")
     @Test
-    void testAutoLockTryLockAndGetDurationTimeout() throws InterruptedException{
+    void testTryLockAndGetDurationTimeout() throws InterruptedException{
 
       // Create lock
       ReentrantLock rl = new ReentrantLock();
@@ -2141,7 +2141,7 @@ class AutoLockTest{
       }
 
       @Test
-      void testAutoLockLockAndPerformWithException(){
+      void testLockAndPerformWithException(){
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
@@ -2159,7 +2159,7 @@ class AutoLockTest{
       }
 
       @Test
-      void testAutoLockLockAndGetWithException(){
+      void testLockAndGetWithException(){
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
@@ -2177,7 +2177,7 @@ class AutoLockTest{
       }
 
       @Test
-      void testAutoLockLockInterruptiblyAndPerformWithException(){
+      void testLockInterruptiblyAndPerformWithException(){
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
@@ -2198,7 +2198,7 @@ class AutoLockTest{
       }
 
       @Test
-      void testAutoLockLockInterruptiblyAndGetWithException(){
+      void testLockInterruptiblyAndGetWithException(){
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
@@ -2219,7 +2219,7 @@ class AutoLockTest{
       }
 
       @Test
-      void testAutoLockTryLockAndPerformWithException(){
+      void testTryLockAndPerformWithException(){
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
@@ -2240,7 +2240,7 @@ class AutoLockTest{
       }
 
       @Test
-      void testAutoLockTryLockAndGetWithException(){
+      void testTryLockAndGetWithException(){
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
@@ -2258,7 +2258,7 @@ class AutoLockTest{
       }
 
       @Test
-      void testAutoLockTryLockAndPerformTimeUnitWithException(){
+      void testTryLockAndPerformTimeUnitWithException(){
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
@@ -2279,7 +2279,7 @@ class AutoLockTest{
       }
 
       @Test
-      void testAutoLockTryLockAndGetTimeUnitWithException(){
+      void testTryLockAndGetTimeUnitWithException(){
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
@@ -2300,7 +2300,7 @@ class AutoLockTest{
       }
 
       @Test
-      void testAutoLockTryLockAndPerformDurationWithException(){
+      void testTryLockAndPerformDurationWithException(){
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
@@ -2321,7 +2321,7 @@ class AutoLockTest{
       }
 
       @Test
-      void testAutoLockTryLockAndGetDurationWithException(){
+      void testTryLockAndGetDurationWithException(){
 
         // Create lock
         ReentrantLock rl = new ReentrantLock();
