@@ -1904,6 +1904,7 @@ class AutoLockTest{
 
     }
 
+    @DisplayName("Lambda methods (without Exception)")
     static class LambdaWithoutException extends Lambdas{
 
       @Override
@@ -2022,6 +2023,7 @@ class AutoLockTest{
       }
     }
 
+    @DisplayName("Lambda methods (with Exception)")
     static class LambdaWithException extends Lambdas{
 
       @Override
@@ -2140,6 +2142,7 @@ class AutoLockTest{
         });
       }
 
+      @DisplayName("Attempt to perform lockAndPerform(Lock,Runnable) method and have the inside function to throw exception")
       @Test
       void testLockAndPerformWithException(){
 
@@ -2158,6 +2161,7 @@ class AutoLockTest{
         assertEquals(exception, thrown.getCause());
       }
 
+      @DisplayName("Attempt to perform lockAndGet(Lock,Supplier) method and have the inside function to throw exception")
       @Test
       void testLockAndGetWithException(){
 
@@ -2176,6 +2180,7 @@ class AutoLockTest{
         assertEquals(exception, thrown.getCause());
       }
 
+      @DisplayName("Attempt to perform lockInterruptiblyAndPerform(Lock,Runnable) method and have the inside function to throw exception")
       @Test
       void testLockInterruptiblyAndPerformWithException(){
 
@@ -2197,6 +2202,7 @@ class AutoLockTest{
         assertEquals(exception, thrown.getCause());
       }
 
+      @DisplayName("Attempt to perform lockInterruptiblyAndGet(Lock,Supplier) method and have the inside function to throw exception")
       @Test
       void testLockInterruptiblyAndGetWithException(){
 
@@ -2218,6 +2224,7 @@ class AutoLockTest{
         assertEquals(exception, thrown.getCause());
       }
 
+      @DisplayName("Attempt to perform tryLockAndPerform(Lock,Runnable) method and have the inside function to throw exception")
       @Test
       void testTryLockAndPerformWithException(){
 
@@ -2239,6 +2246,7 @@ class AutoLockTest{
         assertEquals(exception, thrown.getCause());
       }
 
+      @DisplayName("Attempt to perform tryLockAndGet(Lock,Supplier) method and have the inside function to throw exception")
       @Test
       void testTryLockAndGetWithException(){
 
@@ -2257,6 +2265,7 @@ class AutoLockTest{
         assertEquals(exception, thrown.getCause());
       }
 
+      @DisplayName("Attempt to perform tryLockAndPerform(Lock,long,TimeUnit,Runnable) method and have the inside function to throw exception")
       @Test
       void testTryLockAndPerformTimeUnitWithException(){
 
@@ -2278,6 +2287,7 @@ class AutoLockTest{
         assertEquals(exception, thrown.getCause());
       }
 
+      @DisplayName("Attempt to perform tryLockAndGet(Lock,long,TimeUnit,Supplier) method and have the inside function to throw exception")
       @Test
       void testTryLockAndGetTimeUnitWithException(){
 
@@ -2299,6 +2309,7 @@ class AutoLockTest{
         assertEquals(exception, thrown.getCause());
       }
 
+      @DisplayName("Attempt to perform tryLockAndPerform(Lock,Duration,Runnable) method and have the inside function to throw exception")
       @Test
       void testTryLockAndPerformDurationWithException(){
 
@@ -2320,6 +2331,7 @@ class AutoLockTest{
         assertEquals(exception, thrown.getCause());
       }
 
+      @DisplayName("Attempt to perform tryLockAndGet(Lock,Duration,Supplier) method and have the inside function to throw exception")
       @Test
       void testTryLockAndGetDurationWithException(){
 
