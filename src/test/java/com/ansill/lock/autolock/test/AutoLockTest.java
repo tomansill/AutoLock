@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
+import java.io.FileNotFoundException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Random;
@@ -2101,6 +2102,207 @@ class AutoLockTest{
             throw new RuntimeException(exception);
           }
         });
+      }
+
+      @Test
+      void testAutoLockLockAndPerformWithException(){
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Exception
+        Exception exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+        // Do it
+        ExecutionException thrown = assertThrows(ExecutionException.class, () -> AutoLock.Ex.lockAndPerform(rl, () -> {
+          throw exception;
+        }));
+
+        // Get cause and compare
+        assertEquals(exception, thrown.getCause());
+      }
+
+      @Test
+      void testAutoLockLockAndGetWithException(){
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Exception
+        Exception exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+        // Do it
+        ExecutionException thrown = assertThrows(ExecutionException.class, () -> AutoLock.Ex.lockAndGet(rl, () -> {
+          throw exception;
+        }));
+
+        // Get cause and compare
+        assertEquals(exception, thrown.getCause());
+      }
+
+      @Test
+      void testAutoLockLockInterruptiblyAndPerformWithException(){
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Exception
+        Exception exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+        // Do it
+        ExecutionException thrown = assertThrows(
+          ExecutionException.class,
+          () -> AutoLock.Ex.lockInterruptiblyAndPerform(rl, () -> {
+            throw exception;
+          })
+        );
+
+        // Get cause and compare
+        assertEquals(exception, thrown.getCause());
+      }
+
+      @Test
+      void testAutoLockLockInterruptiblyAndGetWithException(){
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Exception
+        Exception exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+        // Do it
+        ExecutionException thrown = assertThrows(
+          ExecutionException.class,
+          () -> AutoLock.Ex.lockInterruptiblyAndGet(rl, () -> {
+            throw exception;
+          })
+        );
+
+        // Get cause and compare
+        assertEquals(exception, thrown.getCause());
+      }
+
+      @Test
+      void testAutoLockTryLockAndPerformWithException(){
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Exception
+        Exception exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+        // Do it
+        ExecutionException thrown = assertThrows(
+          ExecutionException.class,
+          () -> AutoLock.Ex.tryLockAndPerform(rl, () -> {
+            throw exception;
+          })
+        );
+
+        // Get cause and compare
+        assertEquals(exception, thrown.getCause());
+      }
+
+      @Test
+      void testAutoLockTryLockAndGetWithException(){
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Exception
+        Exception exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+        // Do it
+        ExecutionException thrown = assertThrows(ExecutionException.class, () -> AutoLock.Ex.tryLockAndGet(rl, () -> {
+          throw exception;
+        }));
+
+        // Get cause and compare
+        assertEquals(exception, thrown.getCause());
+      }
+
+      @Test
+      void testAutoLockTryLockAndPerformTimeUnitWithException(){
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Exception
+        Exception exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+        // Do it
+        ExecutionException thrown = assertThrows(
+          ExecutionException.class,
+          () -> AutoLock.Ex.tryLockAndPerform(rl, 1, TimeUnit.MINUTES, () -> {
+            throw exception;
+          })
+        );
+
+        // Get cause and compare
+        assertEquals(exception, thrown.getCause());
+      }
+
+      @Test
+      void testAutoLockTryLockAndGetTimeUnitWithException(){
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Exception
+        Exception exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+        // Do it
+        ExecutionException thrown = assertThrows(
+          ExecutionException.class,
+          () -> AutoLock.Ex.tryLockAndGet(rl, 1, TimeUnit.MINUTES, () -> {
+            throw exception;
+          })
+        );
+
+        // Get cause and compare
+        assertEquals(exception, thrown.getCause());
+      }
+
+      @Test
+      void testAutoLockTryLockAndPerformDurationWithException(){
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Exception
+        Exception exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+        // Do it
+        ExecutionException thrown = assertThrows(
+          ExecutionException.class,
+          () -> AutoLock.Ex.tryLockAndPerform(rl, Duration.ofMinutes(1), () -> {
+            throw exception;
+          })
+        );
+
+        // Get cause and compare
+        assertEquals(exception, thrown.getCause());
+      }
+
+      @Test
+      void testAutoLockTryLockAndGetDurationWithException(){
+
+        // Create lock
+        ReentrantLock rl = new ReentrantLock();
+
+        // Exception
+        Exception exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+        // Do it
+        ExecutionException thrown = assertThrows(
+          ExecutionException.class,
+          () -> AutoLock.Ex.tryLockAndGet(rl, Duration.ofMinutes(1), () -> {
+            throw exception;
+          })
+        );
+
+        // Get cause and compare
+        assertEquals(exception, thrown.getCause());
       }
     }
   }
