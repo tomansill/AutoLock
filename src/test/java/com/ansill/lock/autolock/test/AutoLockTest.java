@@ -117,6 +117,41 @@ class AutoLockTest{
   @DisplayName("Instance Methods")
   static class InstanceMethods{
 
+    @DisplayName("Attempt to successfully double-unlock")
+    @Test
+    void testAutoLockDoubleUnlock(){
+
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
+
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
+
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
+
+      // Set up after-lock runnable reference
+      Runnable afterLock;
+
+      // Lock it
+      try(LockedAutoLock lock = al.doLock()){
+
+        // Do during-thread test and get post lock runnable
+        afterLock = duringThread.get();
+
+        // Unlock here
+        lock.unlock();
+
+      } // Will unlock here
+
+      // Check if it's unlocked
+      assertFalse(al.isLocked());
+
+      // Do after-lock test
+      afterLock.run();
+
+    }
+
     @DisplayName("Attempt to successfully perform doLock() method")
     @Test
     void testAutoLockDoLock(){
@@ -145,6 +180,7 @@ class AutoLockTest{
 
       // Do after-lock test
       afterLock.run();
+
     }
 
     @DisplayName("Attempt to successfully perform doLockInterruptibly() method")
