@@ -13,21 +13,21 @@ final class Locked implements LockedAutoLock{
 
   /** Lock state */
   @Nonnull
-  private final AtomicBoolean lock_state;
+  private final AtomicBoolean lockState;
 
   /**
    * Creates locked resource
    *
-   * @param lock       lock
-   * @param lock_state lock state
+   * @param lock      lock
+   * @param lockState lock state
    */
-  Locked(@Nonnull Lock lock, @Nonnull AtomicBoolean lock_state){
+  Locked(@Nonnull Lock lock, @Nonnull AtomicBoolean lockState){
     this.lock = lock;
-    this.lock_state = lock_state;
+    this.lockState = lockState;
   }
 
   @Override
   public void unlock(){
-    if(this.lock_state.compareAndSet(true, false)) this.lock.unlock();
+    if(this.lockState.compareAndSet(true, false)) this.lock.unlock();
   }
 }

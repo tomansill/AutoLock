@@ -19,7 +19,7 @@ final class ALock implements AutoLock{
 
   /** Lock state */
   @Nonnull
-  private final AtomicBoolean lock_state = new AtomicBoolean(false);
+  private final AtomicBoolean lockState = new AtomicBoolean(false);
 
   /**
    * Creates AutoLock
@@ -39,8 +39,8 @@ final class ALock implements AutoLock{
   @Override
   public LockedAutoLock doLock(){
     this.lock.lock();
-    this.lock_state.set(true);
-    return new Locked(this.lock, this.lock_state);
+    this.lockState.set(true);
+    return new Locked(this.lock, this.lockState);
   }
 
   /**
@@ -53,8 +53,8 @@ final class ALock implements AutoLock{
   @Override
   public LockedAutoLock doLockInterruptibly() throws InterruptedException{
     this.lock.lockInterruptibly();
-    this.lock_state.set(true);
-    return new Locked(this.lock, this.lock_state);
+    this.lockState.set(true);
+    return new Locked(this.lock, this.lockState);
   }
 
   /**
@@ -67,8 +67,8 @@ final class ALock implements AutoLock{
   @Override
   public LockedAutoLock doTryLock() throws TimeoutException{
     if(!this.lock.tryLock()) throw new TimeoutException("Timed out");
-    this.lock_state.set(true);
-    return new Locked(this.lock, this.lock_state);
+    this.lockState.set(true);
+    return new Locked(this.lock, this.lockState);
   }
 
   /**
@@ -85,8 +85,8 @@ final class ALock implements AutoLock{
   public LockedAutoLock doTryLock(@Nonnegative long time, @Nonnull TimeUnit unit)
   throws TimeoutException, InterruptedException{
     if(!this.lock.tryLock(time, unit)) throw new TimeoutException("Timed out");
-    this.lock_state.set(true);
-    return new Locked(this.lock, this.lock_state);
+    this.lockState.set(true);
+    return new Locked(this.lock, this.lockState);
   }
 
   /**
@@ -101,8 +101,8 @@ final class ALock implements AutoLock{
   @Nonnull
   public LockedAutoLock doTryLock(@Nonnull Duration timeout) throws TimeoutException, InterruptedException{
     if(!this.lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) throw new TimeoutException("Timed out");
-    this.lock_state.set(true);
-    return new Locked(this.lock, this.lock_state);
+    this.lockState.set(true);
+    return new Locked(this.lock, this.lockState);
   }
 
   /**
@@ -112,6 +112,6 @@ final class ALock implements AutoLock{
    */
   @Override
   public boolean isLocked(){
-    return this.lock_state.get();
+    return this.lockState.get();
   }
 }
