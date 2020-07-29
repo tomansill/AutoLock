@@ -1,535 +1,982 @@
 package com.ansill.lock.autolock.test;
 
-import com.ansill.lock.autolock.ALock;
 import com.ansill.lock.autolock.AutoLock;
 import com.ansill.lock.autolock.LockedAutoLock;
+import com.ansill.lock.autolock.NonThreadSafeObject;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class AutoLockTest{
 
+  private final static Random RNG = new SecureRandom();
+
+  private final static Duration EXECUTION_TIME = Duration.ofMillis(10);
+
+  static Supplier<Runnable> beforeLock(ReentrantLock lock){
+
+    // Create thread-sensitive object
+    NonThreadSafeObject<Integer> object = new NonThreadSafeObject<>(RNG.nextInt());
+
+    // Desired numbers
+    int desiredNumberOne = object.getValue() + 1;
+    int desiredNumberTwo = desiredNumberOne + 1;
+
+    // Return supplier
+    return () -> duringLock(lock, object, desiredNumberOne, desiredNumberTwo);
+  }
+
+  static Runnable duringLock(
+    ReentrantLock lock,
+    NonThreadSafeObject<Integer> object,
+    Integer desiredNumberOne,
+    Integer desiredNumberTwo
+  ){
+
+    // Assert that lock is locked
+    assertTrue(lock.isLocked());
+
+    // Set up CDLs to control execution
+    CountDownLatch startCDL = new CountDownLatch(1);
+
+    // Create thread
+    Thread thread = new Thread(() -> {
+
+      // Old-fashioned lock
+      try{
+
+        // Wait for a okay from main thread
+        startCDL.await();
+
+        // Lock it
+        lock.lock();
+
+        // Perform what we need to do
+        object.modify(desiredNumberTwo);
+
+      }catch(InterruptedException e){
+        throw new RuntimeException(e);
+      }finally{
+
+        // Unlock it
+        lock.unlock();
+      }
+
+    });
+
+    // Run it
+    thread.start();
+
+    // Attempt to modify object
+    object.modify(desiredNumberOne, startCDL, EXECUTION_TIME);
+
+    // Ensure not corrupted
+    assertFalse(object.isCorrupted());
+
+    // Check value
+    assertEquals(desiredNumberOne, object.getValue());
+
+    // Assert that lock is locked
+    assertTrue(lock.isLocked());
+
+    // Build runnable to run afterwards
+    return () -> {
+
+      // Wait for other thread to finish
+      assertDoesNotThrow((Executable) thread::join);
+
+      // Ensure not corrupted
+      assertFalse(object.isCorrupted());
+
+      // Check value
+      assertEquals(desiredNumberTwo, object.getValue());
+
+      // Assert that lock is unlocked
+      assertFalse(lock.isLocked());
+    };
+  }
+
+  @DisplayName("Instance Methods")
+  static class InstanceMethods{
+
+    @DisplayName("Attempt to successfully perform doLock() method")
     @Test
     void testAutoLockDoLock(){
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
 
-        // Lock it
-        try(LockedAutoLock ignored = al.doLock()){
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Set up after-lock runnable reference
+      Runnable afterLock;
 
-        }
+      // Lock it
+      try(LockedAutoLock ignored = al.doLock()){
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+        // Do during-thread test and get post lock runnable
+        afterLock = duringThread.get();
+      }
+
+      // Check if it's unlocked
+      assertFalse(al.isLocked());
+
+      // Do after-lock test
+      afterLock.run();
     }
 
+    @DisplayName("Attempt to successfully perform doLockInterruptibly() method")
     @Test
-    void testAutoLockDoLockInterruptibly() throws Exception{
+    void testAutoLockDoLockInterruptibly() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
 
-        // Lock it
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
+
+      // Set up after-lock runnable reference
+      Runnable afterLock;
+
+      // Lock it
+      try(LockedAutoLock ignored = al.doLockInterruptibly()){
+
+        // Check if its locked
+        assertTrue(al.isLocked());
+
+        // Do during-thread test and get post lock runnable
+        afterLock = duringThread.get();
+      }
+
+      // Check if it's unlocked
+      assertFalse(al.isLocked());
+
+      // Do after-lock test
+      afterLock.run();
+    }
+
+    @DisplayName("Attempt to successfully perform doTryLock() method")
+    @Test
+    void testAutoLockDoTryLock() throws TimeoutException{
+
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
+
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
+
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
+
+      // Set up after-lock runnable reference
+      Runnable afterLock;
+
+      // Lock it
+      try(LockedAutoLock ignored = al.doTryLock()){
+
+        // Check if its locked
+        assertTrue(al.isLocked());
+
+        // Do during-thread test and get post lock runnable
+        afterLock = duringThread.get();
+      }
+
+      // Check if it's unlocked
+      assertFalse(al.isLocked());
+
+      // Do after-lock test
+      afterLock.run();
+    }
+
+    @DisplayName("Attempt to successfully perform doTryLock(long,TimeUnit) method")
+    @Test
+    void testAutoLockDoTryLockWithLongTimeUnitTimeout(){
+
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
+
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
+
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
+
+      // Set up after-lock runnable reference
+      AtomicReference<Runnable> afterLock = new AtomicReference<>();
+
+      // Lock it and ensure that tryLock is instantaneous
+      assertTimeout(Duration.ofSeconds(1), () -> {
+        try(LockedAutoLock ignored = al.doTryLock(1, TimeUnit.MINUTES)){
+
+          // Check if its locked
+          assertTrue(al.isLocked());
+
+          // Do during-thread test and get post lock runnable
+          afterLock.set(duringThread.get());
+        }
+      });
+
+      // Check if it's unlocked
+      assertFalse(al.isLocked());
+
+      // Do after-lock test
+      afterLock.get().run();
+    }
+
+    @DisplayName("Attempt to successfully perform doTryLock(Duration) method")
+    @Test
+    void testAutoLockDoTryLockWithDurationTimeout(){
+
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
+
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
+
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
+
+      // Set up after-lock runnable reference
+      AtomicReference<Runnable> afterLock = new AtomicReference<>();
+
+      // Lock it and ensure that tryLock is instantaneous
+      assertTimeout(Duration.ofSeconds(1), () -> {
+        try(LockedAutoLock ignored = al.doTryLock(Duration.ofMinutes(1))){
+
+          // Check if its locked
+          assertTrue(al.isLocked());
+
+          // Do during-thread test and get post lock runnable
+          afterLock.set(duringThread.get());
+        }
+      });
+
+      // Check if it's unlocked
+      assertFalse(al.isLocked());
+
+      // Do after-lock test
+      afterLock.get().run();
+    }
+
+    @DisplayName("Attempt to perform doLockInterruptibly() method and call interrupt")
+    @Test
+    void testAutoLockDoLockInterruptiblyInterrupt() throws InterruptedException{
+
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
+
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
+
+      // Lock it
+      rl.lock();
+
+      // Flag for successful interrupt
+      AtomicBoolean success = new AtomicBoolean(false);
+
+      // Create thread
+      Thread thread = new Thread(() -> {
+
         try(LockedAutoLock ignored = al.doLockInterruptibly()){
-
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
-
+          fail("Lock obtained");
+        }catch(InterruptedException e){
+          success.set(true);
         }
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+      });
+
+      // Start thread
+      thread.start();
+
+      // Wait a tiny bit
+      Thread.sleep(EXECUTION_TIME.toMillis());
+
+      // Interrupt
+      thread.interrupt();
+
+      // Wait for thread to join
+      thread.join();
+
+      // Ensure that lock has been interrupted
+      assertTrue(success.get());
+
     }
 
+    @DisplayName("Attempt to perform doTryLock(long,TimeUnit) method and call interrupt")
     @Test
-    void testAutoLockDoTryLock() throws Exception{
+    void testAutoLockDoTryLockTimeUnitInterrupt() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
 
-        // Lock it
-        try(LockedAutoLock ignored = al.doTryLock()){
+      // Lock it
+      rl.lock();
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Flag for successful interrupt
+      AtomicBoolean success = new AtomicBoolean(false);
 
-        }
+      // Create thread
+      Thread thread = new Thread(() -> {
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+        // Ensure doTryLock doesn't take too long
+        assertTimeout(Duration.ofSeconds(1), () -> {
+
+          // Do it
+          try(LockedAutoLock ignored = al.doTryLock(1, TimeUnit.MINUTES)){
+            fail("Lock obtained");
+          }catch(InterruptedException e){
+            success.set(true);
+          }catch(TimeoutException e){
+            fail("Timed out");
+          }
+        });
+      });
+
+      // Start thread
+      thread.start();
+
+      // Wait a tiny bit
+      Thread.sleep(EXECUTION_TIME.toMillis());
+
+      // Interrupt
+      thread.interrupt();
+
+      // Wait for thread to join
+      thread.join();
+
+      // Ensure that lock has been interrupted
+      assertTrue(success.get());
+
     }
 
+    @DisplayName("Attempt to perform doTryLock(Duration) method and call interrupt")
     @Test
-    void testAutoLockDoTryLockDuration() throws Exception{
+    void testAutoLockDoTryLockDurationInterrupt() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
 
-        // Lock it
-        try(LockedAutoLock ignored = al.doTryLock(1, TimeUnit.MILLISECONDS)){
+      // Lock it
+      rl.lock();
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Flag for successful interrupt
+      AtomicBoolean success = new AtomicBoolean(false);
 
-        }
+      // Create thread
+      Thread thread = new Thread(() -> {
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+        // Ensure doTryLock doesn't take too long
+        assertTimeout(Duration.ofSeconds(1), () -> {
+
+          // Do it
+          try(LockedAutoLock ignored = al.doTryLock(Duration.ofMinutes(1))){
+            fail("Lock obtained");
+          }catch(InterruptedException e){
+            success.set(true);
+          }catch(TimeoutException e){
+            fail("Timed out");
+          }
+        });
+      });
+
+      // Start thread
+      thread.start();
+
+      // Wait a tiny bit
+      Thread.sleep(EXECUTION_TIME.toMillis());
+
+      // Interrupt
+      thread.interrupt();
+
+      // Wait for thread to join
+      thread.join();
+
+      // Ensure that lock has been interrupted
+      assertTrue(success.get());
+
     }
 
+    @DisplayName("Attempt to perform doTryLock() method and force it to time out")
     @Test
-    void testAutoLockTryLockTimeout() throws Exception{
+    void testAutoLockDoTryLockTimeout() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
 
-        // Lock it
-        try(LockedAutoLock ignored = al.doLock()){
+      // Go-ahead CDL
+      CountDownLatch goAhead = new CountDownLatch(1);
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Unlock CDL
+      CountDownLatch cdl = new CountDownLatch(1);
 
-            // CDL
-            CountDownLatch cdl = new CountDownLatch(1);
-
-            // AtomicBoolean
-            AtomicBoolean result = new AtomicBoolean();
-
-            // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
-            new Thread(() -> {
-                result.set(rl.tryLock());
-                cdl.countDown();
-            }).start();
-
-            // Wait
-            cdl.await();
-
-            // Assert
-            assertFalse(result.get());
+      // Create thread
+      Thread thread = new Thread(() -> {
+        try{
+          rl.lock();
+          goAhead.countDown();
+          cdl.await();
+        }catch(InterruptedException e){
+          fail();
+        }finally{
+          rl.unlock();
         }
+      });
 
-        // Assert that lock is unlocked
-        assertFalse(al.isLocked());
+      try{
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+        // Start thread to lock
+        thread.start();
+
+        // Wait for thread to lock
+        goAhead.await();
+
+        // Attempt to tryLock
+        assertThrows(TimeoutException.class, al::doTryLock);
+
+      }finally{
+        cdl.countDown();
+      }
+
+      // Wait for thread to finish
+      thread.join();
+
     }
 
+    @DisplayName("Attempt to perform doTryLock(long,TimeUnit) method and force it to time out")
     @Test
-    void testAutoLockTryLockDurationTimeout() throws Exception{
+    void testAutoLockDoTryLockTimeUnitTimeout() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
 
-        // Lock it
-        try(LockedAutoLock ignored = al.doLock()){
+      // Go-ahead CDL
+      CountDownLatch goAhead = new CountDownLatch(1);
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Unlock CDL
+      CountDownLatch cdl = new CountDownLatch(1);
 
-            // CDL
-            CountDownLatch cdl = new CountDownLatch(1);
-
-            // AtomicBoolean
-            AtomicBoolean result = new AtomicBoolean();
-
-            // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
-            new Thread(() -> {
-                try{
-                    result.set(rl.tryLock(1, TimeUnit.MILLISECONDS));
-                }catch(InterruptedException e){
-                    e.printStackTrace();
-                }
-                cdl.countDown();
-            }).start();
-
-            // Wait
-            cdl.await();
-
-            // Assert
-            assertFalse(result.get());
+      // Create thread
+      Thread thread = new Thread(() -> {
+        try{
+          rl.lock();
+          goAhead.countDown();
+          cdl.await();
+        }catch(InterruptedException e){
+          e.printStackTrace();
+          fail();
+        }finally{
+          rl.unlock();
         }
+      });
 
-        // Assert that lock is unlocked
-        assertFalse(al.isLocked());
+      try{
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+        // Start thread to lock
+        thread.start();
+
+        // Wait for thread to lock
+        goAhead.await();
+
+        // Attempt to tryLock
+        assertThrows(TimeoutException.class, () -> al.doTryLock(EXECUTION_TIME.toMillis(), TimeUnit.MILLISECONDS));
+
+      }finally{
+        cdl.countDown();
+      }
+
+      // Wait for thread to finish
+      thread.join();
+
     }
 
+    @DisplayName("Attempt to perform doTryLock(Duration) method and force it to time out")
     @Test
-    void testAutoLockDoTryLockTimeout() throws Exception{
+    void testAutoLockDoTryLockDurationTimeout() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Create AutoLock
+      AutoLock al = AutoLock.create(rl);
 
-        // Lock it
-        try(LockedAutoLock ignored = al.doLock()){
+      // Go-ahead CDL
+      CountDownLatch goAhead = new CountDownLatch(1);
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Unlock CDL
+      CountDownLatch cdl = new CountDownLatch(1);
 
-            // CDL
-            CountDownLatch cdl = new CountDownLatch(1);
-
-            // AtomicBoolean
-            AtomicReference<TimeoutException> result = new AtomicReference<>();
-
-            // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
-            new Thread(() -> {
-                try{
-                    al.doTryLock();
-                }catch(TimeoutException e){
-                    result.set(e);
-                }
-                cdl.countDown();
-            }).start();
-
-            // Wait
-            cdl.await();
-
-            // Assert
-            assertThrows(TimeoutException.class, () -> {
-                TimeoutException te = result.get();
-                if(te == null) return;
-                throw te;
-            });
+      // Create thread
+      Thread thread = new Thread(() -> {
+        try{
+          rl.lock();
+          goAhead.countDown();
+          cdl.await();
+        }catch(InterruptedException e){
+          e.printStackTrace();
+          fail();
+        }finally{
+          rl.unlock();
         }
+      });
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+      try{
+
+        // Start thread to lock
+        thread.start();
+
+        // Wait for thread to lock
+        goAhead.await();
+
+        // Attempt to tryLock
+        assertThrows(TimeoutException.class, () -> al.doTryLock(EXECUTION_TIME));
+
+      }finally{
+        cdl.countDown();
+      }
+
+      // Wait for thread to finish
+      thread.join();
+
     }
+  }
 
+  @DisplayName("Static Methods")
+  static class StaticMethods{
+
+    @DisplayName("Attempt to successfully perform doLock(Lock) method")
     @Test
-    void testAutoLockDoTryLockDurationTimeout() throws Exception{
+    void testAutoLockDoLock(){
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
 
-        // Lock it
-        try(LockedAutoLock ignored = al.doLock()){
+      // Set up after-lock runnable reference
+      Runnable afterLock;
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Lock it
+      try(LockedAutoLock ignored = AutoLock.doLock(rl)){
 
-            // CDL
-            CountDownLatch cdl = new CountDownLatch(1);
+        // Do during-thread test and get post lock runnable
+        afterLock = duringThread.get();
+      }
 
-            // AtomicBoolean
-            AtomicReference<TimeoutException> result = new AtomicReference<>();
-
-            // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
-            new Thread(() -> {
-                try{
-                    al.doTryLock(1, TimeUnit.MILLISECONDS);
-                }catch(TimeoutException e){
-                    result.set(e);
-                }catch(InterruptedException e){
-                    e.printStackTrace();
-                }
-                cdl.countDown();
-            }).start();
-
-            // Wait
-            cdl.await();
-
-            // Assert
-            assertThrows(TimeoutException.class, () -> {
-                TimeoutException te = result.get();
-                if(te == null) return;
-                throw te;
-            });
-        }
-
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+      // Do after-lock test
+      afterLock.run();
     }
 
-
+    @DisplayName("Attempt to successfully perform doLockInterruptibly(Lock) method")
     @Test
-    void testStaticAutoLockDoLock(){
+    void testAutoLockDoLockInterruptibly() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Lock it
-        try(LockedAutoLock ignored = ALock.doLock(rl)){
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Set up after-lock runnable reference
+      Runnable afterLock;
 
-        }
+      // Lock it
+      try(LockedAutoLock ignored = AutoLock.doLockInterruptibly(rl)){
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+        // Do during-thread test and get post lock runnable
+        afterLock = duringThread.get();
+      }
+
+      // Do after-lock test
+      afterLock.run();
     }
 
+    @DisplayName("Attempt to successfully perform doTryLock(Lock) method")
     @Test
-    void testStaticAutoLockDoLockInterruptibly() throws Exception{
+    void testAutoLockDoTryLock() throws TimeoutException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Lock it
-        try(LockedAutoLock ignored = ALock.doLockInterruptibly(rl)){
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Set up after-lock runnable reference
+      Runnable afterLock;
 
-        }
+      // Lock it
+      try(LockedAutoLock ignored = AutoLock.doTryLock(rl)){
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+        // Do during-thread test and get post lock runnable
+        afterLock = duringThread.get();
+      }
+
+      // Do after-lock test
+      afterLock.run();
     }
 
+
+    @DisplayName("Attempt to perform doLockInterruptibly(Lock) method and call interrupt")
     @Test
-    void testStaticAutoLockDoTryLock() throws Exception{
+    void testAutoLockDoLockInterruptiblyInterrupt() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Lock it
-        try(LockedAutoLock ignored = ALock.doTryLock(rl)){
+      // Lock it
+      rl.lock();
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Flag for successful interrupt
+      AtomicBoolean success = new AtomicBoolean(false);
 
+      // Create thread
+      Thread thread = new Thread(() -> {
+
+        try(LockedAutoLock ignored = AutoLock.doLockInterruptibly(rl)){
+          fail("Lock obtained");
+        }catch(InterruptedException e){
+          success.set(true);
         }
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+      });
+
+      // Start thread
+      thread.start();
+
+      // Wait a tiny bit
+      Thread.sleep(EXECUTION_TIME.toMillis());
+
+      // Interrupt
+      thread.interrupt();
+
+      // Wait for thread to join
+      thread.join();
+
+      // Ensure that lock has been interrupted
+      assertTrue(success.get());
+
     }
 
+    @DisplayName("Attempt to perform doTryLock(Lock,long,TimeUnit) method and call interrupt")
     @Test
-    void testStaticAutoLockDoTryLockDuration() throws Exception{
+    void testAutoLockDoTryLockTimeUnitInterrupt() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Lock it
-        try(LockedAutoLock ignored = ALock.doTryLock(rl, 1, TimeUnit.MILLISECONDS)){
+      // Lock it
+      rl.lock();
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Flag for successful interrupt
+      AtomicBoolean success = new AtomicBoolean(false);
 
-        }
+      // Create thread
+      Thread thread = new Thread(() -> {
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+        // Ensure doTryLock doesn't take too long
+        assertTimeout(Duration.ofSeconds(1), () -> {
+
+          // Do it
+          try(LockedAutoLock ignored = AutoLock.doTryLock(rl, 1, TimeUnit.MINUTES)){
+            fail("Lock obtained");
+          }catch(InterruptedException e){
+            success.set(true);
+          }catch(TimeoutException e){
+            fail("Timed out");
+          }
+        });
+      });
+
+      // Start thread
+      thread.start();
+
+      // Wait a tiny bit
+      Thread.sleep(EXECUTION_TIME.toMillis());
+
+      // Interrupt
+      thread.interrupt();
+
+      // Wait for thread to join
+      thread.join();
+
+      // Ensure that lock has been interrupted
+      assertTrue(success.get());
+
     }
 
+    @DisplayName("Attempt to perform doTryLock(Lock,Duration) method and call interrupt")
     @Test
-    void testStaticAutoLockTryLockTimeout() throws Exception{
+    void testAutoLockDoTryLockDurationInterrupt() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Lock it
+      rl.lock();
 
-        // Lock it
-        try(LockedAutoLock ignored = ALock.doLock(rl)){
+      // Flag for successful interrupt
+      AtomicBoolean success = new AtomicBoolean(false);
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Create thread
+      Thread thread = new Thread(() -> {
 
-            // CDL
-            CountDownLatch cdl = new CountDownLatch(1);
+        // Ensure doTryLock doesn't take too long
+        assertTimeout(Duration.ofSeconds(1), () -> {
 
-            // AtomicBoolean
-            AtomicBoolean result = new AtomicBoolean();
+          // Do it
+          try(LockedAutoLock ignored = AutoLock.doTryLock(rl, Duration.ofMinutes(1))){
+            fail("Lock obtained");
+          }catch(InterruptedException e){
+            success.set(true);
+          }catch(TimeoutException e){
+            fail("Timed out");
+          }
+        });
+      });
 
-            // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
-            new Thread(() -> {
-                result.set(rl.tryLock());
-                cdl.countDown();
-            }).start();
+      // Start thread
+      thread.start();
 
-            // Wait
-            cdl.await();
+      // Wait a tiny bit
+      Thread.sleep(EXECUTION_TIME.toMillis());
 
-            // Assert
-            assertFalse(result.get());
-        }
+      // Interrupt
+      thread.interrupt();
 
-        // Assert that lock is unlocked
-        assertFalse(al.isLocked());
+      // Wait for thread to join
+      thread.join();
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+      // Ensure that lock has been interrupted
+      assertTrue(success.get());
+
     }
 
+    @DisplayName("Attempt to successfully perform doTryLock(Lock,long,TimeUnit) method")
     @Test
-    void testStaticAutoLockTryLockDurationTimeout() throws Exception{
+    void testAutoLockDoTryLockWithLongTimeUnitTimeout(){
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
 
-        // Lock it
-        try(LockedAutoLock ignored = ALock.doLock(rl)){
+      // Set up after-lock runnable reference
+      AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Lock it and ensure that tryLock is instantaneous
+      assertTimeout(Duration.ofSeconds(1), () -> {
+        try(LockedAutoLock ignored = AutoLock.doTryLock(rl, 1, TimeUnit.MINUTES)){
 
-            // CDL
-            CountDownLatch cdl = new CountDownLatch(1);
-
-            // AtomicBoolean
-            AtomicBoolean result = new AtomicBoolean();
-
-            // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
-            new Thread(() -> {
-                try{
-                    result.set(rl.tryLock(1, TimeUnit.MILLISECONDS));
-                }catch(InterruptedException e){
-                    e.printStackTrace();
-                }
-                cdl.countDown();
-            }).start();
-
-            // Wait
-            cdl.await();
-
-            // Assert
-            assertFalse(result.get());
+          // Do during-thread test and get post lock runnable
+          afterLock.set(duringThread.get());
         }
+      });
 
-        // Assert that lock is unlocked
-        assertFalse(al.isLocked());
-
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+      // Do after-lock test
+      afterLock.get().run();
     }
 
+    @DisplayName("Attempt to successfully perform doTryLock(Lock,Duration) method")
     @Test
-    void testStaticAutoLockDoTryLockTimeout() throws Exception{
+    void testAutoLockDoTryLockWithDurationTimeout(){
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Do before
+      Supplier<Runnable> duringThread = beforeLock(rl);
 
-        // Lock it
-        try(LockedAutoLock ignored = ALock.doLock(rl)){
+      // Set up after-lock runnable reference
+      AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
+      // Lock it and ensure that tryLock is instantaneous
+      assertTimeout(Duration.ofSeconds(1), () -> {
+        try(LockedAutoLock ignored = AutoLock.doTryLock(rl, Duration.ofMinutes(1))){
 
-            // CDL
-            CountDownLatch cdl = new CountDownLatch(1);
-
-            // AtomicBoolean
-            AtomicReference<TimeoutException> result = new AtomicReference<>();
-
-            // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
-            new Thread(() -> {
-                try{
-                    al.doTryLock();
-                }catch(TimeoutException e){
-                    result.set(e);
-                }
-                cdl.countDown();
-            }).start();
-
-            // Wait
-            cdl.await();
-
-            // Assert
-            assertThrows(TimeoutException.class, () -> {
-                TimeoutException te = result.get();
-                if(te == null) return;
-                throw te;
-            });
+          // Do during-thread test and get post lock runnable
+          afterLock.set(duringThread.get());
         }
+      });
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+      // Do after-lock test
+      afterLock.get().run();
     }
 
+    @DisplayName("Attempt to perform doTryLock(Lock) method and force it to time out")
     @Test
-    void testStaticAutoLockDoTryLockDurationTimeout() throws Exception{
+    void testAutoLockDoTryLockTimeout() throws InterruptedException{
 
-        // Create lock
-        ReentrantLock rl = new ReentrantLock();
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
 
-        // Create AutoLock
-        AutoLock al = new ALock(rl);
+      // Go-ahead CDL
+      CountDownLatch goAhead = new CountDownLatch(1);
 
-        // Lock it
-        try(LockedAutoLock ignored = ALock.doLock(rl)){
+      // Unlock CDL
+      CountDownLatch cdl = new CountDownLatch(1);
 
-            // Assert that lock is locked
-            assertTrue(rl.isLocked());
-
-            // CDL
-            CountDownLatch cdl = new CountDownLatch(1);
-
-            // AtomicBoolean
-            AtomicReference<TimeoutException> result = new AtomicReference<>();
-
-            // Fire new thread (tryLock will accept currentThread as 'true', meaning new Thread is needed to get this condition to fail)
-            new Thread(() -> {
-                try{
-                    al.doTryLock(1, TimeUnit.MILLISECONDS);
-                }catch(TimeoutException e){
-                    result.set(e);
-                }catch(InterruptedException e){
-                    e.printStackTrace();
-                }
-                cdl.countDown();
-            }).start();
-
-            // Wait
-            cdl.await();
-
-            // Assert
-            assertThrows(TimeoutException.class, () -> {
-                TimeoutException te = result.get();
-                if(te == null) return;
-                throw te;
-            });
+      // Create thread
+      Thread thread = new Thread(() -> {
+        try{
+          rl.lock();
+          goAhead.countDown();
+          cdl.await();
+        }catch(InterruptedException e){
+          fail();
+        }finally{
+          rl.unlock();
         }
+      });
 
-        // Assert that lock is unlocked
-        assertFalse(rl.isLocked());
+      try{
+
+        // Start thread to lock
+        thread.start();
+
+        // Wait for thread to lock
+        goAhead.await();
+
+        // Attempt to tryLock
+        assertThrows(TimeoutException.class, () -> AutoLock.doTryLock(rl));
+
+      }finally{
+        cdl.countDown();
+      }
+
+      // Wait for thread to finish
+      thread.join();
+
     }
+
+    @DisplayName("Attempt to perform doTryLock(Lock,long,TimeUnit) method and force it to time out")
+    @Test
+    void testAutoLockDoTryLockTimeUnitTimeout() throws InterruptedException{
+
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
+
+      // Go-ahead CDL
+      CountDownLatch goAhead = new CountDownLatch(1);
+
+      // Unlock CDL
+      CountDownLatch cdl = new CountDownLatch(1);
+
+      // Create thread
+      Thread thread = new Thread(() -> {
+        try{
+          rl.lock();
+          goAhead.countDown();
+          cdl.await();
+        }catch(InterruptedException e){
+          e.printStackTrace();
+          fail();
+        }finally{
+          rl.unlock();
+        }
+      });
+
+      try{
+
+        // Start thread to lock
+        thread.start();
+
+        // Wait for thread to lock
+        goAhead.await();
+
+        // Attempt to tryLock
+        assertThrows(
+          TimeoutException.class,
+          () -> AutoLock.doTryLock(rl, EXECUTION_TIME.toMillis(), TimeUnit.MILLISECONDS)
+        );
+
+      }finally{
+        cdl.countDown();
+      }
+
+      // Wait for thread to finish
+      thread.join();
+
+    }
+
+    @DisplayName("Attempt to perform doTryLock(Lock,Duration) method and force it to time out")
+    @Test
+    void testAutoLockDoTryLockDurationTimeout() throws InterruptedException{
+
+      // Create lock
+      ReentrantLock rl = new ReentrantLock();
+
+      // Go-ahead CDL
+      CountDownLatch goAhead = new CountDownLatch(1);
+
+      // Unlock CDL
+      CountDownLatch cdl = new CountDownLatch(1);
+
+      // Create thread
+      Thread thread = new Thread(() -> {
+        try{
+          rl.lock();
+          goAhead.countDown();
+          cdl.await();
+        }catch(InterruptedException e){
+          e.printStackTrace();
+          fail();
+        }finally{
+          rl.unlock();
+        }
+      });
+
+      try{
+
+        // Start thread to lock
+        thread.start();
+
+        // Wait for thread to lock
+        goAhead.await();
+
+        // Attempt to tryLock
+        assertThrows(TimeoutException.class, () -> AutoLock.doTryLock(rl, EXECUTION_TIME));
+
+      }finally{
+        cdl.countDown();
+      }
+
+      // Wait for thread to finish
+      thread.join();
+
+    }
+  }
+
 }
