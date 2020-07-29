@@ -409,7 +409,8 @@ public interface AutoLock{
      * @param runnable runnable to run while locked
      * @throws ExecutionException thrown if invocation of runnable function has thrown an exception
      */
-    static void lockAndPerform(@Nonnull Lock lock, @Nonnull RunnableWithException runnable) throws ExecutionException{
+    public static void lockAndPerform(@Nonnull Lock lock, @Nonnull RunnableWithException runnable)
+    throws ExecutionException{
 
       // Ensure runnable is not null
       Validation.assertNonnull(runnable, "runnable");
@@ -436,7 +437,7 @@ public interface AutoLock{
      * @return result of supplier
      * @throws ExecutionException thrown if invocation of supplier function has thrown an exception
      */
-    static <T> T lockAndGet(@Nonnull Lock lock, @Nonnull SupplierWithException<T> supplier)
+    public static <T> T lockAndGet(@Nonnull Lock lock, @Nonnull SupplierWithException<T> supplier)
     throws ExecutionException{
 
       // Ensure runnable is not null
@@ -462,7 +463,7 @@ public interface AutoLock{
      * @throws InterruptedException thrown if the thread was interrupted
      * @throws ExecutionException   thrown if invocation of runnable function has thrown an exception
      */
-    static void lockInterruptiblyAndPerform(@Nonnull Lock lock, @Nonnull RunnableWithException runnable)
+    public static void lockInterruptiblyAndPerform(@Nonnull Lock lock, @Nonnull RunnableWithException runnable)
     throws InterruptedException, ExecutionException{
 
       // Ensure runnable is not null
@@ -491,7 +492,7 @@ public interface AutoLock{
      * @throws InterruptedException thrown if the thread was interrupted
      * @throws ExecutionException   thrown if invocation of supplier function has thrown an exception
      */
-    static <T> T lockInterruptiblyAndGet(@Nonnull Lock lock, @Nonnull SupplierWithException<T> supplier)
+    public static <T> T lockInterruptiblyAndGet(@Nonnull Lock lock, @Nonnull SupplierWithException<T> supplier)
     throws InterruptedException, ExecutionException{
 
       // Ensure runnable is not null
@@ -517,7 +518,7 @@ public interface AutoLock{
      * @throws TimeoutException   thrown if lock has failed to lock
      * @throws ExecutionException thrown if invocation of runnable function has thrown an exception
      */
-    static void tryLockAndPerform(@Nonnull Lock lock, @Nonnull RunnableWithException runnable)
+    public static void tryLockAndPerform(@Nonnull Lock lock, @Nonnull RunnableWithException runnable)
     throws TimeoutException, ExecutionException{
 
       // Ensure runnable is not null
@@ -546,7 +547,7 @@ public interface AutoLock{
      * @throws TimeoutException   thrown if lock has failed to lock
      * @throws ExecutionException thrown if invocation of supplier function has thrown an exception
      */
-    static <T> T tryLockAndGet(@Nonnull Lock lock, @Nonnull SupplierWithException<T> supplier)
+    public static <T> T tryLockAndGet(@Nonnull Lock lock, @Nonnull SupplierWithException<T> supplier)
     throws TimeoutException, ExecutionException{
 
       // Ensure runnable is not null
@@ -574,7 +575,7 @@ public interface AutoLock{
      * @throws InterruptedException thrown if the thread was interrupted
      * @throws ExecutionException   thrown if invocation of runnable function has thrown an exception
      */
-    static void tryLockAndPerform(
+    public static void tryLockAndPerform(
       @Nonnull Lock lock,
       @Nonnull Duration timeout,
       @Nonnull RunnableWithException runnable
@@ -608,7 +609,7 @@ public interface AutoLock{
      * @throws InterruptedException thrown if the thread was interrupted
      * @throws ExecutionException   thrown if invocation of supplier function has thrown an exception
      */
-    static <T> T tryLockAndGet(
+    public static <T> T tryLockAndGet(
       @Nonnull Lock lock,
       @Nonnull Duration timeout,
       @Nonnull SupplierWithException<T> supplier
@@ -640,7 +641,7 @@ public interface AutoLock{
      * @throws InterruptedException thrown when the locking process was interrupted
      * @throws ExecutionException   thrown if invocation of runnable function has thrown an exception
      */
-    static void tryLockAndPerform(
+    public static void tryLockAndPerform(
       @Nonnull Lock lock,
       @Nonnegative long time,
       @Nonnull TimeUnit unit,
@@ -676,7 +677,7 @@ public interface AutoLock{
      * @throws InterruptedException thrown if the thread was interrupted
      * @throws ExecutionException   thrown if invocation of supplier function has thrown an exception
      */
-    static <T> T tryLockAndGet(
+    public static <T> T tryLockAndGet(
       @Nonnull Lock lock,
       @Nonnegative long time,
       @Nonnull TimeUnit unit,
