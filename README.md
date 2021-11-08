@@ -132,11 +132,15 @@ continuing regardless of successful execution or failure due to exceptions being
 
 `AutoLock` has several locking methods:
 
-- `doLock()` - Acquires a lock. Same as `Lock::lock()`. Returns `LockedAutoLock`.
-- `doLockInterruptibly()` - Acquires a lock unless the current thread is interrupted. Same as `Lock::lockInterruptibly()`. Returns `LockedAutoLock`.
-- `doTryLock()` - Acquires the lock only if it is free at the time of invocation. Same as `Lock::tryLock()`. Returns `LockedAutoLock`.
-- `doTryLock(long,TimeUnit)` - Acquires the lock if it is free within the given waiting time and the current thread has not been interrupted. Same as `Lock::tryLock(long,TimeUnit)`. Returns `LockedAutoLock`.
-- `doTryLock(Duration)` - Same as `doTryLock(long,TimeUnit)` but `Duration` is used instead of `long` and `TimeUnit` combination. Returns `LockedAutoLock`.
+- `doLock()` - Acquires a lock. Same as `Lock.lock()`. Returns `LockedAutoLock`.
+- `doLockInterruptibly()` - Acquires a lock unless the current thread is interrupted. Same
+  as `Lock::lockInterruptibly()`. Returns `LockedAutoLock`.
+- `doTryLock()` - Acquires the lock only if it is free at the time of invocation. Same as `Lock.tryLock()`.
+  Returns `LockedAutoLock`.
+- `doTryLock(long,TimeUnit)` - Acquires the lock if it is free within the given waiting time and the current thread has
+  not been interrupted. Same as `Lock.tryLock(long,TimeUnit)`. Returns `LockedAutoLock`.
+- `doTryLock(Duration)` - Same as `doTryLock(long,TimeUnit)` but `Duration` is used instead of `long` and `TimeUnit`
+  combination. Returns `LockedAutoLock`.
 
 ### Static Methods
 
@@ -202,7 +206,7 @@ Use `AutoLock.lockAndGet(Lock,ThrowableSupplier<R,T>)` instead like this.
 ```java
 Lock lock = new ReentrantLock();
 
-// Will unlock automatically when this method exits
+// Will lock, retrieve, unlock, then return (if no exception) when this method exits
 int value = AutoLock.lockAndGet(lock, () -> {
 
   // Do stuff here

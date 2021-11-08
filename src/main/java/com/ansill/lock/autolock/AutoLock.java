@@ -20,7 +20,7 @@ public interface AutoLock{
    */
   @Nonnull
   static AutoLock create(@Nonnull Lock lock){
-    return new ALock(Validation.assertNonnull(lock, "lock"));
+    return new AutoLockImplementation(Validation.assertNonnull(lock, "lock"));
   }
 
   /**
