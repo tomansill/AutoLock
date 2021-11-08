@@ -100,7 +100,9 @@ final class ALock implements AutoLock{
   @Override
   @Nonnull
   public LockedAutoLock doTryLock(@Nonnull Duration timeout) throws TimeoutException, InterruptedException{
-    if(!this.lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) throw new TimeoutException("Timed out");
+    Validation.assertNonnull(timeout, "timeout");
+    boolean something = this.lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS);
+    if(!something) throw new TimeoutException("Timed out");
     this.lockState.set(true);
     return new Locked(this.lock, this.lockState);
   }

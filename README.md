@@ -1,6 +1,10 @@
 # AutoLock
 
-A wrapper library that wraps `Lock` and allows you to use locks inside Try-with-resources scopes to automatically unlock locks when it exits the try scope.
+A wrapper library that wraps `Lock` and allows you to use locks inside Try-with-resources scopes to automatically unlock
+locks when it exits the try scope.
+
+The wrapper library also have methods that allows you to use lambda functions with locks instead of using
+Try-with-resources.
 
 By Tom Ansill
 
@@ -8,26 +12,62 @@ By Tom Ansill
 
 I have been using `Lock` a lot for a while now, and I'm getting tired of writing like this:
 
-```
+```java
 
 Lock lock = new ReentrantLock();
 
-try{
-    lock.lock();
+try{  
+  lock.lock();
     
-    // Do stuff
+  // Do stuff
+  
 }finally{
-    lock.unlock();
+  lock.unlock();
 }
 
 ```
 
-Where I will need to remember to write `finally` block. 
-If I forget, then my locks won't work properly. 
-Also, coding with `try` with `finally` is pretty ugly.
+Where I will need to remember to write `finally` block. If I forget, then my locks won't work properly. Also, coding
+with `try` with `finally` is pretty ugly and takes a lot of lines.
 
-I liked how Java 8's Try-with-resources works and I thought that it could be applied to `Lock`s too.
-So I created this library.
+I liked how Java 8's Try-with-resources works, and I thought that it could be applied to `Lock`s too. So I created this
+library and made the locking process much easier like this:
+
+```java
+Lock lock = new ReentrantLock();
+
+try(LockedAutoLock ignored = AutoLock.doLock(lock)){
+  
+  // Do stuff
+  
+}
+```
+
+Then I added methods that allows us to use locks with Java 8 lambda functions to make it even easier to use.
+
+```java
+Lock lock = new ReentrantLock();
+
+AutoLock.lockAndRun(lock, () -> {
+  
+  // Do stuff
+  
+});
+```
+
+Also, supplier functions are available to use to simplify variable initialization while using locks like this:
+
+```java
+Lock lock = new ReentrantLock();
+
+int value = AutoLock.lockAndGet(lock, () -> {
+  
+  // Do stuff
+  
+  // Return value
+  return 100;
+});
+```
 
 ## Prerequisites
 
@@ -38,12 +78,13 @@ So I created this library.
 
 ### Package Repository
 
-The library is availble for download on Sonatype public Maven repository (https://oss.sonatype.org/#nexus-search;quick~com.ansill.lock).
+The library is available for download on Sonatype public Maven
+repository (https://oss.sonatype.org/#nexus-search;quick~com.ansill.lock).
 ```xml
 <dependency>
   <groupId>com.ansill.lock</groupId>
   <artifactId>AutoLock</artifactId>
-  <version>0.3.1</version>
+  <version>0.4.0</version>
 </dependency>
 ```
 
@@ -69,7 +110,7 @@ Lock lock = new ReentrantLock();
 AutoLock autoLock = AutoLock.create(lock);
 ```
 
-Then you can perform locks in Try-with-resources block with `AutoLock` like this:
+Then you can run locks in Try-with-resources block with `AutoLock` like this:
 
 ```java
 try(LockedAutoLock lockedAutoLock = autoLock.doLock()){
@@ -79,7 +120,9 @@ try(LockedAutoLock lockedAutoLock = autoLock.doLock()){
 } // Lock will be automatically be unlocked at this line
 ```
 
-`LockedAutoLock` is an `AutoCloseable` reference to `AutoLock`'s lock operation. Its `close()` operation will call `Lock::unlock` method. So, when try-with-resources exits, it will guarantee an unlock before continuing despite successful execution or with exceptions.
+`LockedAutoLock` is an `AutoCloseable` reference to `AutoLock`'s lock operation. Its `close()` operation will
+call `Lock::unlock` method. So, when try-with-resources exits, it will guarantee that the lock will unlock before
+continuing regardless of successful execution or failure due to exceptions being thrown.
 
 ### Class Methods
 
@@ -119,20 +162,22 @@ try(LockedAutoLock lockedAutoLock = AutoLock.doLock(lock)){
 
 #### Lambda methods
 
-You can avoid using Try-with-resources and `LockedAutoLock` with `AutoLock.lockAndPerform(Lock,Runnable)` with lambdas like this:
+You can avoid using Try-with-resources and `LockedAutoLock` with `AutoLock.lockAndRun(Lock,ThrowableRunnable<T>)` with
+lambdas like this:
 
 ```java
 Lock lock = new ReentrantLock();
 
 // Will unlock automatically when this method exits
-AutoLock.lockAndPerform(lock, () -> {
+AutoLock.lockAndRun(lock, () -> {
 
   // Do stuff here
 
 });
 ```
 
-If you have something you want to return after the lock completes, Use `AutoLock.lockAndGet(Lock,Supplier<T>)` instead like this.
+If you have something you want to return after the lock completes,
+Use `AutoLock.lockAndGet(Lock,ThrowableSupplier<R,T>)` instead like this.
 
 ```java
 Lock lock = new ReentrantLock();
@@ -148,51 +193,18 @@ int value = AutoLock.lockAndGet(lock, () -> {
 });
 ```
 
+Note: `ThrowableRunner<T>` and `ThrowableSupplier<R,T>` throws `<T>` generic that extends `Throwable` so you can use
+checked exceptions inside of lambdas.
+
 `AutoLock` has several static lambda locking methods:
 
-- `lockAndPerform(Lock,Runnable)`
+- `lockAndRun(Lock,Runnable)`
 - `lockAndGet(Lock,Supplier<T>)`
-- `lockInterruptiblyAndPerform(Lock,Runnable)`
+- `lockInterruptiblyAndRun(Lock,Runnable)`
 - `lockInterruptiblyAndGet(Lock,Supplier<T>)`
-- `tryLockAndPerform(Lock,Runnable)`
+- `tryLockAndRun(Lock,Runnable)`
 - `tryLockAndGet(Lock,Supplier<T>)`
-- `tryLockAndPerform(Lock,long,TimeUnit,Runnable)`
+- `tryLockAndRun(Lock,long,TimeUnit,Runnable)`
 - `tryLockAndGet(Lock,long,TimeUnit,Supplier<T>)`
-- `tryLockAndPerform(Lock,Duration,Runnable)`
+- `tryLockAndRun(Lock,Duration,Runnable)`
 - `tryLockAndGet(Lock,Duration,Supplier<T>)`
-
-#### Lambda with `Exception`
-
-Suppose you have some checked exceptions thrown inside of your `Runnable` and `Supplier` which can be painful to deal with; `AutoLock.Ex` has methods that are exactly same as the regular lambda locking methods but with `Exception` handling. All `Runnable` are replaced with `RunnableWithException` and `Supplier` to `SupplierWithException`. Those methods will wrap any `Exception` into `ExecutionException`
-
-Example:
-
-```java
-Lock lock = new ReentrantLock();
-
-try{
-    AutoLock.Ex.lockAndPerform(lock, () -> {
-    
-      if(Math.random() < 0.5) throw new Exception("Error!");
-    
-    });
-}catch(ExecutionException exException){
-  Exception exception = (Exception) exException.getCause();
-  throw exception;
-}
-```
-
-**NOTE:** This exists as an option for users to use, but you probably should use Try-with-resources if you're dealing with a lot of checked exceptions that may be thrown during the lock.
-
-`AutoLock.Ex` has several static lambda locking methods:
-
-- `lockAndPerform(Lock,RunnableWIthException)`
-- `lockAndGet(Lock,SupplierWithException<T>)`
-- `lockInterruptiblyAndPerform(Lock,RunnableWIthException)`
-- `lockInterruptiblyAndGet(Lock,SupplierWithException<T>)`
-- `tryLockAndPerform(Lock,RunnableWIthException)`
-- `tryLockAndGet(Lock,SupplierWithException<T>)`
-- `tryLockAndPerform(Lock,long,TimeUnit,RunnableWIthException)`
-- `tryLockAndGet(Lock,long,TimeUnit,SupplierWithException<T>)`
-- `tryLockAndPerform(Lock,Duration,RunnableWIthException)`
-- `tryLockAndGet(Lock,Duration,SupplierWithException<T>)`
