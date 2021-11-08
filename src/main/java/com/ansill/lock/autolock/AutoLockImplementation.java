@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /** AutoLock Implementation */
-final class ALock implements AutoLock{
+final class AutoLockImplementation implements AutoLock{
 
   /** Lock */
   @Nonnull
@@ -26,7 +26,7 @@ final class ALock implements AutoLock{
    *
    * @param lock lock
    */
-  ALock(@Nonnull Lock lock){
+  AutoLockImplementation(@Nonnull Lock lock){
     this.lock = Validation.assertNonnull(lock, "lock");
   }
 
@@ -40,7 +40,7 @@ final class ALock implements AutoLock{
   public LockedAutoLock doLock(){
     this.lock.lock();
     this.lockState.set(true);
-    return new Locked(this.lock, this.lockState);
+    return new LockedAutoLockImplementation(this.lock, this.lockState);
   }
 
   /**
@@ -54,7 +54,7 @@ final class ALock implements AutoLock{
   public LockedAutoLock doLockInterruptibly() throws InterruptedException{
     this.lock.lockInterruptibly();
     this.lockState.set(true);
-    return new Locked(this.lock, this.lockState);
+    return new LockedAutoLockImplementation(this.lock, this.lockState);
   }
 
   /**
@@ -68,7 +68,7 @@ final class ALock implements AutoLock{
   public LockedAutoLock doTryLock() throws TimeoutException{
     if(!this.lock.tryLock()) throw new TimeoutException("Timed out");
     this.lockState.set(true);
-    return new Locked(this.lock, this.lockState);
+    return new LockedAutoLockImplementation(this.lock, this.lockState);
   }
 
   /**
@@ -86,7 +86,7 @@ final class ALock implements AutoLock{
   throws TimeoutException, InterruptedException{
     if(!this.lock.tryLock(time, unit)) throw new TimeoutException("Timed out");
     this.lockState.set(true);
-    return new Locked(this.lock, this.lockState);
+    return new LockedAutoLockImplementation(this.lock, this.lockState);
   }
 
   /**
@@ -100,9 +100,11 @@ final class ALock implements AutoLock{
   @Override
   @Nonnull
   public LockedAutoLock doTryLock(@Nonnull Duration timeout) throws TimeoutException, InterruptedException{
-    if(!this.lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) throw new TimeoutException("Timed out");
+    Validation.assertNonnull(timeout, "timeout");
+    boolean something = this.lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS);
+    if(!something) throw new TimeoutException("Timed out");
     this.lockState.set(true);
-    return new Locked(this.lock, this.lockState);
+    return new LockedAutoLockImplementation(this.lock, this.lockState);
   }
 
   /**
