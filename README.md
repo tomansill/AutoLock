@@ -72,7 +72,6 @@ int value = AutoLock.lockAndGet(lock, () -> {
 ## Prerequisites
 
 * Java 8 or better
-* [My Java Validation library](https://github.com/tomansill/JavaValidation)
 
 ## Download and Install
 
@@ -84,7 +83,7 @@ repository (https://oss.sonatype.org/#nexus-search;quick~com.ansill.lock).
 <dependency>
   <groupId>com.ansill.lock</groupId>
   <artifactId>AutoLock</artifactId>
-  <version>0.4.0</version>
+  <version>0.5.0</version>
 </dependency>
 ```
 

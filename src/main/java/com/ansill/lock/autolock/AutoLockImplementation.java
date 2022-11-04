@@ -1,7 +1,5 @@
 package com.ansill.lock.autolock;
 
-import com.ansill.validation.Validation;
-
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import java.time.Duration;
@@ -27,7 +25,7 @@ final class AutoLockImplementation implements AutoLock{
    * @param lock lock
    */
   AutoLockImplementation(@Nonnull Lock lock){
-    this.lock = Validation.assertNonnull(lock, "lock");
+    this.lock = lock;
   }
 
   /**
@@ -100,7 +98,8 @@ final class AutoLockImplementation implements AutoLock{
   @Override
   @Nonnull
   public LockedAutoLock doTryLock(@Nonnull Duration timeout) throws TimeoutException, InterruptedException{
-    Validation.assertNonnull(timeout, "timeout");
+    //noinspection ConstantConditions
+    if(timeout == null) throw new IllegalArgumentException("'timeout' is null");
     boolean something = this.lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS);
     if(!something) throw new TimeoutException("Timed out");
     this.lockState.set(true);

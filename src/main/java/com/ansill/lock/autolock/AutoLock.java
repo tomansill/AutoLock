@@ -1,7 +1,5 @@
 package com.ansill.lock.autolock;
 
-import com.ansill.validation.Validation;
-
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import java.time.Duration;
@@ -20,7 +18,9 @@ public interface AutoLock{
    */
   @Nonnull
   static AutoLock create(@Nonnull Lock lock){
-    return new AutoLockImplementation(Validation.assertNonnull(lock, "lock"));
+    //noinspection ConstantConditions
+    if(lock == null) throw new IllegalArgumentException("'lock' is null");
+    return new AutoLockImplementation(lock);
   }
 
   /**
@@ -100,7 +100,8 @@ public interface AutoLock{
   static <T extends Throwable> void lockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable) throws T{
 
     // Ensure runnable is not null
-    Validation.assertNonnull(runnable, "runnable");
+    //noinspection ConstantConditions
+    if(runnable == null) throw new IllegalArgumentException("'runnable' is null");
 
     // Lock it
     try(LockedAutoLock ignored = doLock(lock)){
@@ -123,8 +124,9 @@ public interface AutoLock{
    */
   static <R, T extends Throwable> R lockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R,T> supplier) throws T{
 
-    // Ensure runnable is not null
-    Validation.assertNonnull(supplier, "supplier");
+    // Ensure supplier is not null
+    //noinspection ConstantConditions
+    if(supplier == null) throw new IllegalArgumentException("'supplier' is null");
 
     // Lock it
     try(LockedAutoLock ignored = doLock(lock)){
@@ -149,7 +151,8 @@ public interface AutoLock{
   ) throws T, InterruptedException{
 
     // Ensure runnable is not null
-    Validation.assertNonnull(runnable, "runnable");
+    //noinspection ConstantConditions
+    if(runnable == null) throw new IllegalArgumentException("'runnable' is null");
 
     // Lock it
     try(LockedAutoLock ignored = doLockInterruptibly(lock)){
@@ -177,8 +180,9 @@ public interface AutoLock{
   )
   throws T, InterruptedException{
 
-    // Ensure runnable is not null
-    Validation.assertNonnull(supplier, "supplier");
+    // Ensure supplier is not null
+    //noinspection ConstantConditions
+    if(supplier == null) throw new IllegalArgumentException("'supplier' is null");
 
     // Lock it
     try(LockedAutoLock ignored = doLockInterruptibly(lock)){
@@ -201,7 +205,8 @@ public interface AutoLock{
   throws T, TimeoutException{
 
     // Ensure runnable is not null
-    Validation.assertNonnull(runnable, "runnable");
+    //noinspection ConstantConditions
+    if(runnable == null) throw new IllegalArgumentException("'runnable' is null");
 
     // Lock it
     try(LockedAutoLock ignored = doTryLock(lock)){
@@ -226,8 +231,9 @@ public interface AutoLock{
   static <R, T extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R,T> supplier)
   throws T, TimeoutException{
 
-    // Ensure runnable is not null
-    Validation.assertNonnull(supplier, "supplier");
+    // Ensure supplier is not null
+    //noinspection ConstantConditions
+    if(supplier == null) throw new IllegalArgumentException("'supplier' is null");
 
     // Lock it
     try(LockedAutoLock ignored = doTryLock(lock)){
@@ -255,7 +261,8 @@ public interface AutoLock{
   ) throws T, TimeoutException, InterruptedException{
 
     // Ensure runnable is not null
-    Validation.assertNonnull(runnable, "runnable");
+    //noinspection ConstantConditions
+    if(runnable == null) throw new IllegalArgumentException("'runnable' is null");
 
     // Lock it
     try(LockedAutoLock ignored = doTryLock(lock, timeout)){
@@ -285,8 +292,9 @@ public interface AutoLock{
     @Nonnull ThrowableSupplier<R,T> supplier
   ) throws T, TimeoutException, InterruptedException{
 
-    // Ensure runnable is not null
-    Validation.assertNonnull(supplier, "supplier");
+    // Ensure supplier is not null
+    //noinspection ConstantConditions
+    if(supplier == null) throw new IllegalArgumentException("'supplier' is null");
 
     // Lock it
     try(LockedAutoLock ignored = doTryLock(lock, timeout)){
@@ -316,7 +324,8 @@ public interface AutoLock{
   ) throws T, TimeoutException, InterruptedException{
 
     // Ensure runnable is not null
-    Validation.assertNonnull(runnable, "runnable");
+    //noinspection ConstantConditions
+    if(runnable == null) throw new IllegalArgumentException("'runnable' is null");
 
     // Lock it
     try(LockedAutoLock ignored = doTryLock(lock, time, unit)){
@@ -348,8 +357,9 @@ public interface AutoLock{
     @Nonnull ThrowableSupplier<R,T> supplier
   ) throws T, TimeoutException, InterruptedException{
 
-    // Ensure runnable is not null
-    Validation.assertNonnull(supplier, "supplier");
+    // Ensure supplier is not null
+    //noinspection ConstantConditions
+    if(supplier == null) throw new IllegalArgumentException("'supplier' is null");
 
     // Lock it
     try(LockedAutoLock ignored = doTryLock(lock, time, unit)){
