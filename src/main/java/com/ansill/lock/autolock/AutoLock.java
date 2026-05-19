@@ -154,10 +154,13 @@ public interface AutoLock {
 	/**
 	 * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
 	 *
-	 * @param <T1>          type of exception
+	 * @param <T1>          type of exception to be thrown inside onLockSuccess runnable
+	 * @param <T2>          type of exception to be thrown inside onLockFail runnable
 	 * @param lock          lock to lock on
 	 * @param onLockSuccess runnable to run while locked
-	 * @throws T1 thrown if runnable has thrown an exception
+	 * @param onLockFail runnable to run when lock did not succeed
+	 * @throws T1 thrown if onLockSuccess runnable has thrown an exception
+	 * @throws T2 thrown if onLockFail runnable has thrown an exception
 	 */
 	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T1> onLockSuccess, @Nonnull ThrowableRunnable<T2> onLockFail) throws T1, T2 {
 
@@ -184,11 +187,14 @@ public interface AutoLock {
 	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
 	 *
 	 * @param <R>           desired type of the return value
-	 * @param <T1>          type of exception
+	 * @param <T1>          type of exception to be thrown inside onLockSuccess supplier
+	 * @param <T2>          type of exception to be thrown inside onLockFail supplier
 	 * @param lock          lock to lock on
 	 * @param onLockSuccess supplier to run while locked
+	 * @param onLockFail supplier to run when lock did not succeed
 	 * @return result of supplier
-	 * @throws T1 thrown if runnable has thrown an exception
+	 * @throws T1 thrown if onLockSuccess supplier has thrown an exception
+	 * @throws T2 thrown if onLockFail supplier has thrown an exception
 	 */
 	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T1> onLockSuccess, @Nonnull ThrowableSupplier<R, T2> onLockFail) throws T1, T2 {
 
@@ -211,40 +217,43 @@ public interface AutoLock {
 	}
 
 	/**
-	 * Attempts to lock. If lock is obtained, then the onSuccessfulLock will be run. After running the onSuccessfulLock, lock is unlocked.
+	 * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
 	 *
-	 * @param <T1>             type of exception
+	 * @param <T1>          type of exception to be thrown inside onLockSuccess runnable
+	 * @param <T2>          type of exception to be thrown inside onLockFail runnable
 	 * @param lock             lock to lock on
 	 * @param timeout          duration of the lock attempt
-	 * @param onSuccessfulLock onSuccessfulLock to run while locked
-	 * @throws T1                   thrown if onSuccessfulLock has thrown an exception
+	 * @param onLockSuccess runnable to run while locked
+	 * @param onLockFail runnable to run if lock was not acquired
+	 * @throws T1                   thrown if onLockSuccess runnable has thrown an exception
+	 * @throws T2                   thrown if onLockFail runnable has thrown an exception
 	 * @throws InterruptedException thrown if the thread was interrupted
 	 */
 	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(
 					@Nonnull Lock lock,
 					@Nonnull Duration timeout,
-					@Nonnull ThrowableRunnable<T1> onSuccessfulLock,
-					@Nonnull ThrowableRunnable<T2> onFailedLock
+					@Nonnull ThrowableRunnable<T1> onLockSuccess,
+					@Nonnull ThrowableRunnable<T2> onLockFail
 	) throws T1, T2, InterruptedException {
 
-		// Ensure onSuccessfulLock is not null
+		// Ensure onLockSuccess is not null
 		//noinspection ConstantConditions
 		if (lock == null) throw new IllegalArgumentException("'lock' is null");
 		//noinspection ConstantConditions
 		if (timeout == null) throw new IllegalArgumentException("'timeout' is null");
 		if (timeout.isNegative()) throw new IllegalArgumentException("'timeout' is negative");
 		//noinspection ConstantConditions
-		if (onSuccessfulLock == null) throw new IllegalArgumentException("'onLockSuccess' is null");
+		if (onLockSuccess == null) throw new IllegalArgumentException("'onLockSuccess' is null");
 		//noinspection ConstantConditions
-		if (onFailedLock == null) throw new IllegalArgumentException("'onLockFail' is null");
+		if (onLockFail == null) throw new IllegalArgumentException("'onLockFail' is null");
 
 		// Lock it
 		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
 			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
-				onSuccessfulLock.run();
+				onLockSuccess.run();
 			}
 		} else {
-			onFailedLock.run();
+			onLockFail.run();
 		}
 	}
 
@@ -254,12 +263,15 @@ public interface AutoLock {
 	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
 	 *
 	 * @param <R>           desired type of the return value
-	 * @param <T1>          type of exception
+	 * @param <T1>          type of exception to be thrown inside onLockSuccess supplier
+	 * @param <T2>          type of exception to be thrown inside onLockFail supplier
 	 * @param lock          lock to lock on
 	 * @param timeout       duration of the lock attempt
 	 * @param onLockSuccess supplier to run while locked
-	 * @return result of supplier
-	 * @throws T1                   thrown if runnable has thrown an exception
+	 * @param onLockFail supplier to run when lock fails to be acquired
+	 * @return result of either supplier
+	 * @throws T1                   thrown if onLockSuccess supplier has thrown an exception
+	 * @throws T2                   thrown if onLockFail supplier has thrown an exception
 	 * @throws InterruptedException thrown if the thread was interrupted
 	 */
 	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(
@@ -293,12 +305,15 @@ public interface AutoLock {
 	/**
 	 * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
 	 *
-	 * @param <T1>          type of exception
+	 * @param <T1>          type of exception to be thrown inside onLockSuccess runnable
+	 * @param <T2>          type of exception to be thrown inside onLockFail runnable
 	 * @param lock          lock to lock on
 	 * @param time          timeout duration
 	 * @param unit          timeout timeunit
 	 * @param onLockSuccess runnable to run while locked
-	 * @throws T1                   thrown if runnable has thrown an exception
+	 * @param onLockFail runnable to run if lock was not acquired
+	 * @throws T1                   thrown if onLockSuccess runnable has thrown an exception
+	 * @throws T2 thrown if onLockFail runnable has thrown an exception
 	 * @throws InterruptedException thrown when the locking process was interrupted
 	 */
 	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(
@@ -336,13 +351,16 @@ public interface AutoLock {
 	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
 	 *
 	 * @param <R>           desired type of the return value
-	 * @param <T1>          type of exception
+	 * @param <T1>          type of exception to be thrown inside onLockSuccess supplier
+	 * @param <T2>          type of exception to be thrown inside onLockFail supplier
 	 * @param lock          lock to lock on
 	 * @param time          timeout duration
 	 * @param unit          timeout timeunit
 	 * @param onLockSuccess supplier to run while locked
+	 * @param onLockFail supplier to run if lock was not acquired
 	 * @return result of supplier
-	 * @throws T1                   thrown if runnable has thrown an exception
+	 * @throws T1                   thrown if onLockSuccess supplier has thrown an exception
+	 * @throws T2 thrown if onLockFail supplier has thrown an exception
 	 * @throws InterruptedException thrown if the thread was interrupted
 	 */
 	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(
