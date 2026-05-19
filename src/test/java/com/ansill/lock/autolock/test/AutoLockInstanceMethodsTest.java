@@ -50,6 +50,14 @@ class AutoLockInstanceMethodsTest implements AutoLockTest {
 
 	}
 
+	@DisplayName("Attempt to create AutoLock with null Lock")
+	@Test
+	void testCreateWithNull() {
+		//noinspection DataFlowIssue
+		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> AutoLock.create(null));
+		assertEquals("'lock' is null", exception.getMessage());
+	}
+
 	@DisplayName("Attempt to successfully run doLock() method")
 	@Test
 	void testDoLock() {
