@@ -6,13 +6,13 @@ package com.ansill.lock.autolock;
  * @param <T> throwable
  */
 @FunctionalInterface
-public interface ThrowableRunnable<T extends Throwable>{
+public interface ThrowableRunnable<T extends Throwable> {
 
-  /**
-   * Runs the runnable
-   *
-   * @throws T throws exception
-   */
-  void run() throws T;
+	/**
+	 * Runs the runnable
+	 *
+	 * @throws T throws exception
+	 */
+	void run() throws T;
 
 }

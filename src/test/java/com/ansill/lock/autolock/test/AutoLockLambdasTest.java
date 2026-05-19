@@ -3,6 +3,7 @@ package com.ansill.lock.autolock.test;
 import com.ansill.lock.autolock.AutoLock;
 import com.ansill.lock.autolock.ThrowableRunnable;
 import com.ansill.lock.autolock.ThrowableSupplier;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +12,6 @@ import java.io.FileNotFoundException;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -21,1200 +21,1246 @@ import java.util.function.Supplier;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Lambda methods")
-abstract class AutoLockLambdasTest implements AutoLockTest{
+abstract class AutoLockLambdasTest implements AutoLockTest {
 
-  abstract <T extends Throwable> void lockAndRun(Lock lock, ThrowableRunnable<T> runnable) throws T;
+	abstract <T extends Throwable> void lockAndRun(Lock lock, ThrowableRunnable<T> runnable) throws T;
 
-  abstract <R, T extends Throwable> R lockAndGet(Lock lock, ThrowableSupplier<R,T> throwableSupplier) throws T;
+	abstract <R, T extends Throwable> R lockAndGet(Lock lock, ThrowableSupplier<R, T> throwableSupplier) throws T;
 
-  abstract <T extends Throwable> void lockInterruptiblyAndRun(Lock lock, ThrowableRunnable<T> runnable)
-  throws T, InterruptedException;
+	abstract <T extends Throwable> void lockInterruptiblyAndRun(Lock lock, ThrowableRunnable<T> runnable)
+					throws T, InterruptedException;
 
-  abstract <R, T extends Throwable> R lockInterruptiblyAndGet(Lock lock, ThrowableSupplier<R,T> throwableSupplier)
-  throws T, InterruptedException;
+	abstract <R, T extends Throwable> R lockInterruptiblyAndGet(Lock lock, ThrowableSupplier<R, T> throwableSupplier)
+					throws T, InterruptedException;
 
-  abstract <T extends Throwable> void tryLockAndRun(Lock lock, ThrowableRunnable<T> runnable) throws T,
-    TimeoutException;
+	abstract <T extends Throwable> void tryLockAndRun(Lock lock, ThrowableRunnable<T> onSuccess, ThrowableRunnable<T> onFail) throws T;
 
-  abstract <R, T extends Throwable> R tryLockAndGet(Lock lock, ThrowableSupplier<R,T> runnable)
-  throws T, TimeoutException;
+	abstract <R, T extends Throwable> R tryLockAndGet(Lock lock, ThrowableSupplier<R, T> onSuccess, ThrowableSupplier<R, T> onFail)
+					throws T;
 
-  abstract <T extends Throwable> void tryLockAndRun(Lock lock, long time, TimeUnit unit, ThrowableRunnable<T> runnable)
-  throws T, TimeoutException, InterruptedException;
+	abstract <T extends Throwable> void tryLockAndRun(Lock lock, long time, TimeUnit unit, ThrowableRunnable<T> onSuccess, ThrowableRunnable<T> onFail)
+					throws T, InterruptedException;
 
-  abstract <R, T extends Throwable> R tryLockAndGet(
-    Lock lock,
-    long time,
-    TimeUnit unit,
-    ThrowableSupplier<R,T> supplier
-  )
-  throws T, TimeoutException, InterruptedException;
+	abstract <R, T extends Throwable> R tryLockAndGet(
+					Lock lock,
+					long time,
+					TimeUnit unit,
+					ThrowableSupplier<R, T> onSuccess,
+					ThrowableSupplier<R, T> onFail)
+					throws T, InterruptedException;
 
-  abstract <T extends Throwable> void tryLockAndRun(Lock lock, Duration timeout, ThrowableRunnable<T> runnable)
-  throws T, TimeoutException, InterruptedException;
+	abstract <T extends Throwable> void tryLockAndRun(Lock lock, Duration timeout, ThrowableRunnable<T> onSuccess, ThrowableRunnable<T> onFail)
+					throws T, InterruptedException;
 
-  abstract <R, T extends Throwable> R tryLockAndGet(Lock lock, Duration timeout, ThrowableSupplier<R,T> supplier)
-  throws T, TimeoutException, InterruptedException;
+	abstract <R, T extends Throwable> R tryLockAndGet(Lock lock, Duration timeout, ThrowableSupplier<R, T> onSuccess, ThrowableSupplier<R, T> onFail)
+					throws T, InterruptedException;
 
-  @DisplayName("Attempt to successfully run lockAndRun(Lock,Runnable) method")
-  @Test
-  void testLockAndRun(){
+	@DisplayName("Attempt to successfully run lockAndRun(Lock,Runnable) method")
+	@Test
+	void testLockAndRun() {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Do before
-    Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
+		// Do before
+		Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
 
-    // Set up after-lock runnable reference
-    AtomicReference<Runnable> afterLock = new AtomicReference<>();
+		// Set up after-lock runnable reference
+		AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-    // Lock it
-    assertDoesNotThrow(() -> lockAndRun(rl, () -> afterLock.set(duringThread.get())));
+		// Lock it
+		assertDoesNotThrow(() -> lockAndRun(rl, () -> afterLock.set(duringThread.get())));
 
-    // Do after-lock test
-    afterLock.get().run();
-  }
+		// Do after-lock test
+		afterLock.get().run();
+	}
 
-  @DisplayName("Attempt to successfully run lockAndGet(Lock,Supplier) method")
-  @Test
-  void testLockAndGet(){
+	@DisplayName("Attempt to successfully run lockAndGet(Lock,Supplier) method")
+	@Test
+	void testLockAndGet() {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Do before
-    Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
+		// Do before
+		Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
 
-    // Set up after-lock runnable reference
-    AtomicReference<Runnable> afterLock = new AtomicReference<>();
+		// Set up after-lock runnable reference
+		AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-    // Desired item
-    int item = RNG.nextInt();
+		// Desired item
+		int item = RNG.nextInt();
 
-    // Lock it
-    int value = assertDoesNotThrow(() -> lockAndGet(rl, () -> {
-      afterLock.set(duringThread.get());
-      return item;
-    }));
+		// Lock it
+		int value = assertDoesNotThrow(() -> lockAndGet(rl, () -> {
+			afterLock.set(duringThread.get());
+			return item;
+		}));
 
-    // Do after-lock test
-    afterLock.get().run();
+		// Do after-lock test
+		afterLock.get().run();
 
-    // Check value
-    assertEquals(item, value);
-  }
+		// Check value
+		assertEquals(item, value);
+	}
 
-  @DisplayName("Attempt to successfully run lockInterruptiblyAndRun(Lock,Runnable) method")
-  @Test
-  void testLockInterruptiblyAndRun(){
+	@DisplayName("Attempt to successfully run lockInterruptiblyAndRun(Lock,Runnable) method")
+	@Test
+	void testLockInterruptiblyAndRun() {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Do before
-    Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
+		// Do before
+		Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
 
-    // Set up after-lock runnable reference
-    AtomicReference<Runnable> afterLock = new AtomicReference<>();
+		// Set up after-lock runnable reference
+		AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-    // Lock it
-    assertDoesNotThrow(() -> lockInterruptiblyAndRun(rl, () -> afterLock.set(duringThread.get())));
+		// Lock it
+		assertDoesNotThrow(() -> lockInterruptiblyAndRun(rl, () -> afterLock.set(duringThread.get())));
 
-    // Do after-lock test
-    afterLock.get().run();
-  }
+		// Do after-lock test
+		afterLock.get().run();
+	}
 
-  @DisplayName("Attempt to successfully run lockInterruptiblyAndGet(Lock,Supplier) method")
-  @Test
-  void testLockInterruptiblyAndGet(){
+	@DisplayName("Attempt to successfully run lockInterruptiblyAndGet(Lock,Supplier) method")
+	@Test
+	void testLockInterruptiblyAndGet() {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Do before
-    Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
+		// Do before
+		Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
 
-    // Set up after-lock runnable reference
-    AtomicReference<Runnable> afterLock = new AtomicReference<>();
+		// Set up after-lock runnable reference
+		AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-    // Desired item
-    int item = RNG.nextInt();
+		// Desired item
+		int item = RNG.nextInt();
 
-    // Lock it
-    int value = assertDoesNotThrow(() -> lockInterruptiblyAndGet(rl, () -> {
-      afterLock.set(duringThread.get());
-      return item;
-    }));
+		// Lock it
+		int value = assertDoesNotThrow(() -> lockInterruptiblyAndGet(rl, () -> {
+			afterLock.set(duringThread.get());
+			return item;
+		}));
 
-    // Do after-lock test
-    afterLock.get().run();
+		// Do after-lock test
+		afterLock.get().run();
 
-    // Check value
-    assertEquals(item, value);
-  }
+		// Check value
+		assertEquals(item, value);
+	}
 
-  @DisplayName("Attempt to run lockInterruptiblyAndRun(Lock,Runnable) method and call interrupt")
-  @Test
-  void testLockInterruptiblyAndRunInterrupt() throws InterruptedException{
+	@DisplayName("Attempt to run lockInterruptiblyAndRun(Lock,Runnable) method and call interrupt")
+	@Test
+	void testLockInterruptiblyAndRunInterrupt() throws InterruptedException {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Lock it
-    rl.lock();
+		// Lock it
+		rl.lock();
 
-    // Flag for successful interrupt
-    AtomicBoolean success = new AtomicBoolean(false);
+		// Flag for successful interrupt
+		AtomicBoolean success = new AtomicBoolean(false);
 
-    // Create thread
-    Thread thread = new Thread(() -> {
+		// Create thread
+		Thread thread = new Thread(() -> {
 
-      try{
-        lockInterruptiblyAndRun(rl, () -> fail("Lock obtained"));
-      }catch(InterruptedException e){
-        success.set(true);
-      }catch(Exception e){
-        fail(e);
-      }
+			try {
+				lockInterruptiblyAndRun(rl, () -> fail("Lock obtained"));
+			} catch (InterruptedException e) {
+				success.set(true);
+			} catch (Exception e) {
+				fail(e);
+			}
 
-    });
+		});
 
-    // Start thread
-    thread.start();
+		// Start thread
+		thread.start();
 
-    // Wait a tiny bit
-    Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
+		// Wait a tiny bit
+		Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
 
-    // Interrupt
-    thread.interrupt();
+		// Interrupt
+		thread.interrupt();
 
-    // Wait for thread to join
-    thread.join();
+		// Wait for thread to join
+		thread.join();
 
-    // Ensure that lock has been interrupted
-    assertTrue(success.get());
+		// Ensure that lock has been interrupted
+		assertTrue(success.get());
 
-  }
+	}
 
-  @DisplayName("Attempt to run lockInterruptiblyAndGet(Lock,Supplier) method and call interrupt")
-  @Test
-  void testLockInterruptiblyAndGetInterrupt() throws InterruptedException{
+	@DisplayName("Attempt to run lockInterruptiblyAndGet(Lock,Supplier) method and call interrupt")
+	@Test
+	void testLockInterruptiblyAndGetInterrupt() throws InterruptedException {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Lock it
-    rl.lock();
+		// Lock it
+		rl.lock();
 
-    // Flag for successful interrupt
-    AtomicBoolean success = new AtomicBoolean(false);
+		// Flag for successful interrupt
+		AtomicBoolean success = new AtomicBoolean(false);
 
-    // Create thread
-    Thread thread = new Thread(() -> {
+		// Create thread
+		Thread thread = new Thread(() -> {
 
-      try{
-        lockInterruptiblyAndGet(rl, () -> {
-          fail("Lock obtained");
-          return 10;
-        });
-      }catch(InterruptedException e){
-        success.set(true);
-      }catch(Exception e){
-        fail(e);
-      }
+			try {
+				lockInterruptiblyAndGet(rl, () -> {
+					fail("Lock obtained");
+					return 10;
+				});
+			} catch (InterruptedException e) {
+				success.set(true);
+			} catch (Exception e) {
+				fail(e);
+			}
 
-    });
+		});
 
-    // Start thread
-    thread.start();
+		// Start thread
+		thread.start();
 
-    // Wait a tiny bit
-    Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
+		// Wait a tiny bit
+		Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
 
-    // Interrupt
-    thread.interrupt();
+		// Interrupt
+		thread.interrupt();
 
-    // Wait for thread to join
-    thread.join();
+		// Wait for thread to join
+		thread.join();
 
-    // Ensure that lock has been interrupted
-    assertTrue(success.get());
+		// Ensure that lock has been interrupted
+		assertTrue(success.get());
 
-  }
+	}
 
-  @DisplayName("Attempt to run tryLockAndRun(Lock,long,TimeUnit,Runnable) method and call interrupt")
-  @Test
-  void testTryLockAndRunTimeUnitInterrupt() throws InterruptedException{
+	@DisplayName("Attempt to run tryLockAndRun(Lock,long,TimeUnit,Runnable) method and call interrupt")
+	@Test
+	void testTryLockAndRunTimeUnitInterrupt() throws InterruptedException {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Lock it
-    rl.lock();
+		// Lock it
+		rl.lock();
 
-    // Flag for successful interrupt
-    AtomicBoolean success = new AtomicBoolean(false);
+		// Flag for successful interrupt
+		AtomicBoolean success = new AtomicBoolean(false);
 
-    // Create thread
-    Thread thread = new Thread(() -> {
+		// Create thread
+		Thread thread = new Thread(() -> {
 
-      // Ensure doTryLock doesn't take too long
-      assertTimeout(Duration.ofSeconds(1), () -> {
+			// Ensure doTryLock doesn't take too long
+			assertTimeout(Duration.ofSeconds(1), () -> {
 
-        // Do it
-        try{
-          tryLockAndRun(rl, 1, TimeUnit.MINUTES, () -> fail("Lock obtained"));
-        }catch(InterruptedException e){
-          success.set(true);
-        }catch(TimeoutException e){
-          fail("Timed out");
-        }
-      });
-    });
+				// Do it
+				try {
+					tryLockAndRun(rl, 1, TimeUnit.MINUTES, () -> fail("Lock obtained"), () -> fail("Timed out"));
+				} catch (InterruptedException e) {
+					success.set(true);
+				}
+			});
+		});
 
-    // Start thread
-    thread.start();
+		// Start thread
+		thread.start();
 
-    // Wait a tiny bit
-    Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
+		// Wait a tiny bit
+		Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
 
-    // Interrupt
-    thread.interrupt();
+		// Interrupt
+		thread.interrupt();
 
-    // Wait for thread to join
-    thread.join();
+		// Wait for thread to join
+		thread.join();
 
-    // Ensure that lock has been interrupted
-    assertTrue(success.get());
+		// Ensure that lock has been interrupted
+		assertTrue(success.get());
 
-  }
+	}
 
-  @DisplayName("Attempt to run tryLockAndGet(Lock,long,TimeUnit,Supplier) method and call interrupt")
-  @Test
-  void testTryLockAndGetTimeUnitInterrupt() throws InterruptedException{
+	@DisplayName("Attempt to run tryLockAndGet(Lock,long,TimeUnit,Supplier) method and call interrupt")
+	@Test
+	void testTryLockAndGetTimeUnitInterrupt() throws InterruptedException {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Lock it
-    rl.lock();
+		// Lock it
+		rl.lock();
 
-    // Flag for successful interrupt
-    AtomicBoolean success = new AtomicBoolean(false);
+		// Flag for successful interrupt
+		AtomicBoolean success = new AtomicBoolean(false);
 
-    // Create thread
-    Thread thread = new Thread(() -> {
+		// Create thread
+		Thread thread = new Thread(() -> {
 
-      // Ensure doTryLock doesn't take too long
-      assertTimeout(Duration.ofSeconds(1), () -> {
+			// Ensure doTryLock doesn't take too long
+			assertTimeout(Duration.ofSeconds(1), () -> {
 
-        // Do it
-        try{
-          tryLockAndGet(rl, 1, TimeUnit.MINUTES, () -> {
-            fail("Lock obtained");
-            return 1;
-          });
-        }catch(InterruptedException e){
-          success.set(true);
-        }catch(TimeoutException e){
-          fail("Timed out");
-        }
-      });
-    });
+				// Do it
+				try {
+					tryLockAndGet(rl, 1, TimeUnit.MINUTES, () -> {
+						fail("Lock obtained");
+						return 1;
+					}, () -> fail("Timed out"));
+				} catch (InterruptedException e) {
+					success.set(true);
+				}
+			});
+		});
 
-    // Start thread
-    thread.start();
+		// Start thread
+		thread.start();
 
-    // Wait a tiny bit
-    Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
+		// Wait a tiny bit
+		Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
 
-    // Interrupt
-    thread.interrupt();
+		// Interrupt
+		thread.interrupt();
 
-    // Wait for thread to join
-    thread.join();
+		// Wait for thread to join
+		thread.join();
 
-    // Ensure that lock has been interrupted
-    assertTrue(success.get());
+		// Ensure that lock has been interrupted
+		assertTrue(success.get());
 
-  }
+	}
 
-  @DisplayName("Attempt to run tryLockAndRun(Lock,Duration,Runnable) method and call interrupt")
-  @Test
-  void testTryLockAndRunDurationInterrupt() throws InterruptedException{
+	@DisplayName("Attempt to run tryLockAndRun(Lock,Duration,Runnable) method and call interrupt")
+	@Test
+	void testTryLockAndRunDurationInterrupt() throws InterruptedException {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Lock it
-    rl.lock();
+		// Lock it
+		rl.lock();
 
-    // Flag for successful interrupt
-    AtomicBoolean success = new AtomicBoolean(false);
+		// Flag for successful interrupt
+		AtomicBoolean success = new AtomicBoolean(false);
 
-    // Create thread
-    Thread thread = new Thread(() -> {
+		// Create thread
+		Thread thread = new Thread(() -> {
 
-      // Ensure doTryLock doesn't take too long
-      assertTimeout(Duration.ofSeconds(1), () -> {
+			// Ensure doTryLock doesn't take too long
+			assertTimeout(Duration.ofSeconds(1), () -> {
 
-        // Do it
-        try{
-          tryLockAndRun(rl, Duration.ofMinutes(1), () -> fail("Lock obtained"));
-        }catch(InterruptedException e){
-          success.set(true);
-        }catch(TimeoutException e){
-          fail("Timed out");
-        }
-      });
-    });
+				// Do it
+				try {
+					tryLockAndRun(rl, Duration.ofMinutes(1), () -> fail("Lock obtained"), () -> fail("Timed out"));
+				} catch (InterruptedException e) {
+					success.set(true);
+				}
+			});
+		});
 
-    // Start thread
-    thread.start();
+		// Start thread
+		thread.start();
 
-    // Wait a tiny bit
-    Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
+		// Wait a tiny bit
+		Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
 
-    // Interrupt
-    thread.interrupt();
+		// Interrupt
+		thread.interrupt();
 
-    // Wait for thread to join
-    thread.join();
+		// Wait for thread to join
+		thread.join();
 
-    // Ensure that lock has been interrupted
-    assertTrue(success.get());
+		// Ensure that lock has been interrupted
+		assertTrue(success.get());
 
-  }
+	}
 
-  @DisplayName("Attempt to run tryLockAndGet(Lock,Duration,Supplier) method and call interrupt")
-  @Test
-  void testTryLockAndGetDurationInterrupt() throws InterruptedException{
+	@DisplayName("Attempt to run tryLockAndGet(Lock,Duration,Supplier) method and call interrupt")
+	@Test
+	void testTryLockAndGetDurationInterrupt() throws InterruptedException {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Lock it
-    rl.lock();
+		// Lock it
+		rl.lock();
 
-    // Flag for successful interrupt
-    AtomicBoolean success = new AtomicBoolean(false);
+		// Flag for successful interrupt
+		AtomicBoolean success = new AtomicBoolean(false);
 
-    // Create thread
-    Thread thread = new Thread(() -> {
+		// Create thread
+		Thread thread = new Thread(() -> {
 
-      // Ensure doTryLock doesn't take too long
-      assertTimeout(Duration.ofSeconds(1), () -> {
+			// Ensure doTryLock doesn't take too long
+			assertTimeout(Duration.ofSeconds(1), () -> {
 
-        // Do it
-        try{
-          tryLockAndGet(rl, Duration.ofMinutes(1), () -> {
-            fail("Lock obtained");
-            return 1;
-          });
-        }catch(InterruptedException e){
-          success.set(true);
-        }catch(TimeoutException e){
-          fail("Timed out");
-        }
-      });
-    });
+				// Do it
+				try {
+					tryLockAndGet(rl, Duration.ofMinutes(1), () -> {
+						fail("Lock obtained");
+						return 1;
+					}, () -> fail("Timed out"));
+				} catch (InterruptedException e) {
+					success.set(true);
+				}
+			});
+		});
 
-    // Start thread
-    thread.start();
+		// Start thread
+		thread.start();
 
-    // Wait a tiny bit
-    Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
+		// Wait a tiny bit
+		Thread.sleep(AutoLockTest.EXECUTION_TIME.toMillis());
 
-    // Interrupt
-    thread.interrupt();
+		// Interrupt
+		thread.interrupt();
 
-    // Wait for thread to join
-    thread.join();
+		// Wait for thread to join
+		thread.join();
 
-    // Ensure that lock has been interrupted
-    assertTrue(success.get());
+		// Ensure that lock has been interrupted
+		assertTrue(success.get());
 
-  }
+	}
 
-  @DisplayName("Attempt to successfully run tryLockAndRun(Lock,Runnable) method")
-  @Test
-  void testTryLockAndRun(){
+	@DisplayName("Attempt to successfully run tryLockAndRun(Lock,Runnable,Runnable) method")
+	@Test
+	void testTryLockAndRun() {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Do before
-    Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
+		// Do before
+		Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
 
-    // Set up after-lock runnable reference
-    AtomicReference<Runnable> afterLock = new AtomicReference<>();
+		// Set up after-lock runnable reference
+		AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-    // Lock it
-    assertDoesNotThrow(() -> tryLockAndRun(rl, () -> {
+		// Lock it
+		assertDoesNotThrow(() -> tryLockAndRun(rl, () -> {
 
-      // Do during-thread test and get post lock runnable
-      afterLock.set(duringThread.get());
+			// Do during-thread test and get post lock runnable
+			afterLock.set(duringThread.get());
 
-    }));
+		}, () -> fail("Timed out")));
 
-    // Do after-lock test
-    afterLock.get().run();
-  }
+		// Do after-lock test
+		afterLock.get().run();
+	}
 
-  @DisplayName("Attempt to successfully run tryLockAndGet(Lock,Supplier) method")
-  @Test
-  void testTryLockAndGet(){
+	@DisplayName("Attempt to successfully run tryLockAndGet(Lock,Supplier,Supplier) method")
+	@Test
+	void testTryLockAndGet() {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Do before
-    Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
+		// Do before
+		Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
 
-    // Set up after-lock runnable reference
-    AtomicReference<Runnable> afterLock = new AtomicReference<>();
+		// Set up after-lock runnable reference
+		AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-    // Expected value
-    int expected = RNG.nextInt();
+		// Expected value
+		int expected = RNG.nextInt();
 
-    // Lock it and ensure that tryLock is instantaneous
-    int value = assertDoesNotThrow(() -> tryLockAndGet(rl, () -> {
+		// Lock it and ensure that tryLock is instantaneous
+		int value = assertDoesNotThrow(() -> tryLockAndGet(rl, () -> {
 
-      // Do during-thread test and get post lock runnable
-      afterLock.set(duringThread.get());
+			// Do during-thread test and get post lock runnable
+			afterLock.set(duringThread.get());
 
-      // Return expected value
-      return expected;
-    }));
+			// Return expected value
+			return expected;
+		}, () -> fail("Timed out")));
 
-    // Check value
-    assertEquals(expected, value);
+		// Check value
+		assertEquals(expected, value);
 
-    // Do after-lock test
-    afterLock.get().run();
-  }
+		// Do after-lock test
+		afterLock.get().run();
+	}
 
-  @DisplayName("Attempt to successfully run tryLockAndRun(Lock,long,TimeUnit,Runnable) method")
-  @Test
-  void testTryLockAndRunTimeUnit(){
+	@DisplayName("Attempt to successfully run tryLockAndRun(Lock,long,TimeUnit,Runnable,Runnable) method")
+	@Test
+	void testTryLockAndRunTimeUnit() {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Do before
-    Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
+		// Do before
+		Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
 
-    // Set up after-lock runnable reference
-    AtomicReference<Runnable> afterLock = new AtomicReference<>();
+		// Set up after-lock runnable reference
+		AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-    // Lock it and ensure that tryLock is instantaneous
-    assertTimeout(Duration.ofSeconds(1), () -> tryLockAndRun(rl, 1, TimeUnit.MINUTES, () -> {
+		// Lock it and ensure that tryLock is instantaneous
+		assertTimeout(Duration.ofSeconds(1), () -> tryLockAndRun(rl, 1, TimeUnit.MINUTES, () -> {
 
-      // Do during-thread test and get post lock runnable
-      afterLock.set(duringThread.get());
+			// Do during-thread test and get post lock runnable
+			afterLock.set(duringThread.get());
 
-    }));
+		}, () -> fail("Timed out")));
 
-    // Do after-lock test
-    afterLock.get().run();
-  }
+		// Do after-lock test
+		afterLock.get().run();
+	}
 
-  @DisplayName("Attempt to successfully run tryLockAndGet(Lock,long,TimeUnit,Supplier) method")
-  @Test
-  void testTryLockAndGetTimeUnit(){
+	@DisplayName("Attempt to successfully run tryLockAndGet(Lock,long,TimeUnit,Supplier,Supplier) method")
+	@Test
+	void testTryLockAndGetTimeUnit() {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Do before
-    Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
+		// Do before
+		Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
 
-    // Set up after-lock runnable reference
-    AtomicReference<Runnable> afterLock = new AtomicReference<>();
+		// Set up after-lock runnable reference
+		AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-    // Expected value
-    int expected = RNG.nextInt();
+		// Expected value
+		int expected = RNG.nextInt();
 
-    // Lock it and ensure that tryLock is instantaneous
-    assertTimeout(Duration.ofSeconds(1), () -> {
-      int value = tryLockAndGet(rl, 1, TimeUnit.MINUTES, () -> {
+		// Lock it and ensure that tryLock is instantaneous
+		assertTimeout(Duration.ofSeconds(1), () -> {
+			int value = tryLockAndGet(rl, 1, TimeUnit.MINUTES, () -> {
 
-        // Do during-thread test and get post lock runnable
-        afterLock.set(duringThread.get());
+				// Do during-thread test and get post lock runnable
+				afterLock.set(duringThread.get());
 
-        // Return expected value
-        return expected;
-      });
+				// Return expected value
+				return expected;
+			}, () -> fail("Timed out"));
 
-      // Check value
-      assertEquals(expected, value);
-    });
+			// Check value
+			assertEquals(expected, value);
+		});
 
-    // Do after-lock test
-    afterLock.get().run();
-  }
+		// Do after-lock test
+		afterLock.get().run();
+	}
 
-  @DisplayName("Attempt to successfully run tryLockAndRun(Lock,Duration,Runnable) method")
-  @Test
-  void testTryLockAndRunDuration(){
+	@DisplayName("Attempt to successfully run tryLockAndRun(Lock,Duration,Runnable,Runnable) method")
+	@Test
+	void testTryLockAndRunDuration() {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Do before
-    Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
+		// Do before
+		Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
 
-    // Set up after-lock runnable reference
-    AtomicReference<Runnable> afterLock = new AtomicReference<>();
+		// Set up after-lock runnable reference
+		AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-    // Lock it and ensure that tryLock is instantaneous
-    assertTimeout(Duration.ofSeconds(1), () -> tryLockAndRun(rl, Duration.ofMinutes(1), () -> {
+		// Lock it and ensure that tryLock is instantaneous
+		assertTimeout(Duration.ofSeconds(1), () -> tryLockAndRun(rl, Duration.ofMinutes(1), () -> {
 
-      // Do during-thread test and get post lock runnable
-      afterLock.set(duringThread.get());
-    }));
+			// Do during-thread test and get post lock runnable
+			afterLock.set(duringThread.get());
+		}, () -> fail("Timed out")));
 
-    // Do after-lock test
-    afterLock.get().run();
-  }
+		// Do after-lock test
+		afterLock.get().run();
+	}
 
-  @DisplayName("Attempt to successfully run tryLockAndGet(Lock,Duration,Supplier) method")
-  @Test
-  void testTryLockAndGetDuration(){
+	@DisplayName("Attempt to successfully run tryLockAndGet(Lock,Duration,Supplier,Supplier) method")
+	@Test
+	void testTryLockAndGetDuration() {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Do before
-    Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
+		// Do before
+		Supplier<Runnable> duringThread = AutoLockTest.beforeLock(rl);
 
-    // Expected value
-    int expected = RNG.nextInt();
+		// Expected value
+		int expected = RNG.nextInt();
 
-    // Set up after-lock runnable reference
-    AtomicReference<Runnable> afterLock = new AtomicReference<>();
+		// Set up after-lock runnable reference
+		AtomicReference<Runnable> afterLock = new AtomicReference<>();
 
-    // Lock it and ensure that tryLock is instantaneous
-    assertTimeout(Duration.ofSeconds(1), () -> {
-      int value = tryLockAndGet(rl, Duration.ofMinutes(1), () -> {
+		// Lock it and ensure that tryLock is instantaneous
+		assertTimeout(Duration.ofSeconds(1), () -> {
+			int value = tryLockAndGet(rl, Duration.ofMinutes(1), () -> {
 
-        // Do during-thread test and get post lock runnable
-        afterLock.set(duringThread.get());
+				// Do during-thread test and get post lock runnable
+				afterLock.set(duringThread.get());
 
-        // Return expected value
-        return expected;
-      });
+				// Return expected value
+				return expected;
+			}, () -> fail("Timed out"));
 
-      // Check value
-      assertEquals(expected, value);
-    });
+			// Check value
+			assertEquals(expected, value);
+		});
 
-    // Do after-lock test
-    afterLock.get().run();
-  }
+		// Do after-lock test
+		afterLock.get().run();
+	}
 
-  @DisplayName("Attempt to run tryLockAndRun(Lock,Runnable) method and force it to time out")
-  @Test
-  void testTryLockAndRunTimeout() throws InterruptedException{
+	@DisplayName("Attempt to run tryLockAndRun(Lock,Runnable,Runnable) method and force it to time out")
+	@Test
+	void testTryLockAndRunTimeout() throws InterruptedException {
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Go-ahead CDL
-    CountDownLatch goAhead = new CountDownLatch(1);
+		// Go-ahead CDL
+		CountDownLatch goAhead = new CountDownLatch(1);
 
-    // Unlock CDL
-    CountDownLatch cdl = new CountDownLatch(1);
+		// Unlock CDL
+		CountDownLatch cdl = new CountDownLatch(1);
 
-    // Create thread
-    Thread thread = new Thread(() -> {
-      try{
-        rl.lock();
-        goAhead.countDown();
-        cdl.await();
-      }catch(InterruptedException e){
-        fail();
-      }finally{
-        rl.unlock();
-      }
-    });
+		// Create thread
+		Thread thread = new Thread(() -> {
+			try {
+				rl.lock();
+				goAhead.countDown();
+				cdl.await();
+			} catch (InterruptedException e) {
+				fail();
+			} finally {
+				rl.unlock();
+			}
+		});
 
-    try{
+		try {
 
-      // Start thread to lock
-      thread.start();
+			// Start thread to lock
+			thread.start();
 
-      // Wait for thread to lock
-      goAhead.await();
+			// Wait for thread to lock
+			goAhead.await();
 
-      // Attempt to tryLock
-      assertThrows(TimeoutException.class, () -> tryLockAndRun(rl, () -> fail("Lock obtained")));
+			// Set up variable to toggle on timeout
+			AtomicBoolean timedOut = new AtomicBoolean(false);
 
-    }finally{
-      cdl.countDown();
-    }
+			// Attempt to tryLock
+			assertTimeoutPreemptively(MAX_WAIT_TIME, () -> tryLockAndRun(rl, () -> fail("Lock obtained"), () -> timedOut.set(true)));
 
-    // Wait for thread to finish
-    thread.join();
+			// Check
+			assertTrue(timedOut.get(), "onFail Runnable never ran");
 
-  }
+		} finally {
+			cdl.countDown();
+		}
 
-  @DisplayName("Attempt to run tryLockAndGet(Lock,Supplier) method and force it to time out")
-  @Test
-  void testTryLockAndGetTimeout() throws InterruptedException{
+		// Wait for thread to finish
+		thread.join();
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+	}
 
-    // Go-ahead CDL
-    CountDownLatch goAhead = new CountDownLatch(1);
+	@DisplayName("Attempt to run tryLockAndGet(Lock,Supplier,Supplier) method and force it to time out")
+	@Test
+	void testTryLockAndGetTimeout() throws InterruptedException {
 
-    // Unlock CDL
-    CountDownLatch cdl = new CountDownLatch(1);
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Create thread
-    Thread thread = new Thread(() -> {
-      try{
-        rl.lock();
-        goAhead.countDown();
-        cdl.await();
-      }catch(InterruptedException e){
-        fail();
-      }finally{
-        rl.unlock();
-      }
-    });
+		// Go-ahead CDL
+		CountDownLatch goAhead = new CountDownLatch(1);
 
-    try{
+		// Unlock CDL
+		CountDownLatch cdl = new CountDownLatch(1);
 
-      // Start thread to lock
-      thread.start();
+		// Create thread
+		Thread thread = new Thread(() -> {
+			try {
+				rl.lock();
+				goAhead.countDown();
+				cdl.await();
+			} catch (InterruptedException e) {
+				fail();
+			} finally {
+				rl.unlock();
+			}
+		});
 
-      // Wait for thread to lock
-      goAhead.await();
+		try {
 
-      // Attempt to tryLock
-      assertThrows(TimeoutException.class, () -> tryLockAndGet(rl, () -> {
-        fail("Lock obtained");
-        return 1;
-      }));
+			// Start thread to lock
+			thread.start();
 
-    }finally{
-      cdl.countDown();
-    }
+			// Wait for thread to lock
+			goAhead.await();
 
-    // Wait for thread to finish
-    thread.join();
+			// Set up variable to toggle on timeout
+			AtomicBoolean timedOut = new AtomicBoolean(false);
 
-  }
+			// Attempt to tryLock
+			assertTimeoutPreemptively(MAX_WAIT_TIME, () -> tryLockAndGet(rl, () -> {
+				fail("Lock obtained");
+				return 1;
+			}, () -> {
+				timedOut.set(true);
+				return 1;
+			}));
 
-  @DisplayName("Attempt to run tryLockAndRun(Lock,long,TimeUnit,Runnable) method and force it to time out")
-  @Test
-  void testTryLockAndRunTimeUnitTimeout() throws InterruptedException{
+			// Check
+			assertTrue(timedOut.get(), "onFail Supplier never ran");
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		} finally {
+			cdl.countDown();
+		}
 
-    // Go-ahead CDL
-    CountDownLatch goAhead = new CountDownLatch(1);
+		// Wait for thread to finish
+		thread.join();
 
-    // Unlock CDL
-    CountDownLatch cdl = new CountDownLatch(1);
+	}
 
-    // Create thread
-    Thread thread = new Thread(() -> {
-      try{
-        rl.lock();
-        goAhead.countDown();
-        cdl.await();
-      }catch(InterruptedException e){
-        e.printStackTrace();
-        fail();
-      }finally{
-        rl.unlock();
-      }
-    });
+	@DisplayName("Attempt to run tryLockAndRun(Lock,long,TimeUnit,Runnable) method and force it to time out")
+	@Test
+	void testTryLockAndRunTimeUnitTimeout() throws InterruptedException {
 
-    try{
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-      // Start thread to lock
-      thread.start();
+		// Go-ahead CDL
+		CountDownLatch goAhead = new CountDownLatch(1);
 
-      // Wait for thread to lock
-      goAhead.await();
+		// Unlock CDL
+		CountDownLatch cdl = new CountDownLatch(1);
 
-      // Attempt to tryLock
-      assertThrows(
-        TimeoutException.class,
-        () -> tryLockAndRun(
-          rl,
-          AutoLockTest.EXECUTION_TIME.toMillis(),
-          TimeUnit.MILLISECONDS,
-          () -> fail("Lock obtained")
-        )
-      );
+		// Create thread
+		Thread thread = new Thread(() -> {
+			try {
+				rl.lock();
+				goAhead.countDown();
+				cdl.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				fail();
+			} finally {
+				rl.unlock();
+			}
+		});
 
-    }finally{
-      cdl.countDown();
-    }
+		try {
 
-    // Wait for thread to finish
-    thread.join();
+			// Start thread to lock
+			thread.start();
 
-  }
+			// Wait for thread to lock
+			goAhead.await();
 
-  @DisplayName("Attempt to run tryLockAndGet(Lock,long,TimeUnit,Supplier) method and force it to time out")
-  @Test
-  void testTryLockAndGetTimeUnitTimeout() throws InterruptedException{
+			// Set up variable to toggle on timeout
+			AtomicBoolean timedOut = new AtomicBoolean(false);
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+			// Attempt to tryLock
+			assertTimeoutPreemptively(MAX_WAIT_TIME, () -> tryLockAndRun(rl,
+							AutoLockTest.EXECUTION_TIME.toMillis(),
+							TimeUnit.MILLISECONDS,
+							() -> fail("Lock obtained"), () -> timedOut.set(true)));
 
-    // Go-ahead CDL
-    CountDownLatch goAhead = new CountDownLatch(1);
+			// Check
+			assertTrue(timedOut.get(), "onFail Runnable never ran");
 
-    // Unlock CDL
-    CountDownLatch cdl = new CountDownLatch(1);
+		} finally {
+			cdl.countDown();
+		}
 
-    // Create thread
-    Thread thread = new Thread(() -> {
-      try{
-        rl.lock();
-        goAhead.countDown();
-        cdl.await();
-      }catch(InterruptedException e){
-        e.printStackTrace();
-        fail();
-      }finally{
-        rl.unlock();
-      }
-    });
+		// Wait for thread to finish
+		thread.join();
 
-    try{
+	}
 
-      // Start thread to lock
-      thread.start();
+	@DisplayName("Attempt to run tryLockAndGet(Lock,long,TimeUnit,Supplier,Supplier) method and force it to time out")
+	@Test
+	void testTryLockAndGetTimeUnitTimeout() throws InterruptedException {
 
-      // Wait for thread to lock
-      goAhead.await();
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-      // Attempt to tryLock
-      assertThrows(
-        TimeoutException.class,
-        () -> tryLockAndGet(rl, AutoLockTest.EXECUTION_TIME.toMillis(), TimeUnit.MILLISECONDS, () -> {
-          fail("Lock obtained");
-          return 1;
-        })
-      );
+		// Go-ahead CDL
+		CountDownLatch goAhead = new CountDownLatch(1);
 
-    }finally{
-      cdl.countDown();
-    }
+		// Unlock CDL
+		CountDownLatch cdl = new CountDownLatch(1);
 
-    // Wait for thread to finish
-    thread.join();
+		// Create thread
+		Thread thread = new Thread(() -> {
+			try {
+				rl.lock();
+				goAhead.countDown();
+				cdl.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				fail();
+			} finally {
+				rl.unlock();
+			}
+		});
 
-  }
+		try {
 
-  @DisplayName("Attempt to run tryLockAndRun(Lock,Duration,Runnable) method and force it to time out")
-  @Test
-  void testTryLockAndRunDurationTimeout() throws InterruptedException{
+			// Start thread to lock
+			thread.start();
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+			// Wait for thread to lock
+			goAhead.await();
 
-    // Go-ahead CDL
-    CountDownLatch goAhead = new CountDownLatch(1);
+			// Set up variable to toggle on timeout
+			AtomicBoolean timedOut = new AtomicBoolean(false);
 
-    // Unlock CDL
-    CountDownLatch cdl = new CountDownLatch(1);
+			// Attempt to tryLock
+			assertTimeoutPreemptively(MAX_WAIT_TIME, () -> tryLockAndGet(rl, AutoLockTest.EXECUTION_TIME.toMillis(), TimeUnit.MILLISECONDS, () -> {
+				fail("Lock obtained");
+				return 1;
+			}, () -> {
+				timedOut.set(true);
+				return 1;
+			}));
 
-    // Create thread
-    Thread thread = new Thread(() -> {
-      try{
-        rl.lock();
-        goAhead.countDown();
-        cdl.await();
-      }catch(InterruptedException e){
-        e.printStackTrace();
-        fail();
-      }finally{
-        rl.unlock();
-      }
-    });
+			// Check
+			assertTrue(timedOut.get(), "onFail Supplier never ran");
 
-    try{
+		} finally {
+			cdl.countDown();
+		}
 
-      // Start thread to lock
-      thread.start();
+		// Wait for thread to finish
+		thread.join();
 
-      // Wait for thread to lock
-      goAhead.await();
+	}
 
-      // Attempt to tryLock
-      assertThrows(
-        TimeoutException.class,
-        () -> tryLockAndRun(rl, AutoLockTest.EXECUTION_TIME, () -> fail("obtained lock"))
-      );
+	@DisplayName("Attempt to run tryLockAndRun(Lock,Duration,Runnable,Runnable) method and force it to time out")
+	@Test
+	void testTryLockAndRunDurationTimeout() throws InterruptedException {
 
-    }finally{
-      cdl.countDown();
-    }
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-    // Wait for thread to finish
-    thread.join();
+		// Go-ahead CDL
+		CountDownLatch goAhead = new CountDownLatch(1);
 
-  }
+		// Unlock CDL
+		CountDownLatch cdl = new CountDownLatch(1);
 
-  @DisplayName("Attempt to run tryLockAndGet(Lock,Duration,Supplier) method and force it to time out")
-  @Test
-  void testTryLockAndGetDurationTimeout() throws InterruptedException{
+		// Create thread
+		Thread thread = new Thread(() -> {
+			try {
+				rl.lock();
+				goAhead.countDown();
+				cdl.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				fail();
+			} finally {
+				rl.unlock();
+			}
+		});
 
-    // Create lock
-    ReentrantLock rl = new ReentrantLock();
+		try {
 
-    // Go-ahead CDL
-    CountDownLatch goAhead = new CountDownLatch(1);
+			// Start thread to lock
+			thread.start();
 
-    // Unlock CDL
-    CountDownLatch cdl = new CountDownLatch(1);
+			// Wait for thread to lock
+			goAhead.await();
 
-    // Create thread
-    Thread thread = new Thread(() -> {
-      try{
-        rl.lock();
-        goAhead.countDown();
-        cdl.await();
-      }catch(InterruptedException e){
-        e.printStackTrace();
-        fail();
-      }finally{
-        rl.unlock();
-      }
-    });
+			// Set up variable to toggle on timeout
+			AtomicBoolean timedOut = new AtomicBoolean(false);
 
-    try{
+			// Attempt to tryLock
+			assertTimeoutPreemptively(MAX_WAIT_TIME, () -> tryLockAndRun(rl,
+							AutoLockTest.EXECUTION_TIME,
+							() -> fail("Lock obtained"), () -> timedOut.set(true)));
 
-      // Start thread to lock
-      thread.start();
+			// Check
+			assertTrue(timedOut.get(), "onFail Runnable never ran");
 
-      // Wait for thread to lock
-      goAhead.await();
+		} finally {
+			cdl.countDown();
+		}
 
-      // Attempt to tryLock
-      assertThrows(TimeoutException.class, () -> tryLockAndGet(rl, AutoLockTest.EXECUTION_TIME, () -> {
-        fail("obtained lock");
-        return 1;
-      }));
+		// Wait for thread to finish
+		thread.join();
 
-    }finally{
-      cdl.countDown();
-    }
+	}
 
-    // Wait for thread to finish
-    thread.join();
+	@DisplayName("Attempt to run tryLockAndGet(Lock,Duration,Supplier) method and force it to time out")
+	@Test
+	void testTryLockAndGetDurationTimeout() throws InterruptedException {
 
-  }
+		// Create lock
+		ReentrantLock rl = new ReentrantLock();
 
-  @DisplayName("Lambda methods (with Exception)")
-  static class LambdaWithException extends AutoLockLambdasTest{
+		// Go-ahead CDL
+		CountDownLatch goAhead = new CountDownLatch(1);
 
-    @Override
-    <T extends Throwable> void lockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable) throws T{
-      AutoLock.lockAndRun(lock, runnable);
-    }
+		// Unlock CDL
+		CountDownLatch cdl = new CountDownLatch(1);
 
-    @Override
-    <R, T extends Throwable> R lockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R,T> throwableSupplier)
-    throws T{
-      return AutoLock.lockAndGet(lock, throwableSupplier);
-    }
+		// Create thread
+		Thread thread = new Thread(() -> {
+			try {
+				rl.lock();
+				goAhead.countDown();
+				cdl.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				fail();
+			} finally {
+				rl.unlock();
+			}
+		});
 
-    @Override
-    <T extends Throwable> void lockInterruptiblyAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable)
-    throws T, InterruptedException{
-      AutoLock.lockInterruptiblyAndRun(lock, runnable);
-    }
+		try {
 
-    @Override
-    <R, T extends Throwable> R lockInterruptiblyAndGet(
-      @Nonnull Lock lock,
-      @Nonnull ThrowableSupplier<R,T> throwableSupplier
-    )
-    throws T, InterruptedException{
-      return AutoLock.lockInterruptiblyAndGet(lock, throwableSupplier);
-    }
+			// Start thread to lock
+			thread.start();
 
-    @Override
-    <T extends Throwable> void tryLockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable)
-    throws T, TimeoutException{
-      AutoLock.tryLockAndRun(lock, runnable);
-    }
+			// Wait for thread to lock
+			goAhead.await();
 
-    @Override
-    <R, T extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R,T> supplier)
-    throws T, TimeoutException{
-      return AutoLock.tryLockAndGet(lock, supplier);
-    }
+			// Set up variable to toggle on timeout
+			AtomicBoolean timedOut = new AtomicBoolean(false);
 
-    @Override
-    <T extends Throwable> void tryLockAndRun(
-      @Nonnull Lock lock,
-      long time,
-      @Nonnull TimeUnit unit,
-      @Nonnull ThrowableRunnable<T> runnable
-    )
-    throws T, InterruptedException, TimeoutException{
-      AutoLock.tryLockAndRun(lock, time, unit, runnable);
-    }
+			// Attempt to tryLock
+			assertTimeoutPreemptively(MAX_WAIT_TIME, () -> tryLockAndGet(rl, AutoLockTest.EXECUTION_TIME, () -> {
+				fail("Lock obtained");
+				return 1;
+			}, () -> {
+				timedOut.set(true);
+				return 1;
+			}));
 
-    @Override
-    <R, T extends Throwable> R tryLockAndGet(
-      @Nonnull Lock lock,
-      long time,
-      @Nonnull TimeUnit unit,
-      @Nonnull ThrowableSupplier<R,T> supplier
-    )
-    throws T, InterruptedException, TimeoutException{
-      return AutoLock.tryLockAndGet(lock, time, unit, supplier);
-    }
+			// Check
+			assertTrue(timedOut.get(), "onFail Supplier never ran");
 
-    @Override
-    <T extends Throwable> void tryLockAndRun(
-      @Nonnull Lock lock,
-      @Nonnull Duration timeout,
-      @Nonnull ThrowableRunnable<T> runnable
-    )
-    throws T, InterruptedException, TimeoutException{
-      AutoLock.tryLockAndRun(lock, timeout, runnable);
-    }
+		} finally {
+			cdl.countDown();
+		}
 
-    @Override
-    <R, T extends Throwable> R tryLockAndGet(
-      @Nonnull Lock lock,
-      @Nonnull Duration timeout,
-      @Nonnull ThrowableSupplier<R,T> supplier
-    )
-    throws T, InterruptedException, TimeoutException{
-      return AutoLock.tryLockAndGet(lock, timeout, supplier);
-    }
+		// Wait for thread to finish
+		thread.join();
 
-    @DisplayName("Attempt to run lockAndRun(Lock,Runnable) method and have the inside function to throw exception")
-    @Test
-    void testLockAndRunWithException(){
+	}
 
-      // Create lock
-      ReentrantLock rl = new ReentrantLock();
+	@DisplayName("Lambda methods (with Exception)")
+	static class LambdaWithExceptionTest extends AutoLockLambdasTest {
 
-      // Exception
-      FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+		@Override
+		<T extends Throwable> void lockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable) throws T {
+			AutoLock.lockAndRun(lock, runnable);
+		}
 
-      // Do it
-      FileNotFoundException thrown = assertThrows(
-        FileNotFoundException.class,
-        () -> AutoLock.lockAndRun(rl, () -> {
-          throw exception;
-        })
-      );
+		@Override
+		<R, T extends Throwable> R lockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T> throwableSupplier)
+						throws T {
+			return AutoLock.lockAndGet(lock, throwableSupplier);
+		}
 
-      // Get cause and compare
-      assertEquals(exception, thrown);
-    }
+		@Override
+		<T extends Throwable> void lockInterruptiblyAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable)
+						throws T, InterruptedException {
+			AutoLock.lockInterruptiblyAndRun(lock, runnable);
+		}
 
-    @DisplayName("Attempt to run lockAndGet(Lock,Supplier) method and have the inside function to throw exception")
-    @Test
-    void testLockAndGetWithException(){
+		@Override
+		<R, T extends Throwable> R lockInterruptiblyAndGet(
+						@Nonnull Lock lock,
+						@Nonnull ThrowableSupplier<R, T> throwableSupplier
+		)
+						throws T, InterruptedException {
+			return AutoLock.lockInterruptiblyAndGet(lock, throwableSupplier);
+		}
 
-      // Create lock
-      ReentrantLock rl = new ReentrantLock();
+		@Override
+		<T extends Throwable> void tryLockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> onSuccess, ThrowableRunnable<T> onFail) throws T {
+			AutoLock.tryLockAndRun(lock, onSuccess, onFail);
+		}
 
-      // Exception
-      FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+		@Override
+		<R, T extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T> onSuccess, ThrowableSupplier<R, T> onFail)
+						throws T {
+			return AutoLock.tryLockAndGet(lock, onSuccess, onFail);
+		}
 
-      // Do it
-      FileNotFoundException thrown = assertThrows(FileNotFoundException.class, () -> AutoLock.lockAndGet(rl, () -> {
-        throw exception;
-      }));
+		@Override
+		<T extends Throwable> void tryLockAndRun(
+						@Nonnull Lock lock,
+						long time,
+						@Nonnull TimeUnit unit,
+						@Nonnull ThrowableRunnable<T> onSuccess,
+						ThrowableRunnable<T> onFail)
+						throws T, InterruptedException {
+			AutoLock.tryLockAndRun(lock, time, unit, onSuccess, onFail);
+		}
 
-      // Get cause and compare
-      assertEquals(exception, thrown);
-    }
+		@Override
+		<R, T extends Throwable> R tryLockAndGet(
+						@Nonnull Lock lock,
+						long time,
+						@Nonnull TimeUnit unit,
+						@Nonnull ThrowableSupplier<R, T> onSuccess,
+						ThrowableSupplier<R, T> onFail)
+						throws T, InterruptedException {
+			return AutoLock.tryLockAndGet(lock, time, unit, onSuccess, onFail);
+		}
 
-    @DisplayName("Attempt to run lockInterruptiblyAndRun(Lock,Runnable) method and have the inside function to throw exception")
-    @Test
-    void testLockInterruptiblyAndRunWithException(){
+		@Override
+		<T extends Throwable> void tryLockAndRun(
+						@Nonnull Lock lock,
+						@Nonnull Duration timeout,
+						@Nonnull ThrowableRunnable<T> onSuccess,
+						@Nonnull ThrowableRunnable<T> onFail)
+						throws T, InterruptedException {
+			AutoLock.tryLockAndRun(lock, timeout, onSuccess, onFail);
+		}
 
-      // Create lock
-      ReentrantLock rl = new ReentrantLock();
+		@Override
+		<R, T extends Throwable> R tryLockAndGet(
+						@Nonnull Lock lock,
+						@Nonnull Duration timeout,
+						@Nonnull ThrowableSupplier<R, T> onSuccess,
+						ThrowableSupplier<R, T> onFail)
+						throws T, InterruptedException {
+			return AutoLock.tryLockAndGet(lock, timeout, onSuccess, onFail);
+		}
 
-      // Exception
-      FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
-
-      // Do it
-      FileNotFoundException thrown = assertThrows(
-        FileNotFoundException.class,
-        () -> AutoLock.lockInterruptiblyAndRun(rl, () -> {
-          throw exception;
-        })
-      );
+		@DisplayName("Attempt to run lockAndRun(Lock,Runnable) method and have the inside function to throw exception")
+		@Test
+		void testLockAndRunWithException() {
 
-      // Get cause and compare
-      assertEquals(exception, thrown);
-    }
+			// Create lock
+			ReentrantLock rl = new ReentrantLock();
 
-    @DisplayName("Attempt to run lockInterruptiblyAndGet(Lock,Supplier) method and have the inside function to throw exception")
-    @Test
-    void testLockInterruptiblyAndGetWithException(){
-
-      // Create lock
-      ReentrantLock rl = new ReentrantLock();
+			// Exception
+			FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
 
-      // Exception
-      FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
-
-      // Do it
-      FileNotFoundException thrown = assertThrows(
-        FileNotFoundException.class,
-        () -> AutoLock.lockInterruptiblyAndGet(rl, () -> {
-          throw exception;
-        })
-      );
+			// Do it
+			FileNotFoundException thrown = assertThrows(
+							FileNotFoundException.class,
+							() -> AutoLock.lockAndRun(rl, () -> {
+								throw exception;
+							})
+			);
 
-      // Get cause and compare
-      assertEquals(exception, thrown);
-    }
+			// Get cause and compare
+			assertEquals(exception, thrown);
+		}
 
-    @DisplayName("Attempt to run tryLockAndRun(Lock,Runnable) method and have the inside function to throw exception")
-    @Test
-    void testTryLockAndRunWithException(){
-
-      // Create lock
-      ReentrantLock rl = new ReentrantLock();
-
-      // Exception
-      FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
-
-      // Do it
-      FileNotFoundException thrown = assertThrows(
-        FileNotFoundException.class,
-        () -> AutoLock.tryLockAndRun(rl, () -> {
-          throw exception;
-        })
-      );
-
-      // Get cause and compare
-      assertEquals(exception, thrown);
-    }
-
-    @DisplayName("Attempt to run tryLockAndGet(Lock,Supplier) method and have the inside function to throw exception")
-    @Test
-    void testTryLockAndGetWithException(){
-
-      // Create lock
-      ReentrantLock rl = new ReentrantLock();
-
-      // Exception
-      FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
-
-      // Do it
-      FileNotFoundException thrown = assertThrows(
-        FileNotFoundException.class,
-        () -> AutoLock.tryLockAndGet(rl, () -> {
-          throw exception;
-        })
-      );
-
-      // Get cause and compare
-      assertEquals(exception, thrown);
-    }
-
-    @DisplayName("Attempt to run tryLockAndRun(Lock,long,TimeUnit,Runnable) method and have the inside function to throw exception")
-    @Test
-    void testTryLockAndRunTimeUnitWithException(){
-
-      // Create lock
-      ReentrantLock rl = new ReentrantLock();
-
-      // Exception
-      FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
-
-      // Do it
-      FileNotFoundException thrown = assertThrows(
-        FileNotFoundException.class,
-        () -> AutoLock.tryLockAndRun(rl, 1, TimeUnit.MINUTES, () -> {
-          throw exception;
-        })
-      );
-
-      // Get cause and compare
-      assertEquals(exception, thrown);
-    }
-
-    @DisplayName("Attempt to run tryLockAndGet(Lock,long,TimeUnit,Supplier) method and have the inside function to throw exception")
-    @Test
-    void testTryLockAndGetTimeUnitWithException(){
-
-      // Create lock
-      ReentrantLock rl = new ReentrantLock();
-
-      // Exception
-      FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
-
-      // Do it
-      FileNotFoundException thrown = assertThrows(
-        FileNotFoundException.class,
-        () -> AutoLock.tryLockAndGet(rl, 1, TimeUnit.MINUTES, () -> {
-          throw exception;
-        })
-      );
-
-      // Get cause and compare
-      assertEquals(exception, thrown);
-    }
-
-    @DisplayName("Attempt to run tryLockAndRun(Lock,Duration,Runnable) method and have the inside function to throw exception")
-    @Test
-    void testTryLockAndRunDurationWithException(){
-
-      // Create lock
-      ReentrantLock rl = new ReentrantLock();
-
-      // Exception
-      FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
-
-      // Do it
-      FileNotFoundException thrown = assertThrows(
-        FileNotFoundException.class,
-        () -> AutoLock.tryLockAndRun(rl, Duration.ofMinutes(1), () -> {
-          throw exception;
-        })
-      );
-
-      // Get cause and compare
-      assertEquals(exception, thrown);
-    }
-
-    @DisplayName("Attempt to run tryLockAndGet(Lock,Duration,Supplier) method and have the inside function to throw exception")
-    @Test
-    void testTryLockAndGetDurationWithException(){
-
-      // Create lock
-      ReentrantLock rl = new ReentrantLock();
-
-      // Exception
-      FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
-
-      // Do it
-      FileNotFoundException thrown = assertThrows(
-        FileNotFoundException.class,
-        () -> AutoLock.tryLockAndGet(rl, Duration.ofMinutes(1), () -> {
-          throw exception;
-        })
-      );
-
-      // Get cause and compare
-      assertEquals(exception, thrown);
-    }
-  }
+		@DisplayName("Attempt to run lockAndGet(Lock,Supplier) method and have the inside function to throw exception")
+		@Test
+		void testLockAndGetWithException() {
+
+			// Create lock
+			ReentrantLock rl = new ReentrantLock();
+
+			// Exception
+			FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+			// Do it
+			FileNotFoundException thrown = assertThrows(FileNotFoundException.class, () -> AutoLock.lockAndGet(rl, () -> {
+				throw exception;
+			}));
+
+			// Get cause and compare
+			assertEquals(exception, thrown);
+		}
+
+		@DisplayName("Attempt to run lockInterruptiblyAndRun(Lock,Runnable) method and have the inside function to throw exception")
+		@Test
+		void testLockInterruptiblyAndRunWithException() {
+
+			// Create lock
+			ReentrantLock rl = new ReentrantLock();
+
+			// Exception
+			FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+			// Do it
+			FileNotFoundException thrown = assertThrows(
+							FileNotFoundException.class,
+							() -> AutoLock.lockInterruptiblyAndRun(rl, () -> {
+								throw exception;
+							})
+			);
+
+			// Get cause and compare
+			assertEquals(exception, thrown);
+		}
+
+		@DisplayName("Attempt to run lockInterruptiblyAndGet(Lock,Supplier) method and have the inside function to throw exception")
+		@Test
+		void testLockInterruptiblyAndGetWithException() {
+
+			// Create lock
+			ReentrantLock rl = new ReentrantLock();
+
+			// Exception
+			FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+			// Do it
+			FileNotFoundException thrown = assertThrows(
+							FileNotFoundException.class,
+							() -> AutoLock.lockInterruptiblyAndGet(rl, () -> {
+								throw exception;
+							})
+			);
+
+			// Get cause and compare
+			assertEquals(exception, thrown);
+		}
+
+		@DisplayName("Attempt to run tryLockAndRun(Lock,Runnable) method and have the inside function to throw exception")
+		@Test
+		void testTryLockAndRunWithException() {
+
+			// Create lock
+			ReentrantLock rl = new ReentrantLock();
+
+			// Exception
+			FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+			// Do it
+			FileNotFoundException thrown = assertThrows(
+							FileNotFoundException.class,
+							() -> AutoLock.tryLockAndRun(
+											rl,
+											() -> {
+												throw exception;
+											},
+											Assertions::fail
+							)
+			);
+
+			// Get cause and compare
+			assertEquals(exception, thrown);
+		}
+
+		@DisplayName("Attempt to run tryLockAndGet(Lock,Supplier) method and have the inside function to throw exception")
+		@Test
+		void testTryLockAndGetWithException() {
+
+			// Create lock
+			ReentrantLock rl = new ReentrantLock();
+
+			// Exception
+			FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+			// Do it
+			FileNotFoundException thrown = assertThrows(
+							FileNotFoundException.class,
+							() -> AutoLock.tryLockAndGet(
+											rl,
+											() -> {
+												throw exception;
+											},
+											Assertions::fail
+							)
+			);
+
+			// Get cause and compare
+			assertEquals(exception, thrown);
+		}
+
+		@DisplayName("Attempt to run tryLockAndRun(Lock,long,TimeUnit,Runnable) method and have the inside function to throw exception")
+		@Test
+		void testTryLockAndRunTimeUnitWithException() {
+
+			// Create lock
+			ReentrantLock rl = new ReentrantLock();
+
+			// Exception
+			FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+			// Do it
+			FileNotFoundException thrown = assertThrows(
+							FileNotFoundException.class,
+							() -> AutoLock.tryLockAndRun(rl, 1, TimeUnit.MINUTES,
+											() -> {
+												throw exception;
+											},
+											Assertions::fail
+							)
+			);
+
+			// Get cause and compare
+			assertEquals(exception, thrown);
+		}
+
+		@DisplayName("Attempt to run tryLockAndGet(Lock,long,TimeUnit,Supplier) method and have the inside function to throw exception")
+		@Test
+		void testTryLockAndGetTimeUnitWithException() {
+
+			// Create lock
+			ReentrantLock rl = new ReentrantLock();
+
+			// Exception
+			FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+			// Do it
+			FileNotFoundException thrown = assertThrows(
+							FileNotFoundException.class,
+							() -> AutoLock.tryLockAndGet(rl, 1, TimeUnit.MINUTES,
+											() -> {
+												throw exception;
+											},
+											Assertions::fail
+							)
+			);
+
+			// Get cause and compare
+			assertEquals(exception, thrown);
+		}
+
+		@DisplayName("Attempt to run tryLockAndRun(Lock,Duration,Runnable) method and have the inside function to throw exception")
+		@Test
+		void testTryLockAndRunDurationWithException() {
+
+			// Create lock
+			ReentrantLock rl = new ReentrantLock();
+
+			// Exception
+			FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+			// Do it
+			FileNotFoundException thrown = assertThrows(
+							FileNotFoundException.class,
+							() -> AutoLock.tryLockAndRun(rl, Duration.ofMinutes(1),
+											() -> {
+												throw exception;
+											},
+											Assertions::fail
+							)
+			);
+
+			// Get cause and compare
+			assertEquals(exception, thrown);
+		}
+
+		@DisplayName("Attempt to run tryLockAndGet(Lock,Duration,Supplier) method and have the inside function to throw exception")
+		@Test
+		void testTryLockAndGetDurationWithException() {
+
+			// Create lock
+			ReentrantLock rl = new ReentrantLock();
+
+			// Exception
+			FileNotFoundException exception = new FileNotFoundException("Where is that file? " + RNG.nextInt());
+
+			// Do it
+			FileNotFoundException thrown = assertThrows(
+							FileNotFoundException.class,
+							() -> AutoLock.tryLockAndGet(rl, Duration.ofMinutes(1),
+											() -> {
+												throw exception;
+											},
+											Assertions::fail
+							)
+			);
+
+			// Get cause and compare
+			assertEquals(exception, thrown);
+		}
+	}
 }

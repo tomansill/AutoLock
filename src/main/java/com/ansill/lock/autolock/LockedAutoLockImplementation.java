@@ -4,30 +4,36 @@ import javax.annotation.Nonnull;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
-/** LockedAutoLock implementation */
-final class LockedAutoLockImplementation implements LockedAutoLock{
+/**
+ * LockedAutoLock implementation
+ */
+final class LockedAutoLockImplementation implements LockedAutoLock {
 
-  /** Lock object */
-  @Nonnull
-  private final Lock lock;
+	/**
+	 * Lock object
+	 */
+	@Nonnull
+	private final Lock lock;
 
-  /** Lock state */
-  @Nonnull
-  private final AtomicBoolean lockState;
+	/**
+	 * Lock state
+	 */
+	@Nonnull
+	private final AtomicBoolean lockState;
 
-  /**
-   * Creates locked resource
-   *
-   * @param lock      lock
-   * @param lockState lock state
-   */
-  LockedAutoLockImplementation(@Nonnull Lock lock, @Nonnull AtomicBoolean lockState){
-    this.lock = lock;
-    this.lockState = lockState;
-  }
+	/**
+	 * Creates locked resource
+	 *
+	 * @param lock      lock
+	 * @param lockState lock state
+	 */
+	LockedAutoLockImplementation(@Nonnull Lock lock, @Nonnull AtomicBoolean lockState) {
+		this.lock = lock;
+		this.lockState = lockState;
+	}
 
-  @Override
-  public void unlock(){
-    if(this.lockState.compareAndSet(true, false)) this.lock.unlock();
-  }
+	@Override
+	public void unlock() {
+		if (this.lockState.compareAndSet(true, false)) this.lock.unlock();
+	}
 }

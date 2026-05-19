@@ -16,13 +16,17 @@ I have been using `Lock` a lot for a while now, and I'm getting tired of writing
 
 Lock lock = new ReentrantLock();
 
-try{  
-  lock.lock();
-    
-  // Do stuff
+try{
+				lock.
+
+lock();
+
+// Do stuff
   
 }finally{
-  lock.unlock();
+				lock.
+
+unlock();
 }
 
 ```
@@ -36,11 +40,12 @@ library and made the locking process much easier like this:
 ```java
 Lock lock = new ReentrantLock();
 
-try(LockedAutoLock ignored = AutoLock.doLock(lock)){
-  
-  // Do stuff
-  
-}
+try(
+LockedAutoLock ignored = AutoLock.doLock(lock)){
+
+				// Do stuff
+
+				}
 ```
 
 Then I added methods that allows us to use locks with Java 8 lambda functions to make it even easier to use.
@@ -48,11 +53,13 @@ Then I added methods that allows us to use locks with Java 8 lambda functions to
 ```java
 Lock lock = new ReentrantLock();
 
-AutoLock.lockAndRun(lock, () -> {
-  
-  // Do stuff
-  
-});
+AutoLock.
+
+lockAndRun(lock, () ->{
+
+				// Do stuff
+
+				});
 ```
 
 Also, supplier functions are available to use to simplify variable initialization while using locks like this:
@@ -61,11 +68,11 @@ Also, supplier functions are available to use to simplify variable initializatio
 Lock lock = new ReentrantLock();
 
 int value = AutoLock.lockAndGet(lock, () -> {
-  
-  // Do stuff
-  
-  // Return value
-  return 100;
+
+	// Do stuff
+
+	// Return value
+	return 100;
 });
 ```
 
@@ -79,11 +86,13 @@ int value = AutoLock.lockAndGet(lock, () -> {
 
 The library is available for download on Sonatype public Maven
 repository (https://oss.sonatype.org/#nexus-search;quick~com.ansill.lock).
+
 ```xml
+
 <dependency>
-  <groupId>com.ansill.lock</groupId>
-  <artifactId>AutoLock</artifactId>
-  <version>0.5.0</version>
+    <groupId>com.ansill.lock</groupId>
+    <artifactId>AutoLock</artifactId>
+    <version>0.5.0</version>
 </dependency>
 ```
 
@@ -117,10 +126,10 @@ Then you can lock the lock in Try-with-resources scope with `AutoLock` class lik
 
 ```java
 try(LockedAutoLock lockedAutoLock = autoLock.doLock()){
-    
-  // Do stuff here
 
-} // Lock will be automatically be unlocked at this line
+				// Do stuff here
+
+				} // Lock will be automatically be unlocked at this line
 ```
 
 `LockedAutoLock` is an `AutoCloseable` reference to `AutoLock`'s lock operation. Its `close()` operation will
@@ -153,11 +162,12 @@ Using `Lock`, you can just create `LockedAutoLock` directly like this:
 ```java
 Lock lock = new ReentrantLock();
 
-try(LockedAutoLock lockedAutoLock = AutoLock.doLock(lock)){
-    
-  // Do stuff here
+try(
+LockedAutoLock lockedAutoLock = AutoLock.doLock(lock)){
 
-}
+				// Do stuff here
+
+				}
 ```
 
 If you have Java 11 or above, you can just use `var` like this:
@@ -165,11 +175,12 @@ If you have Java 11 or above, you can just use `var` like this:
 ```java
 Lock lock = new ReentrantLock();
 
-try(var locked = AutoLock.doLock(lock)){
-    
-  // Do stuff here
+try(
+var locked = AutoLock.doLock(lock)){
 
-}
+				// Do stuff here
+
+				}
 ```
 
 `AutoLock` has several static locking methods:
@@ -189,11 +200,13 @@ in `AutoLock.lockAndRun(Lock,ThrowableRunnable<T>)` function like this:
 Lock lock = new ReentrantLock();
 
 // Will lock, run, then unlock when this method exits
-AutoLock.lockAndRun(lock, () -> {
+AutoLock.
 
-  // Do stuff here
+lockAndRun(lock, () ->{
 
-});
+				// Do stuff here
+
+				});
 ```
 
 `AutoLock.lockAndRun(Lock,ThrowableRunnable<T>)` will first attempt to lock your `Lock`, then runs the supplied
@@ -208,10 +221,10 @@ Lock lock = new ReentrantLock();
 // Will lock, retrieve, unlock, then return (if no exception) when this method exits
 int value = AutoLock.lockAndGet(lock, () -> {
 
-  // Do stuff here
+	// Do stuff here
 
-  // Return value
-  return 100;
+	// Return value
+	return 100;
 
 });
 ```

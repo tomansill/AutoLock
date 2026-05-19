@@ -12,93 +12,95 @@ import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-interface AutoLockTest{
+interface AutoLockTest {
 
-  Random RNG = new SecureRandom();
+	Random RNG = new SecureRandom();
 
-  Duration EXECUTION_TIME = Duration.ofMillis(10);
+	Duration EXECUTION_TIME = Duration.ofMillis(10);
 
-  static Supplier<Runnable> beforeLock(ReentrantLock lock){
+	Duration MAX_WAIT_TIME = Duration.ofMillis(500);
 
-    // Create thread-sensitive object
-    NonThreadSafeObject<Integer> object = new NonThreadSafeObject<>(RNG.nextInt());
+	static Supplier<Runnable> beforeLock(ReentrantLock lock) {
 
-    // Desired numbers
-    int desiredNumberOne = object.getValue() + 1;
-    int desiredNumberTwo = desiredNumberOne + 1;
+		// Create thread-sensitive object
+		NonThreadSafeObject<Integer> object = new NonThreadSafeObject<>(RNG.nextInt());
 
-    // Return supplier
-    return () -> duringLock(lock, object, desiredNumberOne, desiredNumberTwo);
-  }
+		// Desired numbers
+		int desiredNumberOne = object.getValue() + 1;
+		int desiredNumberTwo = desiredNumberOne + 1;
 
-  static Runnable duringLock(
-    ReentrantLock lock,
-    NonThreadSafeObject<Integer> object,
-    Integer desiredNumberOne,
-    Integer desiredNumberTwo
-  ){
+		// Return supplier
+		return () -> duringLock(lock, object, desiredNumberOne, desiredNumberTwo);
+	}
 
-    // Assert that lock is locked
-    assertTrue(lock.isLocked());
+	static Runnable duringLock(
+					ReentrantLock lock,
+					NonThreadSafeObject<Integer> object,
+					Integer desiredNumberOne,
+					Integer desiredNumberTwo
+	) {
 
-    // Set up CDLs to control execution
-    CountDownLatch startCDL = new CountDownLatch(1);
+		// Assert that lock is locked
+		assertTrue(lock.isLocked());
 
-    // Create thread
-    Thread thread = new Thread(() -> {
+		// Set up CDLs to control execution
+		CountDownLatch startCDL = new CountDownLatch(1);
 
-      // Old-fashioned lock
-      try{
+		// Create thread
+		Thread thread = new Thread(() -> {
 
-        // Wait for a okay from main thread
-        startCDL.await();
+			// Old-fashioned lock
+			try {
 
-        // Lock it
-        lock.lock();
+				// Wait for a okay from main thread
+				startCDL.await();
 
-        // Run what we need to do
-        object.modify(desiredNumberTwo);
+				// Lock it
+				lock.lock();
 
-      }catch(InterruptedException e){
-        throw new RuntimeException(e);
-      }finally{
+				// Run what we need to do
+				object.modify(desiredNumberTwo);
 
-        // Unlock it
-        lock.unlock();
-      }
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			} finally {
 
-    });
+				// Unlock it
+				lock.unlock();
+			}
 
-    // Run it
-    thread.start();
+		});
 
-    // Attempt to modify object
-    object.modify(desiredNumberOne, startCDL, EXECUTION_TIME);
+		// Run it
+		thread.start();
 
-    // Ensure not corrupted
-    assertFalse(object.isCorrupted());
+		// Attempt to modify object
+		object.modify(desiredNumberOne, startCDL, EXECUTION_TIME);
 
-    // Check value
-    assertEquals(desiredNumberOne, object.getValue());
+		// Ensure not corrupted
+		assertFalse(object.isCorrupted());
 
-    // Assert that lock is locked
-    assertTrue(lock.isLocked());
+		// Check value
+		assertEquals(desiredNumberOne, object.getValue());
 
-    // Build runnable to run afterwards
-    return () -> {
+		// Assert that lock is locked
+		assertTrue(lock.isLocked());
 
-      // Wait for other thread to finish
-      assertDoesNotThrow((Executable) thread::join);
+		// Build runnable to run afterwards
+		return () -> {
 
-      // Ensure not corrupted
-      assertFalse(object.isCorrupted());
+			// Wait for other thread to finish
+			assertDoesNotThrow((Executable) thread::join);
 
-      // Check value
-      assertEquals(desiredNumberTwo, object.getValue());
+			// Ensure not corrupted
+			assertFalse(object.isCorrupted());
 
-      // Assert that lock is unlocked
-      assertFalse(lock.isLocked());
-    };
-  }
+			// Check value
+			assertEquals(desiredNumberTwo, object.getValue());
+
+			// Assert that lock is unlocked
+			assertFalse(lock.isLocked());
+		};
+	}
 
 }

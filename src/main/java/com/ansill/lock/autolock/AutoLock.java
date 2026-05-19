@@ -4,428 +4,393 @@ import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
-/** AutoLock class that creates LockedAutoLock object AutoCloseable resource that can be used in Try-with-resources scope */
-public interface AutoLock{
+/**
+ * AutoLock class that creates LockedAutoLock object AutoCloseable resource that can be used in Try-with-resources scope
+ */
+public interface AutoLock {
 
-  /**
-   * Creates AutoLock from lock
-   *
-   * @param lock lock
-   * @return AutoLock auto lock
-   */
-  @Nonnull
-  static AutoLock create(@Nonnull Lock lock){
-    //noinspection ConstantConditions
-    if(lock == null) throw new IllegalArgumentException("'lock' is null");
-    return new AutoLockImplementation(lock);
-  }
+	/**
+	 * Creates AutoLock from lock
+	 *
+	 * @param lock lock
+	 * @return AutoLock auto lock
+	 */
+	@Nonnull
+	static AutoLock create(@Nonnull Lock lock) {
+		//noinspection ConstantConditions
+		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		return new AutoLockImplementation(lock);
+	}
 
-  /**
-   * Locks and creates a LockedAutoLock reference
-   *
-   * @param lock lock to lock on
-   * @return LockedAutoLock locked auto lock
-   */
-  @Nonnull
-  static LockedAutoLock doLock(@Nonnull Lock lock){
-    return create(lock).doLock();
-  }
+	/**
+	 * Locks and creates a LockedAutoLock reference
+	 *
+	 * @param lock lock to lock on
+	 * @return LockedAutoLock locked auto lock
+	 */
+	@Nonnull
+	static LockedAutoLock doLock(@Nonnull Lock lock) {
+		return create(lock).doLock();
+	}
 
-  /**
-   * Locks and creates a LockedAutoLock reference
-   *
-   * @param lock lock to lock on
-   * @return LockedAutoLock locked auto lock
-   * @throws InterruptedException thrown if the thread was interrupted
-   */
-  @Nonnull
-  static LockedAutoLock doLockInterruptibly(@Nonnull Lock lock) throws InterruptedException{
-    return create(lock).doLockInterruptibly();
-  }
+	/**
+	 * Locks and creates a LockedAutoLock reference
+	 *
+	 * @param lock lock to lock on
+	 * @return LockedAutoLock locked auto lock
+	 * @throws InterruptedException thrown if the thread was interrupted
+	 */
+	@Nonnull
+	static LockedAutoLock doLockInterruptibly(@Nonnull Lock lock) throws InterruptedException {
+		return create(lock).doLockInterruptibly();
+	}
 
-  /**
-   * Attempts to lock. If lock is obtained, then a LockedAutoLock reference is created.
-   *
-   * @param lock lock to lock on
-   * @return LockedAutoLock locked auto lock
-   * @throws TimeoutException thrown if lock has failed to lock
-   */
-  @Nonnull
-  static LockedAutoLock doTryLock(@Nonnull Lock lock) throws TimeoutException{
-    return create(lock).doTryLock();
-  }
+	/**
+	 * Locks the provided lock, runs the runnable during the lock, unlocks afterwards
+	 *
+	 * @param <T>      type of exception
+	 * @param lock     lock to lock on
+	 * @param runnable runnable to run while locked
+	 * @throws T thrown if runnable has thrown an exception
+	 */
+	static <T extends Throwable> void lockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable) throws T {
 
-  /**
-   * Attempts to lock. If lock is obtained, then a LockedAutoLock reference is created.
-   *
-   * @param lock lock to lock on
-   * @param time amount of time for lock to be attempted before timing out
-   * @param unit unit for parameter 'time'
-   * @return LockedAutoLock locked auto lock
-   * @throws TimeoutException     thrown if lock has failed to lock
-   * @throws InterruptedException thrown if the thread was interrupted
-   */
-  @Nonnull
-  static LockedAutoLock doTryLock(@Nonnull Lock lock, long time, @Nonnull TimeUnit unit)
-  throws TimeoutException, InterruptedException{
-    return create(lock).doTryLock(time, unit);
-  }
+		// Ensure runnable is not null
+		//noinspection ConstantConditions
+		if (runnable == null) throw new IllegalArgumentException("'runnable' is null");
 
-  /**
-   * Attempts to lock. If lock is obtained, then a LockedAutoLock reference is created.
-   *
-   * @param lock    lock to lock on
-   * @param timeout duration of the lock attempt
-   * @return LockedAutoLock locked auto lock
-   * @throws TimeoutException     thrown if lock has failed to lock
-   * @throws InterruptedException thrown if the thread was interrupted
-   */
-  @Nonnull
-  static LockedAutoLock doTryLock(@Nonnull Lock lock, @Nonnull Duration timeout)
-  throws TimeoutException, InterruptedException{
-    return create(lock).doTryLock(timeout.toMillis(), TimeUnit.MILLISECONDS);
-  }
+		// Lock it
+		try (LockedAutoLock ignored = doLock(lock)) {
 
-  /**
-   * Locks the provided lock, runs the runnable during the lock, unlocks afterwards
-   *
-   * @param <T>      type of exception
-   * @param lock     lock to lock on
-   * @param runnable runnable to run while locked
-   * @throws T thrown if runnable has thrown an exception
-   */
-  static <T extends Throwable> void lockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable) throws T{
+			// Run it
+			runnable.run();
+		}
+	}
 
-    // Ensure runnable is not null
-    //noinspection ConstantConditions
-    if(runnable == null) throw new IllegalArgumentException("'runnable' is null");
+	/**
+	 * Locks the provided lock, runs the supplier during the lock, unlocks afterwards and, assuming if supplier does
+	 * not return an exception, value returned by the supplier will be returned
+	 *
+	 * @param <R>      desired type of the return value
+	 * @param <T>      type of exception
+	 * @param lock     lock to lock on
+	 * @param supplier supplier to run while locked
+	 * @return result of supplier
+	 * @throws T thrown if runnable has thrown an exception
+	 */
+	static <R, T extends Throwable> R lockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T> supplier) throws T {
 
-    // Lock it
-    try(LockedAutoLock ignored = doLock(lock)){
+		// Ensure supplier is not null
+		//noinspection ConstantConditions
+		if (supplier == null) throw new IllegalArgumentException("'supplier' is null");
 
-      // Run it
-      runnable.run();
-    }
-  }
+		// Lock it
+		try (LockedAutoLock ignored = doLock(lock)) {
 
-  /**
-   * Locks the provided lock, runs the supplier during the lock, unlocks afterwards and, assuming if supplier does
-   * not return an exception, value returned by the supplier will be returned
-   *
-   * @param <R>      desired type of the return value
-   * @param <T>      type of exception
-   * @param lock     lock to lock on
-   * @param supplier supplier to run while locked
-   * @return result of supplier
-   * @throws T thrown if runnable has thrown an exception
-   */
-  static <R, T extends Throwable> R lockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R,T> supplier) throws T{
+			// Get it
+			return supplier.get();
+		}
+	}
 
-    // Ensure supplier is not null
-    //noinspection ConstantConditions
-    if(supplier == null) throw new IllegalArgumentException("'supplier' is null");
+	/**
+	 * Locks the provided lock, runs the runnable during the lock, unlocks afterwards
+	 *
+	 * @param <T>      type of exception
+	 * @param lock     lock to lock on
+	 * @param runnable runnable to run while locked
+	 * @throws T                    thrown if runnable has thrown an exception
+	 * @throws InterruptedException thrown if the thread was interrupted
+	 */
+	static <T extends Throwable> void lockInterruptiblyAndRun(
+					@Nonnull Lock lock,
+					@Nonnull ThrowableRunnable<T> runnable
+	) throws T, InterruptedException {
 
-    // Lock it
-    try(LockedAutoLock ignored = doLock(lock)){
+		// Ensure runnable is not null
+		//noinspection ConstantConditions
+		if (runnable == null) throw new IllegalArgumentException("'runnable' is null");
 
-      // Get it
-      return supplier.get();
-    }
-  }
+		// Lock it
+		try (LockedAutoLock ignored = doLockInterruptibly(lock)) {
 
-  /**
-   * Locks the provided lock, runs the runnable during the lock, unlocks afterwards
-   *
-   * @param <T>      type of exception
-   * @param lock     lock to lock on
-   * @param runnable runnable to run while locked
-   * @throws T                    thrown if runnable has thrown an exception
-   * @throws InterruptedException thrown if the thread was interrupted
-   */
-  static <T extends Throwable> void lockInterruptiblyAndRun(
-    @Nonnull Lock lock,
-    @Nonnull ThrowableRunnable<T> runnable
-  ) throws T, InterruptedException{
+			// Run it
+			runnable.run();
+		}
+	}
 
-    // Ensure runnable is not null
-    //noinspection ConstantConditions
-    if(runnable == null) throw new IllegalArgumentException("'runnable' is null");
+	/**
+	 * Locks the provided lock, runs the supplier during the lock, unlocks afterwards and, assuming if supplier does
+	 * not return an exception, value returned by the supplier will be returned
+	 *
+	 * @param <R>      desired type of the return value
+	 * @param <T>      type of exception
+	 * @param lock     lock to lock on
+	 * @param supplier supplier to run while locked
+	 * @return result of supplier
+	 * @throws T                    thrown if runnable has thrown an exception
+	 * @throws InterruptedException thrown if the thread was interrupted
+	 */
+	static <R, T extends Throwable> R lockInterruptiblyAndGet(
+					@Nonnull Lock lock,
+					@Nonnull ThrowableSupplier<R, T> supplier
+	)
+					throws T, InterruptedException {
 
-    // Lock it
-    try(LockedAutoLock ignored = doLockInterruptibly(lock)){
+		// Ensure supplier is not null
+		//noinspection ConstantConditions
+		if (supplier == null) throw new IllegalArgumentException("'supplier' is null");
 
-      // Run it
-      runnable.run();
-    }
-  }
+		// Lock it
+		try (LockedAutoLock ignored = doLockInterruptibly(lock)) {
 
-  /**
-   * Locks the provided lock, runs the supplier during the lock, unlocks afterwards and, assuming if supplier does
-   * not return an exception, value returned by the supplier will be returned
-   *
-   * @param <R>      desired type of the return value
-   * @param <T>      type of exception
-   * @param lock     lock to lock on
-   * @param supplier supplier to run while locked
-   * @return result of supplier
-   * @throws T                    thrown if runnable has thrown an exception
-   * @throws InterruptedException thrown if the thread was interrupted
-   */
-  static <R, T extends Throwable> R lockInterruptiblyAndGet(
-    @Nonnull Lock lock,
-    @Nonnull ThrowableSupplier<R,T> supplier
-  )
-  throws T, InterruptedException{
+			// Get it
+			return supplier.get();
+		}
+	}
 
-    // Ensure supplier is not null
-    //noinspection ConstantConditions
-    if(supplier == null) throw new IllegalArgumentException("'supplier' is null");
+	/**
+	 * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
+	 *
+	 * @param <T>           type of exception
+	 * @param lock          lock to lock on
+	 * @param onLockSuccess runnable to run while locked
+	 * @throws T thrown if runnable has thrown an exception
+	 */
+	static <T extends Throwable> void tryLockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> onLockSuccess, @Nonnull ThrowableRunnable<T> onLockFail) throws T {
 
-    // Lock it
-    try(LockedAutoLock ignored = doLockInterruptibly(lock)){
+		// Ensure runnables are not null
+		//noinspection ConstantConditions
+		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		//noinspection ConstantConditions
+		if (onLockSuccess == null) throw new IllegalArgumentException("'onLockSuccess' is null");
+		//noinspection ConstantConditions
+		if (onLockFail == null) throw new IllegalArgumentException("'onLockFail' is null");
 
-      // Get it
-      return supplier.get();
-    }
-  }
+		// Lock it
+		if (lock.tryLock()) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+				onLockSuccess.run();
+			}
+		} else {
+			onLockFail.run();
+		}
+	}
 
-  /**
-   * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
-   *
-   * @param <T>      type of exception
-   * @param lock     lock to lock on
-   * @param runnable runnable to run while locked
-   * @throws T                thrown if runnable has thrown an exception
-   * @throws TimeoutException thrown if lock has failed to lock
-   */
-  static <T extends Throwable> void tryLockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable)
-  throws T, TimeoutException{
+	/**
+	 * Attempts to lock. If lock is obtained, then the supplier will be run. After running the supplier, lock is unlocked.
+	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
+	 *
+	 * @param <R>                   desired type of the return value
+	 * @param <T>                   type of exception
+	 * @param lock                  lock to lock on
+	 * @param onLockSuccessSupplier supplier to run while locked
+	 * @return result of supplier
+	 * @throws T thrown if runnable has thrown an exception
+	 */
+	static <R, T extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T> onLockSuccessSupplier, @Nonnull ThrowableSupplier<R, T> onLockFailSupplier) throws T {
 
-    // Ensure runnable is not null
-    //noinspection ConstantConditions
-    if(runnable == null) throw new IllegalArgumentException("'runnable' is null");
+		// Ensure supplier is not null
+		//noinspection ConstantConditions
+		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		//noinspection ConstantConditions
+		if (onLockSuccessSupplier == null) throw new IllegalArgumentException("'onLockSuccessSupplier' is null");
+		//noinspection ConstantConditions
+		if (onLockFailSupplier == null) throw new IllegalArgumentException("'onLockFailSupplier' is null");
 
-    // Lock it
-    try(LockedAutoLock ignored = doTryLock(lock)){
+		// Lock it
+		if (lock.tryLock()) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+				return onLockSuccessSupplier.get();
+			}
+		} else {
+			return onLockFailSupplier.get();
+		}
+	}
 
-      // Run it
-      runnable.run();
-    }
-  }
+	/**
+	 * Attempts to lock. If lock is obtained, then the onSuccessfulLock will be run. After running the onSuccessfulLock, lock is unlocked.
+	 *
+	 * @param <T>              type of exception
+	 * @param lock             lock to lock on
+	 * @param timeout          duration of the lock attempt
+	 * @param onSuccessfulLock onSuccessfulLock to run while locked
+	 * @throws T                    thrown if onSuccessfulLock has thrown an exception
+	 * @throws InterruptedException thrown if the thread was interrupted
+	 */
+	static <T extends Throwable> void tryLockAndRun(
+					@Nonnull Lock lock,
+					@Nonnull Duration timeout,
+					@Nonnull ThrowableRunnable<T> onSuccessfulLock,
+					@Nonnull ThrowableRunnable<T> onFailedLock
+	) throws T, InterruptedException {
 
-  /**
-   * Attempts to lock. If lock is obtained, then the supplier will be run. After running the supplier, lock is unlocked.
-   * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
-   *
-   * @param <R>      desired type of the return value
-   * @param <T>      type of exception
-   * @param lock     lock to lock on
-   * @param supplier supplier to run while locked
-   * @return result of supplier
-   * @throws T                thrown if runnable has thrown an exception
-   * @throws TimeoutException thrown if lock has failed to lock
-   */
-  static <R, T extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R,T> supplier)
-  throws T, TimeoutException{
+		// Ensure onSuccessfulLock is not null
+		//noinspection ConstantConditions
+		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		//noinspection ConstantConditions
+		if (timeout == null) throw new IllegalArgumentException("'timeout' is null");
+		//noinspection ConstantConditions
+		if (onSuccessfulLock == null) throw new IllegalArgumentException("'onSuccessfulLock' is null");
+		//noinspection ConstantConditions
+		if (onFailedLock == null) throw new IllegalArgumentException("'onFailedLock' is null");
 
-    // Ensure supplier is not null
-    //noinspection ConstantConditions
-    if(supplier == null) throw new IllegalArgumentException("'supplier' is null");
+		// Lock it
+		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+				onSuccessfulLock.run();
+			}
+		} else {
+			onFailedLock.run();
+		}
+	}
 
-    // Lock it
-    try(LockedAutoLock ignored = doTryLock(lock)){
 
-      // Get it
-      return supplier.get();
-    }
-  }
+	/**
+	 * Attempts to lock. If lock is obtained, then the supplier will be run. After running the supplier, lock is unlocked.
+	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
+	 *
+	 * @param <R>                   desired type of the return value
+	 * @param <T>                   type of exception
+	 * @param lock                  lock to lock on
+	 * @param timeout               duration of the lock attempt
+	 * @param onLockSuccessSupplier supplier to run while locked
+	 * @return result of supplier
+	 * @throws T                    thrown if runnable has thrown an exception
+	 * @throws InterruptedException thrown if the thread was interrupted
+	 */
+	static <R, T extends Throwable> R tryLockAndGet(
+					@Nonnull Lock lock,
+					@Nonnull Duration timeout,
+					@Nonnull ThrowableSupplier<R, T> onLockSuccessSupplier,
+					@Nonnull ThrowableSupplier<R, T> onLockFailSupplier
+	) throws T, InterruptedException {
 
-  /**
-   * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
-   *
-   * @param <T>      type of exception
-   * @param lock     lock to lock on
-   * @param timeout  duration of the lock attempt
-   * @param runnable runnable to run while locked
-   * @throws T                    thrown if runnable has thrown an exception
-   * @throws TimeoutException     thrown if lock has failed to lock
-   * @throws InterruptedException thrown if the thread was interrupted
-   */
-  static <T extends Throwable> void tryLockAndRun(
-    @Nonnull Lock lock,
-    @Nonnull Duration timeout,
-    @Nonnull ThrowableRunnable<T> runnable
-  ) throws T, TimeoutException, InterruptedException{
+		// Ensure supplier is not null
+		//noinspection ConstantConditions
+		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		//noinspection ConstantConditions
+		if (timeout == null) throw new IllegalArgumentException("'timeout' is null");
+		//noinspection ConstantConditions
+		if (onLockSuccessSupplier == null) throw new IllegalArgumentException("'onLockSuccessSupplier' is null");
+		//noinspection ConstantConditions
+		if (onLockFailSupplier == null) throw new IllegalArgumentException("'onLockFailSupplier' is null");
 
-    // Ensure runnable is not null
-    //noinspection ConstantConditions
-    if(runnable == null) throw new IllegalArgumentException("'runnable' is null");
+		// Lock it
+		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+				return onLockSuccessSupplier.get();
+			}
+		} else {
+			return onLockFailSupplier.get();
+		}
+	}
 
-    // Lock it
-    try(LockedAutoLock ignored = doTryLock(lock, timeout)){
+	/**
+	 * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
+	 *
+	 * @param <T>                      type of exception
+	 * @param lock                     lock to lock on
+	 * @param time                     timeout duration
+	 * @param unit                     timeout timeunit
+	 * @param onSuccessfulLockRunnable runnable to run while locked
+	 * @throws T                    thrown if runnable has thrown an exception
+	 * @throws InterruptedException thrown when the locking process was interrupted
+	 */
+	static <T extends Throwable> void tryLockAndRun(
+					@Nonnull Lock lock,
+					@Nonnegative long time,
+					@Nonnull TimeUnit unit,
+					@Nonnull ThrowableRunnable<T> onSuccessfulLockRunnable,
+					@Nonnull ThrowableRunnable<T> onFailedLockRunnable
+	) throws T, InterruptedException {
 
-      // Run it
-      runnable.run();
-    }
-  }
+		// Ensure onSuccessfulLock is not null
+		//noinspection ConstantConditions
+		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		//noinspection ConstantConditions
+		if (unit == null) throw new IllegalArgumentException("'unit' is null");
+		//noinspection ConstantConditions
+		if (onSuccessfulLockRunnable == null) throw new IllegalArgumentException("'onSuccessfulLock' is null");
+		//noinspection ConstantConditions
+		if (onFailedLockRunnable == null) throw new IllegalArgumentException("'onFailedLock' is null");
 
-  /**
-   * Attempts to lock. If lock is obtained, then the supplier will be run. After running the supplier, lock is unlocked.
-   * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
-   *
-   * @param <R>      desired type of the return value
-   * @param <T>      type of exception
-   * @param lock     lock to lock on
-   * @param timeout  duration of the lock attempt
-   * @param supplier supplier to run while locked
-   * @return result of supplier
-   * @throws T                    thrown if runnable has thrown an exception
-   * @throws TimeoutException     thrown if lock has failed to lock
-   * @throws InterruptedException thrown if the thread was interrupted
-   */
-  static <R, T extends Throwable> R tryLockAndGet(
-    @Nonnull Lock lock,
-    @Nonnull Duration timeout,
-    @Nonnull ThrowableSupplier<R,T> supplier
-  ) throws T, TimeoutException, InterruptedException{
+		// Lock it
+		if (lock.tryLock(time, unit)) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+				onSuccessfulLockRunnable.run();
+			}
+		} else {
+			onFailedLockRunnable.run();
+		}
+	}
 
-    // Ensure supplier is not null
-    //noinspection ConstantConditions
-    if(supplier == null) throw new IllegalArgumentException("'supplier' is null");
+	/**
+	 * Attempts to lock. If lock is obtained, then the supplier will be run. After running the supplier, lock is unlocked.
+	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
+	 *
+	 * @param <R>                      desired type of the return value
+	 * @param <T>                      type of exception
+	 * @param lock                     lock to lock on
+	 * @param time                     timeout duration
+	 * @param unit                     timeout timeunit
+	 * @param onSuccessfulLockSupplier supplier to run while locked
+	 * @return result of supplier
+	 * @throws T                    thrown if runnable has thrown an exception
+	 * @throws InterruptedException thrown if the thread was interrupted
+	 */
+	static <R, T extends Throwable> R tryLockAndGet(
+					@Nonnull Lock lock,
+					@Nonnegative long time,
+					@Nonnull TimeUnit unit,
+					@Nonnull ThrowableSupplier<R, T> onSuccessfulLockSupplier,
+					@Nonnull ThrowableSupplier<R, T> onFailedLockSupplier
+	) throws T, InterruptedException {
 
-    // Lock it
-    try(LockedAutoLock ignored = doTryLock(lock, timeout)){
+		// Ensure supplier is not null
+		//noinspection ConstantConditions
+		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		//noinspection ConstantConditions
+		if (unit == null) throw new IllegalArgumentException("'unit' is null");
+		//noinspection ConstantConditions
+		if (onSuccessfulLockSupplier == null) throw new IllegalArgumentException("'onSuccessfulLockSupplier' is null");
+		//noinspection ConstantConditions
+		if (onFailedLockSupplier == null) throw new IllegalArgumentException("'onFailedLockSupplier' is null");
 
-      // Get it
-      return supplier.get();
-    }
-  }
+		// Lock it
+		if (lock.tryLock(time, unit)) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+				return onSuccessfulLockSupplier.get();
+			}
+		} else {
+			return onFailedLockSupplier.get();
+		}
+	}
 
-  /**
-   * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
-   *
-   * @param <T>      type of exception
-   * @param lock     lock to lock on
-   * @param time     timeout duration
-   * @param unit     timeout timeunit
-   * @param runnable runnable to run while locked
-   * @throws T                    thrown if runnable has thrown an exception
-   * @throws TimeoutException     thrown if the lock cannot be obtained
-   * @throws InterruptedException thrown when the locking process was interrupted
-   */
-  static <T extends Throwable> void tryLockAndRun(
-    @Nonnull Lock lock,
-    @Nonnegative long time,
-    @Nonnull TimeUnit unit,
-    @Nonnull ThrowableRunnable<T> runnable
-  ) throws T, TimeoutException, InterruptedException{
+	/**
+	 * Locks this AutoLock and creates AutoCloseable LockedAutoLock resource
+	 *
+	 * @return LockedAutoLock resource
+	 */
+	@Nonnull
+	LockedAutoLock doLock();
 
-    // Ensure runnable is not null
-    //noinspection ConstantConditions
-    if(runnable == null) throw new IllegalArgumentException("'runnable' is null");
+	/**
+	 * Locks this AutoLock and creates AutoCloseable LockedAutoLock resource
+	 *
+	 * @return LockedAutoLock resource
+	 * @throws InterruptedException thrown when the locking process was interrupted
+	 */
+	@Nonnull
+	LockedAutoLock doLockInterruptibly() throws InterruptedException;
 
-    // Lock it
-    try(LockedAutoLock ignored = doTryLock(lock, time, unit)){
-
-      // Run it
-      runnable.run();
-    }
-  }
-
-  /**
-   * Attempts to lock. If lock is obtained, then the supplier will be run. After running the supplier, lock is unlocked.
-   * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
-   *
-   * @param <R>      desired type of the return value
-   * @param <T>      type of exception
-   * @param lock     lock to lock on
-   * @param time     timeout duration
-   * @param unit     timeout timeunit
-   * @param supplier supplier to run while locked
-   * @return result of supplier
-   * @throws T                    thrown if runnable has thrown an exception
-   * @throws TimeoutException     thrown if lock has failed to lock
-   * @throws InterruptedException thrown if the thread was interrupted
-   */
-  static <R, T extends Throwable> R tryLockAndGet(
-    @Nonnull Lock lock,
-    @Nonnegative long time,
-    @Nonnull TimeUnit unit,
-    @Nonnull ThrowableSupplier<R,T> supplier
-  ) throws T, TimeoutException, InterruptedException{
-
-    // Ensure supplier is not null
-    //noinspection ConstantConditions
-    if(supplier == null) throw new IllegalArgumentException("'supplier' is null");
-
-    // Lock it
-    try(LockedAutoLock ignored = doTryLock(lock, time, unit)){
-
-      // Get it
-      return supplier.get();
-    }
-  }
-
-  /**
-   * Locks this AutoLock and creates AutoCloseable LockedAutoLock resource
-   *
-   * @return LockedAutoLock resource
-   */
-  @Nonnull
-  LockedAutoLock doLock();
-
-  /**
-   * Locks this AutoLock and creates AutoCloseable LockedAutoLock resource
-   *
-   * @return LockedAutoLock resource
-   * @throws InterruptedException thrown when the locking process was interrupted
-   */
-  @Nonnull
-  LockedAutoLock doLockInterruptibly() throws InterruptedException;
-
-  /**
-   * Attempts to lock this AutoLock and creates AutoCloseable LockedAutoLock resource if successful. TimeoutException will be
-   * thrown if the lock cannot be obtained
-   *
-   * @return LockedAutoLock resource
-   * @throws TimeoutException thrown if the lock cannot be obtained
-   */
-  @Nonnull
-  LockedAutoLock doTryLock() throws TimeoutException;
-
-  /**
-   * Attempts to lock this AutoLock and creates AutoCloseable LockedAutoLock resource if successful. TimeoutException will be
-   * thrown if the lock cannot be obtained
-   *
-   * @param time timeout duration
-   * @param unit timeout timeunit
-   * @return LockedAutoLock resource
-   * @throws TimeoutException     thrown if the lock cannot be obtained
-   * @throws InterruptedException thrown when the locking process was interrupted
-   */
-  @Nonnull
-  LockedAutoLock doTryLock(@Nonnegative long time, @Nonnull TimeUnit unit)
-  throws TimeoutException, InterruptedException;
-
-  /**
-   * Attempts to lock. If lock is obtained, then a LockedAutoLock reference is created.
-   *
-   * @param timeout duration of the lock attempt
-   * @return LockedAutoLock locked auto lock
-   * @throws TimeoutException     thrown if lock has failed to lock
-   * @throws InterruptedException thrown if the thread was interrupted
-   */
-  @Nonnull
-  LockedAutoLock doTryLock(@Nonnull Duration timeout) throws TimeoutException, InterruptedException;
-
-  /**
-   * Returns lock state of this lock, true if locked, false if unlocked
-   *
-   * @return true if locked, false if unlocked
-   */
-  boolean isLocked();
+	/**
+	 * Returns lock state of this lock, true if locked, false if unlocked
+	 *
+	 * @return true if locked, false if unlocked
+	 */
+	boolean isLocked();
 
 }
