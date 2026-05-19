@@ -154,12 +154,12 @@ public interface AutoLock {
 	/**
 	 * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
 	 *
-	 * @param <T>           type of exception
+	 * @param <T1>           type of exception
 	 * @param lock          lock to lock on
 	 * @param onLockSuccess runnable to run while locked
-	 * @throws T thrown if runnable has thrown an exception
+	 * @throws T1 thrown if runnable has thrown an exception
 	 */
-	static <T extends Throwable> void tryLockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> onLockSuccess, @Nonnull ThrowableRunnable<T> onLockFail) throws T {
+	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T1> onLockSuccess, @Nonnull ThrowableRunnable<T2> onLockFail) throws T1, T2 {
 
 		// Ensure runnables are not null
 		//noinspection ConstantConditions
@@ -184,13 +184,13 @@ public interface AutoLock {
 	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
 	 *
 	 * @param <R>                   desired type of the return value
-	 * @param <T>                   type of exception
+	 * @param <T1>                   type of exception
 	 * @param lock                  lock to lock on
 	 * @param onLockSuccessSupplier supplier to run while locked
 	 * @return result of supplier
-	 * @throws T thrown if runnable has thrown an exception
+	 * @throws T1 thrown if runnable has thrown an exception
 	 */
-	static <R, T extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T> onLockSuccessSupplier, @Nonnull ThrowableSupplier<R, T> onLockFailSupplier) throws T {
+	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T1> onLockSuccessSupplier, @Nonnull ThrowableSupplier<R, T2> onLockFailSupplier) throws T1,T2 {
 
 		// Ensure supplier is not null
 		//noinspection ConstantConditions
@@ -213,19 +213,19 @@ public interface AutoLock {
 	/**
 	 * Attempts to lock. If lock is obtained, then the onSuccessfulLock will be run. After running the onSuccessfulLock, lock is unlocked.
 	 *
-	 * @param <T>              type of exception
+	 * @param <T1>              type of exception
 	 * @param lock             lock to lock on
 	 * @param timeout          duration of the lock attempt
 	 * @param onSuccessfulLock onSuccessfulLock to run while locked
-	 * @throws T                    thrown if onSuccessfulLock has thrown an exception
+	 * @throws T1                    thrown if onSuccessfulLock has thrown an exception
 	 * @throws InterruptedException thrown if the thread was interrupted
 	 */
-	static <T extends Throwable> void tryLockAndRun(
+	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(
 					@Nonnull Lock lock,
 					@Nonnull Duration timeout,
-					@Nonnull ThrowableRunnable<T> onSuccessfulLock,
-					@Nonnull ThrowableRunnable<T> onFailedLock
-	) throws T, InterruptedException {
+					@Nonnull ThrowableRunnable<T1> onSuccessfulLock,
+					@Nonnull ThrowableRunnable<T2> onFailedLock
+	) throws  T1, T2, InterruptedException {
 
 		// Ensure onSuccessfulLock is not null
 		//noinspection ConstantConditions
@@ -253,20 +253,20 @@ public interface AutoLock {
 	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
 	 *
 	 * @param <R>                   desired type of the return value
-	 * @param <T>                   type of exception
+	 * @param <T1>                   type of exception
 	 * @param lock                  lock to lock on
 	 * @param timeout               duration of the lock attempt
 	 * @param onLockSuccessSupplier supplier to run while locked
 	 * @return result of supplier
-	 * @throws T                    thrown if runnable has thrown an exception
+	 * @throws T1                    thrown if runnable has thrown an exception
 	 * @throws InterruptedException thrown if the thread was interrupted
 	 */
-	static <R, T extends Throwable> R tryLockAndGet(
+	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(
 					@Nonnull Lock lock,
 					@Nonnull Duration timeout,
-					@Nonnull ThrowableSupplier<R, T> onLockSuccessSupplier,
-					@Nonnull ThrowableSupplier<R, T> onLockFailSupplier
-	) throws T, InterruptedException {
+					@Nonnull ThrowableSupplier<R, T1> onLockSuccessSupplier,
+					@Nonnull ThrowableSupplier<R, T2> onLockFailSupplier
+	) throws  T1, T2, InterruptedException {
 
 		// Ensure supplier is not null
 		//noinspection ConstantConditions
@@ -291,21 +291,21 @@ public interface AutoLock {
 	/**
 	 * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
 	 *
-	 * @param <T>                      type of exception
+	 * @param <T1>                      type of exception
 	 * @param lock                     lock to lock on
 	 * @param time                     timeout duration
 	 * @param unit                     timeout timeunit
 	 * @param onSuccessfulLockRunnable runnable to run while locked
-	 * @throws T                    thrown if runnable has thrown an exception
+	 * @throws T1                    thrown if runnable has thrown an exception
 	 * @throws InterruptedException thrown when the locking process was interrupted
 	 */
-	static <T extends Throwable> void tryLockAndRun(
+	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(
 					@Nonnull Lock lock,
 					@Nonnegative long time,
 					@Nonnull TimeUnit unit,
-					@Nonnull ThrowableRunnable<T> onSuccessfulLockRunnable,
-					@Nonnull ThrowableRunnable<T> onFailedLockRunnable
-	) throws T, InterruptedException {
+					@Nonnull ThrowableRunnable<T1> onSuccessfulLockRunnable,
+					@Nonnull ThrowableRunnable<T2> onFailedLockRunnable
+	) throws  T1, T2, InterruptedException {
 
 		// Ensure onSuccessfulLock is not null
 		//noinspection ConstantConditions
@@ -332,22 +332,22 @@ public interface AutoLock {
 	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
 	 *
 	 * @param <R>                      desired type of the return value
-	 * @param <T>                      type of exception
+	 * @param <T1>                      type of exception
 	 * @param lock                     lock to lock on
 	 * @param time                     timeout duration
 	 * @param unit                     timeout timeunit
 	 * @param onSuccessfulLockSupplier supplier to run while locked
 	 * @return result of supplier
-	 * @throws T                    thrown if runnable has thrown an exception
+	 * @throws T1                    thrown if runnable has thrown an exception
 	 * @throws InterruptedException thrown if the thread was interrupted
 	 */
-	static <R, T extends Throwable> R tryLockAndGet(
+	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(
 					@Nonnull Lock lock,
 					@Nonnegative long time,
 					@Nonnull TimeUnit unit,
-					@Nonnull ThrowableSupplier<R, T> onSuccessfulLockSupplier,
-					@Nonnull ThrowableSupplier<R, T> onFailedLockSupplier
-	) throws T, InterruptedException {
+					@Nonnull ThrowableSupplier<R, T1> onSuccessfulLockSupplier,
+					@Nonnull ThrowableSupplier<R, T2> onFailedLockSupplier
+	) throws  T1, T2, InterruptedException {
 
 		// Ensure supplier is not null
 		//noinspection ConstantConditions
