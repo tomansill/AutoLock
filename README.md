@@ -56,10 +56,10 @@ Lock lock = new ReentrantLock();
 
 int value = AutoLock.lockAndGet(lock, () -> {
 
-	// Do stuff
+  // Do stuff
 
-	// Return value
-	return 100;
+  // Return value
+  return 100;
 });
 ```
 

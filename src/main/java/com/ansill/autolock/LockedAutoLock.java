@@ -2,27 +2,34 @@ package com.ansill.autolock;
 
 import org.jspecify.annotations.NonNull;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /**
  * A scope-bound lock holder that releases an underlying {@link java.util.concurrent.locks.Lock}
  * when closed.
  *
- * <p>This class is intended exclusively for use with try-with-resources:</p>
+ * <p>This class is intended for use with try-with-resources to ensure that locks
+ * are reliably released:</p>
  *
  * <pre>{@code
- * try (LockedAutoLock lock = AutoLock.lock(mutex)) {
+ * try (LockedAutoLock ignored = AutoLock.lock(mutex)) {
  *     // critical section
  * }
  * }</pre>
  *
- * <p>The lock is released exactly once when {@link #close()} is invoked.</p>
+ * <p>When {@link #close()} is invoked, this instance delegates directly to
+ * {@link Lock#unlock()} on the underlying lock.</p>
  *
- * <p>This implementation is <b>idempotent and safe for multiple calls to {@code close()}</b>.
- * Only the first invocation will release the underlying lock; subsequent calls are no-ops.</p>
+ * <p><b>Usage contract:</b> Each instance must be closed exactly once. Violations
+ * of this contract (such as double-closing or closing from a non-owning thread)
+ * will result in the underlying {@link Lock} throwing an exception, typically
+ * {@link IllegalMonitorStateException}.</p>
  *
- * <p>Instances of this class are created internally by {@link AutoLock} and are not intended
+ * <p>This class does not attempt to track or guard against misuse; it is a thin,
+ * zero-overhead wrapper over {@link Lock} intended to provide structured locking
+ * via try-with-resources.</p>
+ *
+ * <p>Instances are created internally by {@link AutoLock} and are not intended
  * for external construction or subclassing.</p>
  */
 public final class LockedAutoLock implements AutoCloseable {
@@ -32,13 +39,6 @@ public final class LockedAutoLock implements AutoCloseable {
 	 */
 	@NonNull
 	private final Lock lock;
-
-	/**
-	 * Indicates whether the lock has already been released.
-	 *
-	 * <p>This ensures that {@link #close()} is idempotent.</p>
-	 */
-	private final AtomicBoolean closed = new AtomicBoolean(false);
 
 	/**
 	 * Creates a new scoped lock wrapper.
@@ -53,16 +53,16 @@ public final class LockedAutoLock implements AutoCloseable {
 	}
 
 	/**
-	 * Releases the underlying lock if it has not already been released.
+	 * Releases the underlying lock.
 	 *
-	 * <p>This method is idempotent: multiple calls have no additional effect.</p>
+	 * <p>This method is automatically invoked by try-with-resources. It directly
+	 * calls {@link Lock#unlock()} on the underlying lock.</p>
 	 *
-	 * <p>This method is automatically invoked by try-with-resources.</p>
+	 * @throws IllegalMonitorStateException if the current thread does not hold
+	 *         the lock or if the lock has already been released
 	 */
 	@Override
 	public void close() {
-		if (this.closed.compareAndSet(false, true)) {
-			this.lock.unlock();
-		}
+		this.lock.unlock();
 	}
 }
