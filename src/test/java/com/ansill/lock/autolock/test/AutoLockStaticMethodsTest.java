@@ -15,9 +15,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 @DisplayName("Static Methods")
 class AutoLockStaticMethodsTest implements AutoLockTest {
 
-	@DisplayName("Attempt to successfully run doLock(Lock) method")
+	@DisplayName("Attempt to successfully run lock(Lock) method")
 	@Test
-	void testDoLock() {
+	void testLock() {
 
 		// Create lock
 		ReentrantLock rl = new ReentrantLock();
@@ -29,7 +29,7 @@ class AutoLockStaticMethodsTest implements AutoLockTest {
 		Runnable afterLock;
 
 		// Lock it
-		try (LockedAutoLock ignored = AutoLock.doLock(rl)) {
+		try (LockedAutoLock ignored = AutoLock.lock(rl)) {
 
 			// Do during-thread test and get post lock runnable
 			afterLock = duringThread.get();
@@ -39,9 +39,9 @@ class AutoLockStaticMethodsTest implements AutoLockTest {
 		afterLock.run();
 	}
 
-	@DisplayName("Attempt to successfully run doLockInterruptibly(Lock) method")
+	@DisplayName("Attempt to successfully run lockInterruptibly(Lock) method")
 	@Test
-	void testDoLockInterruptibly() throws InterruptedException {
+	void testLockInterruptibly() throws InterruptedException {
 
 		// Create lock
 		ReentrantLock rl = new ReentrantLock();
@@ -53,7 +53,7 @@ class AutoLockStaticMethodsTest implements AutoLockTest {
 		Runnable afterLock;
 
 		// Lock it
-		try (LockedAutoLock ignored = AutoLock.doLockInterruptibly(rl)) {
+		try (LockedAutoLock ignored = AutoLock.lockInterruptibly(rl)) {
 
 			// Do during-thread test and get post lock runnable
 			afterLock = duringThread.get();
@@ -63,9 +63,9 @@ class AutoLockStaticMethodsTest implements AutoLockTest {
 		afterLock.run();
 	}
 
-	@DisplayName("Attempt to run doLockInterruptibly(Lock) method and call interrupt")
+	@DisplayName("Attempt to run lockInterruptibly(Lock) method and call interrupt")
 	@Test
-	void testDoLockInterruptiblyInterrupt() throws InterruptedException {
+	void testLockInterruptiblyInterrupt() throws InterruptedException {
 
 		// Create lock
 		ReentrantLock rl = new ReentrantLock();
@@ -79,7 +79,7 @@ class AutoLockStaticMethodsTest implements AutoLockTest {
 		// Create thread
 		Thread thread = new Thread(() -> {
 
-			try (LockedAutoLock ignored = AutoLock.doLockInterruptibly(rl)) {
+			try (LockedAutoLock ignored = AutoLock.lockInterruptibly(rl)) {
 				fail("Lock obtained");
 			} catch (InterruptedException e) {
 				success.set(true);

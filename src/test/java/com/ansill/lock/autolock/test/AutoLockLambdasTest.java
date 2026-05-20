@@ -78,15 +78,15 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	@DisplayName("Attempt to pass in null Lock in lockAndRun(Lock,Runnable) method")
 	@Test
 	void testLockAndRunNullLock() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> lockAndRun(null, Assertions::fail));
-		assertEquals("'lock' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> lockAndRun(null, Assertions::fail));
+		assertEquals("lock must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null Runnable in lockAndRun(Lock,Runnable) method")
 	@Test
 	void testLockAndRunNullRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> lockAndRun(new ReentrantLock(), null));
-		assertEquals("'runnable' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> lockAndRun(new ReentrantLock(), null));
+		assertEquals("runnable must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to successfully run lockAndGet(Lock,Supplier) method")
@@ -121,15 +121,15 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	@DisplayName("Attempt to pass in null Lock lockAndGet(Lock,Supplier) method")
 	@Test
 	void testLockAndGetNullLock() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> lockAndGet(null, Assertions::fail));
-		assertEquals("'lock' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> lockAndGet(null, Assertions::fail));
+		assertEquals("lock must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null Runnable in lockAndGet(Lock,Supplier) method")
 	@Test
 	void testLockAndGetNullRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> lockAndGet(new ReentrantLock(), null));
-		assertEquals("'supplier' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> lockAndGet(new ReentrantLock(), null));
+		assertEquals("supplier must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to successfully run lockInterruptiblyAndRun(Lock,Runnable) method")
@@ -155,15 +155,15 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	@DisplayName("Attempt to pass in null Lock in lockInterruptiblyAndRun(Lock,Runnable) method")
 	@Test
 	void testLockInterruptiblyAndRunNullLock() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> lockInterruptiblyAndRun(null, Assertions::fail));
-		assertEquals("'lock' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> lockInterruptiblyAndRun(null, Assertions::fail));
+		assertEquals("lock must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null Runnable in lockInterruptiblyAndRun(Lock,Runnable) method")
 	@Test
 	void testLockInterruptiblyAndRunNullRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> lockInterruptiblyAndRun(new ReentrantLock(), null));
-		assertEquals("'runnable' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> lockInterruptiblyAndRun(new ReentrantLock(), null));
+		assertEquals("runnable must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to successfully run lockInterruptiblyAndGet(Lock,Supplier) method")
@@ -198,15 +198,15 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	@DisplayName("Attempt to pass in null Lock lockInterruptiblyAndGet(Lock,Supplier) method")
 	@Test
 	void testLockInterruptiblyAndGetNullLock() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> lockInterruptiblyAndGet(null, Assertions::fail));
-		assertEquals("'lock' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> lockInterruptiblyAndGet(null, Assertions::fail));
+		assertEquals("lock must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null Runnable in lockInterruptiblyAndGet(Lock,Supplier) method")
 	@Test
 	void testLockInterruptiblyAndGetNullRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> lockInterruptiblyAndGet(new ReentrantLock(), null));
-		assertEquals("'supplier' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> lockInterruptiblyAndGet(new ReentrantLock(), null));
+		assertEquals("supplier must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to run lockInterruptiblyAndRun(Lock,Runnable) method and call interrupt")
@@ -512,22 +512,22 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	@DisplayName("Attempt to pass in null Lock in tryLockAndRun(Lock,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunNullLock() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(null, Assertions::fail, Assertions::fail));
-		assertEquals("'lock' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(null, Assertions::fail, Assertions::fail));
+		assertEquals("lock must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 1st Runnable in tryLockAndRun(Lock,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunNullSuccessRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(new ReentrantLock(), null, Assertions::fail));
-		assertEquals("'onLockSuccess' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(new ReentrantLock(), null, Assertions::fail));
+		assertEquals("onLockSuccess must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 2nd Runnable in tryLockAndRun(Lock,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunNullFailRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(new ReentrantLock(), Assertions::fail, null));
-		assertEquals("'onLockFail' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(new ReentrantLock(), Assertions::fail, null));
+		assertEquals("onLockFail must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to successfully run tryLockAndGet(Lock,Supplier,Supplier) method")
@@ -566,22 +566,22 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	@DisplayName("Attempt to pass in null Lock in tryLockAndGet(Lock,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetNullLock() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(null, Assertions::fail, Assertions::fail));
-		assertEquals("'lock' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(null, Assertions::fail, Assertions::fail));
+		assertEquals("lock must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 1st Supplier in tryLockAndGet(Lock,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetNullSuccessRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(new ReentrantLock(), null, Assertions::fail));
-		assertEquals("'onLockSuccess' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(new ReentrantLock(), null, Assertions::fail));
+		assertEquals("onLockSuccess must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 2nd Supplier in tryLockAndGet(Lock,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetNullFailRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(new ReentrantLock(), Assertions::fail, null));
-		assertEquals("'onLockFail' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(new ReentrantLock(), Assertions::fail, null));
+		assertEquals("onLockFail must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to successfully run tryLockAndRun(Lock,long,TimeUnit,Runnable,Runnable) method")
@@ -671,36 +671,36 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	@DisplayName("Attempt to pass in null Lock in tryLockAndRun(Lock,Duration,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunDurationNullLock() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(null, Duration.ofMinutes(1), Assertions::fail, Assertions::fail));
-		assertEquals("'lock' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(null, Duration.ofMinutes(1), Assertions::fail, Assertions::fail));
+		assertEquals("lock must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null Duration in tryLockAndRun(Lock,Duration,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunDurationNullDuration() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(new ReentrantLock(), null, Assertions::fail, Assertions::fail));
-		assertEquals("'timeout' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(new ReentrantLock(), null, Assertions::fail, Assertions::fail));
+		assertEquals("timeout must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in negative Duration in tryLockAndRun(Lock,Duration,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunDurationNegativeDuration() {
 		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(new ReentrantLock(), Duration.ofMinutes(-1), Assertions::fail, Assertions::fail));
-		assertEquals("'timeout' is negative", exception.getMessage());
+		assertEquals("timeout must be non-negative", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 1st Runnable in tryLockAndRun(Lock,Duration,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunDurationNullSuccessRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(new ReentrantLock(), Duration.ofMinutes(1), null, Assertions::fail));
-		assertEquals("'onLockSuccess' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(new ReentrantLock(), Duration.ofMinutes(1), null, Assertions::fail));
+		assertEquals("onLockSuccess must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 2nd Runnable in tryLockAndRun(Lock,Duration,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunDurationNullFailRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(new ReentrantLock(), Duration.ofMinutes(1), Assertions::fail, null));
-		assertEquals("'onLockFail' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(new ReentrantLock(), Duration.ofMinutes(1), Assertions::fail, null));
+		assertEquals("onLockFail must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to successfully run tryLockAndGet(Lock,Duration,Supplier,Supplier) method")
@@ -741,36 +741,36 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	@DisplayName("Attempt to pass in null Lock in tryLockAndGet(Lock,Duration,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetDurationNullLock() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(null, Duration.ofMinutes(1), Assertions::fail, Assertions::fail));
-		assertEquals("'lock' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(null, Duration.ofMinutes(1), Assertions::fail, Assertions::fail));
+		assertEquals("lock must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null Duration in tryLockAndGet(Lock,Duration,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetDurationNullDuration() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(new ReentrantLock(), null, Assertions::fail, Assertions::fail));
-		assertEquals("'timeout' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(new ReentrantLock(), null, Assertions::fail, Assertions::fail));
+		assertEquals("timeout must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in negative Duration in tryLockAndGet(Lock,Duration,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetDurationNegativeDuration() {
 		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(new ReentrantLock(), Duration.ofMinutes(-1), Assertions::fail, Assertions::fail));
-		assertEquals("'timeout' is negative", exception.getMessage());
+		assertEquals("timeout must be non-negative", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 1st Runnable in tryLockAndGet(Lock,Duration,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetDurationNullSuccessRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(new ReentrantLock(), Duration.ofMinutes(1), null, Assertions::fail));
-		assertEquals("'onLockSuccess' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(new ReentrantLock(), Duration.ofMinutes(1), null, Assertions::fail));
+		assertEquals("onLockSuccess must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 2nd Runnable in tryLockAndGet(Lock,Duration,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetDurationNullFailRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(new ReentrantLock(), Duration.ofMinutes(1), Assertions::fail, null));
-		assertEquals("'onLockFail' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(new ReentrantLock(), Duration.ofMinutes(1), Assertions::fail, null));
+		assertEquals("onLockFail must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to run tryLockAndRun(Lock,Runnable,Runnable) method and force it to time out")
@@ -828,36 +828,36 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	@DisplayName("Attempt to pass in null Lock in tryLockAndRun(Lock,long,TimeUnit,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunLongTimeUnitNullLock() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(null, 1, TimeUnit.MINUTES, Assertions::fail, Assertions::fail));
-		assertEquals("'lock' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(null, 1, TimeUnit.MINUTES, Assertions::fail, Assertions::fail));
+		assertEquals("lock must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null TimeUnit in tryLockAndRun(Lock,long,TimeUnit,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunLongTimeUnitNullDuration() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(new ReentrantLock(), 1, null, Assertions::fail, Assertions::fail));
-		assertEquals("'unit' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(new ReentrantLock(), 1, null, Assertions::fail, Assertions::fail));
+		assertEquals("unit must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in negative time in tryLockAndRun(Lock,long,TimeUnit,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunLongTimeUnitNegativeDuration() {
 		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(new ReentrantLock(), -1, TimeUnit.MINUTES, Assertions::fail, Assertions::fail));
-		assertEquals("'time' is negative", exception.getMessage());
+		assertEquals("time must be non-negative", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 1st Runnable in tryLockAndRun(Lock,long,TimeUnit,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunLongTimeUnitNullSuccessRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(new ReentrantLock(), 1, TimeUnit.MINUTES, null, Assertions::fail));
-		assertEquals("'onLockSuccess' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(new ReentrantLock(), 1, TimeUnit.MINUTES, null, Assertions::fail));
+		assertEquals("onLockSuccess must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 2nd Runnable in tryLockAndRun(Lock,long,TimeUnit,Runnable,Runnable) method")
 	@Test
 	void testTryLockAndRunLongTimeUnitNullFailRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndRun(new ReentrantLock(), 1, TimeUnit.MINUTES, Assertions::fail, null));
-		assertEquals("'onLockFail' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndRun(new ReentrantLock(), 1, TimeUnit.MINUTES, Assertions::fail, null));
+		assertEquals("onLockFail must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to run tryLockAndGet(Lock,Supplier,Supplier) method and force it to time out")
@@ -921,36 +921,36 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	@DisplayName("Attempt to pass in null Lock in tryLockAndGet(Lock,long,TimeUnit,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetLongTimeUnitNullLock() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(null, 1, TimeUnit.MINUTES, Assertions::fail, Assertions::fail));
-		assertEquals("'lock' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(null, 1, TimeUnit.MINUTES, Assertions::fail, Assertions::fail));
+		assertEquals("lock must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null TimeUnit in tryLockAndGet(Lock,long,TimeUnit,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetLongTimeUnitNullDuration() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(new ReentrantLock(), 1, null, Assertions::fail, Assertions::fail));
-		assertEquals("'unit' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(new ReentrantLock(), 1, null, Assertions::fail, Assertions::fail));
+		assertEquals("unit must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in negative time in tryLockAndGet(Lock,long,TimeUnit,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetLongTimeUnitNegativeDuration() {
 		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(new ReentrantLock(), -1, TimeUnit.MINUTES, Assertions::fail, Assertions::fail));
-		assertEquals("'time' is negative", exception.getMessage());
+		assertEquals("time must be non-negative", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 1st Runnable in tryLockAndGet(Lock,long,TimeUnit,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetLongTimeUnitNullSuccessRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(new ReentrantLock(), 1, TimeUnit.MINUTES, null, Assertions::fail));
-		assertEquals("'onLockSuccess' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(new ReentrantLock(), 1, TimeUnit.MINUTES, null, Assertions::fail));
+		assertEquals("onLockSuccess must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to pass in null 2nd Runnable in tryLockAndGet(Lock,long,TimeUnit,Supplier,Supplier) method")
 	@Test
 	void testTryLockAndGetLongTimeUnitNullFailRunnable() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> tryLockAndGet(new ReentrantLock(), 1, TimeUnit.MINUTES, Assertions::fail, null));
-		assertEquals("'onLockFail' is null", exception.getMessage());
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> tryLockAndGet(new ReentrantLock(), 1, TimeUnit.MINUTES, Assertions::fail, null));
+		assertEquals("onLockFail must not be null", exception.getMessage());
 	}
 
 	@DisplayName("Attempt to run tryLockAndRun(Lock,long,TimeUnit,Runnable) method and force it to time out")

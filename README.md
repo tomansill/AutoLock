@@ -41,7 +41,7 @@ library and made the locking process much easier like this:
 Lock lock = new ReentrantLock();
 
 try(
-LockedAutoLock ignored = AutoLock.doLock(lock)){
+LockedAutoLock ignored = AutoLock.lock(lock)){
 
 				// Do stuff
 
@@ -125,7 +125,7 @@ AutoLock autoLock = AutoLock.create(lock);
 Then you can lock the lock in Try-with-resources scope with `AutoLock` class like this:
 
 ```java
-try(LockedAutoLock lockedAutoLock = autoLock.doLock()){
+try(LockedAutoLock lockedAutoLock = autoLock.lock()){
 
 				// Do stuff here
 
@@ -140,8 +140,8 @@ continuing regardless of successful execution or failure due to exceptions being
 
 `AutoLock` has several locking methods:
 
-- `doLock()` - Acquires a lock. Same as `Lock.lock()`. Returns `LockedAutoLock`.
-- `doLockInterruptibly()` - Acquires a lock unless the current thread is interrupted. Same
+- `lock()` - Acquires a lock. Same as `Lock.lock()`. Returns `LockedAutoLock`.
+- `lockInterruptibly()` - Acquires a lock unless the current thread is interrupted. Same
   as `Lock::lockInterruptibly()`. Returns `LockedAutoLock`.
 - `doTryLock()` - Acquires the lock only if it is free at the time of invocation. Same as `Lock.tryLock()`.
   Returns `LockedAutoLock`.
@@ -163,7 +163,7 @@ Using `Lock`, you can just create `LockedAutoLock` directly like this:
 Lock lock = new ReentrantLock();
 
 try(
-LockedAutoLock lockedAutoLock = AutoLock.doLock(lock)){
+LockedAutoLock lockedAutoLock = AutoLock.lock(lock)){
 
 				// Do stuff here
 
@@ -176,7 +176,7 @@ If you have Java 11 or above, you can just use `var` like this:
 Lock lock = new ReentrantLock();
 
 try(
-var locked = AutoLock.doLock(lock)){
+var locked = AutoLock.lock(lock)){
 
 				// Do stuff here
 
@@ -185,8 +185,8 @@ var locked = AutoLock.doLock(lock)){
 
 `AutoLock` has several static locking methods:
 
-- `doLock(Lock)`
-- `doLockInterruptibly(Lock)`
+- `lock(Lock)`
+- `lockInterruptibly(Lock)`
 - `doTryLock()`
 - `doTryLock(long,TimeUnit)`
 - `doTryLock(Duration)`

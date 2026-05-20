@@ -3,6 +3,7 @@ package com.ansill.lock.autolock;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -18,9 +19,8 @@ public interface AutoLock {
 	 * @return LockedAutoLock locked auto lock
 	 */
 	@Nonnull
-	static LockedAutoLock doLock(@Nonnull Lock lock) {
-		//noinspection ConstantValue
-		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+	static LockedAutoLock lock(@Nonnull Lock lock) {
+		Objects.requireNonNull(lock, "lock must not be null");
 		lock.lock();
 		return new LockedAutoLockImplementation(lock);
 	}
@@ -33,9 +33,8 @@ public interface AutoLock {
 	 * @throws InterruptedException thrown if the thread was interrupted
 	 */
 	@Nonnull
-	static LockedAutoLock doLockInterruptibly(@Nonnull Lock lock) throws InterruptedException {
-		//noinspection ConstantValue
-		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+	static LockedAutoLock lockInterruptibly(@Nonnull Lock lock) throws InterruptedException {
+		Objects.requireNonNull(lock, "lock must not be null");
 		lock.lockInterruptibly();
 		return new LockedAutoLockImplementation(lock);
 	}
@@ -50,12 +49,12 @@ public interface AutoLock {
 	 */
 	static <T extends Throwable> void lockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable) throws T {
 
-		// Ensure runnable are not null
-		//noinspection ConstantConditions
-		if (runnable == null) throw new IllegalArgumentException("'runnable' is null");
+		// Ensure inputs are not null
+		Objects.requireNonNull(lock, "lock must not be null");
+		Objects.requireNonNull(runnable, "runnable must not be null");
 
 		// Lock it
-		try (LockedAutoLock ignored = doLock(lock)) {
+		try (LockedAutoLock ignored = lock(lock)) {
 
 			// Run it
 			runnable.run();
@@ -75,12 +74,12 @@ public interface AutoLock {
 	 */
 	static <R, T extends Throwable> R lockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T> supplier) throws T {
 
-		// Ensure supplier is not null
-		//noinspection ConstantConditions
-		if (supplier == null) throw new IllegalArgumentException("'supplier' is null");
+		// Ensure inputs are not null
+		Objects.requireNonNull(lock, "lock must not be null");
+		Objects.requireNonNull(supplier, "supplier must not be null");
 
 		// Lock it
-		try (LockedAutoLock ignored = doLock(lock)) {
+		try (LockedAutoLock ignored = lock(lock)) {
 
 			// Get it
 			return supplier.get();
@@ -101,12 +100,12 @@ public interface AutoLock {
 					@Nonnull ThrowableRunnable<T> runnable
 	) throws T, InterruptedException {
 
-		// Ensure runnable is not null
-		//noinspection ConstantConditions
-		if (runnable == null) throw new IllegalArgumentException("'runnable' is null");
+		// Ensure inputs are not null
+		Objects.requireNonNull(lock, "lock must not be null");
+		Objects.requireNonNull(runnable, "runnable must not be null");
 
 		// Lock it
-		try (LockedAutoLock ignored = doLockInterruptibly(lock)) {
+		try (LockedAutoLock ignored = lockInterruptibly(lock)) {
 
 			// Run it
 			runnable.run();
@@ -128,15 +127,14 @@ public interface AutoLock {
 	static <R, T extends Throwable> R lockInterruptiblyAndGet(
 					@Nonnull Lock lock,
 					@Nonnull ThrowableSupplier<R, T> supplier
-	)
-					throws T, InterruptedException {
+	) throws T, InterruptedException {
 
-		// Ensure supplier is not null
-		//noinspection ConstantConditions
-		if (supplier == null) throw new IllegalArgumentException("'supplier' is null");
+		// Ensure inputs are not null
+		Objects.requireNonNull(lock, "lock must not be null");
+		Objects.requireNonNull(supplier, "supplier must not be null");
 
 		// Lock it
-		try (LockedAutoLock ignored = doLockInterruptibly(lock)) {
+		try (LockedAutoLock ignored = lockInterruptibly(lock)) {
 
 			// Get it
 			return supplier.get();
@@ -156,13 +154,10 @@ public interface AutoLock {
 	 */
 	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T1> onLockSuccess, @Nonnull ThrowableRunnable<T2> onLockFail) throws T1, T2 {
 
-		// Ensure parameters are not null
-		//noinspection ConstantConditions
-		if (lock == null) throw new IllegalArgumentException("'lock' is null");
-		//noinspection ConstantConditions
-		if (onLockSuccess == null) throw new IllegalArgumentException("'onLockSuccess' is null");
-		//noinspection ConstantConditions
-		if (onLockFail == null) throw new IllegalArgumentException("'onLockFail' is null");
+		// Ensure inputs are valid
+		Objects.requireNonNull(lock, "lock must not be null");
+		Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
+		Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 
 		// Lock it
 		if (lock.tryLock()) {
@@ -190,13 +185,10 @@ public interface AutoLock {
 	 */
 	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T1> onLockSuccess, @Nonnull ThrowableSupplier<R, T2> onLockFail) throws T1, T2 {
 
-		// Ensure supplier is not null
-		//noinspection ConstantConditions
-		if (lock == null) throw new IllegalArgumentException("'lock' is null");
-		//noinspection ConstantConditions
-		if (onLockSuccess == null) throw new IllegalArgumentException("'onLockSuccess' is null");
-		//noinspection ConstantConditions
-		if (onLockFail == null) throw new IllegalArgumentException("'onLockFail' is null");
+		// Ensure inputs are valid
+		Objects.requireNonNull(lock, "lock must not be null");
+		Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
+		Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 
 		// Lock it
 		if (lock.tryLock()) {
@@ -228,16 +220,12 @@ public interface AutoLock {
 					@Nonnull ThrowableRunnable<T2> onLockFail
 	) throws T1, T2, InterruptedException {
 
-		// Ensure onLockSuccess is not null
-		//noinspection ConstantConditions
-		if (lock == null) throw new IllegalArgumentException("'lock' is null");
-		//noinspection ConstantConditions
-		if (timeout == null) throw new IllegalArgumentException("'timeout' is null");
-		if (timeout.isNegative()) throw new IllegalArgumentException("'timeout' is negative");
-		//noinspection ConstantConditions
-		if (onLockSuccess == null) throw new IllegalArgumentException("'onLockSuccess' is null");
-		//noinspection ConstantConditions
-		if (onLockFail == null) throw new IllegalArgumentException("'onLockFail' is null");
+		// Ensure inputs are valid
+		Objects.requireNonNull(lock, "lock must not be null");
+		Objects.requireNonNull(timeout, "timeout must not be null");
+		if (timeout.isNegative()) throw new IllegalArgumentException("timeout must be non-negative");
+		Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
+		Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 
 		// Lock it
 		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
@@ -273,16 +261,12 @@ public interface AutoLock {
 					@Nonnull ThrowableSupplier<R, T2> onLockFail
 	) throws T1, T2, InterruptedException {
 
-		// Ensure supplier is not null
-		//noinspection ConstantConditions
-		if (lock == null) throw new IllegalArgumentException("'lock' is null");
-		//noinspection ConstantConditions
-		if (timeout == null) throw new IllegalArgumentException("'timeout' is null");
-		if (timeout.isNegative()) throw new IllegalArgumentException("'timeout' is negative");
-		//noinspection ConstantConditions
-		if (onLockSuccess == null) throw new IllegalArgumentException("'onLockSuccess' is null");
-		//noinspection ConstantConditions
-		if (onLockFail == null) throw new IllegalArgumentException("'onLockFail' is null");
+		// Ensure inputs are valid
+		Objects.requireNonNull(lock, "lock must not be null");
+		Objects.requireNonNull(timeout, "timeout must not be null");
+		if (timeout.isNegative()) throw new IllegalArgumentException("timeout must be non-negative");
+		Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
+		Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 
 		// Lock it
 		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
@@ -316,17 +300,13 @@ public interface AutoLock {
 					@Nonnull ThrowableRunnable<T2> onLockFail
 	) throws T1, T2, InterruptedException {
 
-		// Ensure onSuccessfulLock is not null
-		//noinspection ConstantConditions
-		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		// Ensure inputs are valid
+		Objects.requireNonNull(lock, "lock must not be null");
 		//noinspection ConstantValue
-		if (time < 0) throw new IllegalArgumentException("'time' is negative");
-		//noinspection ConstantConditions
-		if (unit == null) throw new IllegalArgumentException("'unit' is null");
-		//noinspection ConstantConditions
-		if (onLockSuccess == null) throw new IllegalArgumentException("'onLockSuccess' is null");
-		//noinspection ConstantConditions
-		if (onLockFail == null) throw new IllegalArgumentException("'onLockFail' is null");
+		if (time < 0) throw new IllegalArgumentException("time must be non-negative");
+		Objects.requireNonNull(unit, "unit must not be null");
+		Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
+		Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 
 		// Lock it
 		if (lock.tryLock(time, unit)) {
@@ -363,17 +343,13 @@ public interface AutoLock {
 					@Nonnull ThrowableSupplier<R, T2> onLockFail
 	) throws T1, T2, InterruptedException {
 
-		// Ensure supplier is not null
-		//noinspection ConstantConditions
-		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		// Ensure inputs are valid
+		Objects.requireNonNull(lock, "lock must not be null");
 		//noinspection ConstantValue
-		if (time < 0) throw new IllegalArgumentException("'time' is negative");
-		//noinspection ConstantConditions
-		if (unit == null) throw new IllegalArgumentException("'unit' is null");
-		//noinspection ConstantConditions
-		if (onLockSuccess == null) throw new IllegalArgumentException("'onLockSuccess' is null");
-		//noinspection ConstantConditions
-		if (onLockFail == null) throw new IllegalArgumentException("'onLockFail' is null");
+		if (time < 0) throw new IllegalArgumentException("time must be non-negative");
+		Objects.requireNonNull(unit, "unit must not be null");
+		Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
+		Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 
 		// Lock it
 		if (lock.tryLock(time, unit)) {
