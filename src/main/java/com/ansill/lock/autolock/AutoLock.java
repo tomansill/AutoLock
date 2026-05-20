@@ -56,10 +56,10 @@ public final class AutoLock {
 	 *
 	 * <p>The lock is held for the duration of the runnable execution.</p>
 	 *
-	 * @param lock the lock to acquire
+	 * @param lock     the lock to acquire
 	 * @param runnable the action to execute under lock protection
-	 * @param <T> the type of exception thrown by the runnable
-	 * @throws T if the runnable throws an exception
+	 * @param <T>      the type of exception thrown by the runnable
+	 * @throws T                    if the runnable throws an exception
 	 * @throws NullPointerException if {@code lock} or {@code runnable} is null
 	 */
 	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
@@ -80,12 +80,12 @@ public final class AutoLock {
 	/**
 	 * Acquires the given lock, executes the supplier, releases the lock, and returns the result.
 	 *
-	 * @param lock the lock to acquire
+	 * @param lock     the lock to acquire
 	 * @param supplier the computation to execute under lock protection
-	 * @param <R> the return type
-	 * @param <T> the exception type thrown by the supplier
+	 * @param <R>      the return type
+	 * @param <T>      the exception type thrown by the supplier
 	 * @return the result of the supplier
-	 * @throws T if the supplier throws an exception
+	 * @throws T                    if the supplier throws an exception
 	 * @throws NullPointerException if {@code lock} or {@code supplier} is null
 	 */
 	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
@@ -106,10 +106,10 @@ public final class AutoLock {
 	/**
 	 * Acquires the given lock interruptibly, executes the provided action, and releases the lock.
 	 *
-	 * @param lock the lock to acquire
+	 * @param lock     the lock to acquire
 	 * @param runnable the action to execute under lock protection
-	 * @param <T> the exception type thrown by the runnable
-	 * @throws T if the runnable throws an exception
+	 * @param <T>      the exception type thrown by the runnable
+	 * @throws T                    if the runnable throws an exception
 	 * @throws InterruptedException if interrupted while waiting for the lock
 	 * @throws NullPointerException if {@code lock} or {@code runnable} is null
 	 */
@@ -135,12 +135,12 @@ public final class AutoLock {
 	 * Acquires the given lock interruptibly, executes the supplier, releases the lock,
 	 * and returns the result.
 	 *
-	 * @param lock the lock to acquire
+	 * @param lock     the lock to acquire
 	 * @param supplier the computation to execute under lock protection
-	 * @param <R> the return type
-	 * @param <T> the exception type thrown by the supplier
+	 * @param <R>      the return type
+	 * @param <T>      the exception type thrown by the supplier
 	 * @return the result of the supplier
-	 * @throws T if the supplier throws an exception
+	 * @throws T                    if the supplier throws an exception
 	 * @throws InterruptedException if interrupted while waiting for the lock
 	 * @throws NullPointerException if {@code lock} or {@code supplier} is null
 	 */
@@ -166,13 +166,13 @@ public final class AutoLock {
 	 * Attempts to acquire the lock. If successful, executes {@code onLockSuccess}
 	 * while holding the lock. Otherwise, executes {@code onLockFail}.
 	 *
-	 * @param lock the lock to attempt to acquire
+	 * @param lock          the lock to attempt to acquire
 	 * @param onLockSuccess action executed if the lock is acquired
-	 * @param onLockFail action executed if the lock is not acquired
-	 * @param <T1> exception type from success action
-	 * @param <T2> exception type from failure action
-	 * @throws T1 if the success action throws an exception
-	 * @throws T2 if the failure action throws an exception
+	 * @param onLockFail    action executed if the lock is not acquired
+	 * @param <T1>          exception type from success action
+	 * @param <T2>          exception type from failure action
+	 * @throws T1                   if the success action throws an exception
+	 * @throws T2                   if the failure action throws an exception
 	 * @throws NullPointerException if any argument is null
 	 */
 	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
@@ -197,15 +197,15 @@ public final class AutoLock {
 	 * Attempts to acquire the lock. If successful, executes {@code onLockSuccess}
 	 * and returns its result. Otherwise, executes {@code onLockFail} and returns its result.
 	 *
-	 * @param lock the lock to attempt to acquire
+	 * @param lock          the lock to attempt to acquire
 	 * @param onLockSuccess computation executed if lock is acquired
-	 * @param onLockFail computation executed if lock is not acquired
-	 * @param <R> return type
-	 * @param <T1> exception type from success computation
-	 * @param <T2> exception type from failure computation
+	 * @param onLockFail    computation executed if lock is not acquired
+	 * @param <R>           return type
+	 * @param <T1>          exception type from success computation
+	 * @param <T2>          exception type from failure computation
 	 * @return result of either computation
-	 * @throws T1 if success computation throws an exception
-	 * @throws T2 if failure computation throws an exception
+	 * @throws T1                   if success computation throws an exception
+	 * @throws T2                   if failure computation throws an exception
 	 * @throws NullPointerException if any argument is null
 	 */
 	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
@@ -230,16 +230,16 @@ public final class AutoLock {
 	 * Attempts to acquire the lock within the given timeout. If successful,
 	 * executes {@code onLockSuccess}. Otherwise, executes {@code onLockFail}.
 	 *
-	 * @param lock the lock to attempt to acquire
-	 * @param timeout maximum time to wait for the lock
+	 * @param lock          the lock to attempt to acquire
+	 * @param timeout       maximum time to wait for the lock
 	 * @param onLockSuccess action executed if lock is acquired
-	 * @param onLockFail action executed if lock is not acquired
-	 * @param <T1> exception type from success action
-	 * @param <T2> exception type from failure action
-	 * @throws T1 if success action throws an exception
-	 * @throws T2 if failure action throws an exception
-	 * @throws InterruptedException if interrupted while waiting
-	 * @throws NullPointerException if any argument is null
+	 * @param onLockFail    action executed if lock is not acquired
+	 * @param <T1>          exception type from success action
+	 * @param <T2>          exception type from failure action
+	 * @throws T1                       if success action throws an exception
+	 * @throws T2                       if failure action throws an exception
+	 * @throws InterruptedException     if interrupted while waiting
+	 * @throws NullPointerException     if any argument is null
 	 * @throws IllegalArgumentException if timeout is negative
 	 */
 	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
@@ -273,18 +273,18 @@ public final class AutoLock {
 	 * executes {@code onLockSuccess} and returns its result. Otherwise, executes
 	 * {@code onLockFail} and returns its result.
 	 *
-	 * @param lock the lock to attempt to acquire
-	 * @param timeout maximum time to wait for the lock
+	 * @param lock          the lock to attempt to acquire
+	 * @param timeout       maximum time to wait for the lock
 	 * @param onLockSuccess computation executed if lock is acquired
-	 * @param onLockFail computation executed if lock is not acquired
-	 * @param <R> return type
-	 * @param <T1> exception type from success computation
-	 * @param <T2> exception type from failure computation
+	 * @param onLockFail    computation executed if lock is not acquired
+	 * @param <R>           return type
+	 * @param <T1>          exception type from success computation
+	 * @param <T2>          exception type from failure computation
 	 * @return result of either computation
-	 * @throws T1 if success computation throws an exception
-	 * @throws T2 if failure computation throws an exception
-	 * @throws InterruptedException if interrupted while waiting
-	 * @throws NullPointerException if any argument is null
+	 * @throws T1                       if success computation throws an exception
+	 * @throws T2                       if failure computation throws an exception
+	 * @throws InterruptedException     if interrupted while waiting
+	 * @throws NullPointerException     if any argument is null
 	 * @throws IllegalArgumentException if timeout is negative
 	 */
 	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
@@ -316,17 +316,17 @@ public final class AutoLock {
 	 * Attempts to acquire the lock within the given timeout. If successful,
 	 * executes {@code onLockSuccess}. Otherwise, executes {@code onLockFail}.
 	 *
-	 * @param lock the lock to attempt to acquire
-	 * @param time maximum time to wait for the lock
-	 * @param unit time unit of the timeout
+	 * @param lock          the lock to attempt to acquire
+	 * @param time          maximum time to wait for the lock
+	 * @param unit          time unit of the timeout
 	 * @param onLockSuccess action executed if lock is acquired
-	 * @param onLockFail action executed if lock is not acquired
-	 * @param <T1> exception type from success action
-	 * @param <T2> exception type from failure action
-	 * @throws T1 if success action throws an exception
-	 * @throws T2 if failure action throws an exception
-	 * @throws InterruptedException if interrupted while waiting for the lock
-	 * @throws NullPointerException if {@code lock}, {@code unit}, {@code onLockSuccess}, or {@code onLockFail} is null
+	 * @param onLockFail    action executed if lock is not acquired
+	 * @param <T1>          exception type from success action
+	 * @param <T2>          exception type from failure action
+	 * @throws T1                       if success action throws an exception
+	 * @throws T2                       if failure action throws an exception
+	 * @throws InterruptedException     if interrupted while waiting for the lock
+	 * @throws NullPointerException     if {@code lock}, {@code unit}, {@code onLockSuccess}, or {@code onLockFail} is null
 	 * @throws IllegalArgumentException if {@code time} is negative
 	 */
 	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
@@ -360,19 +360,19 @@ public final class AutoLock {
 	 * executes {@code onLockSuccess} and returns its result. Otherwise, executes
 	 * {@code onLockFail} and returns its result.
 	 *
-	 * @param lock the lock to attempt to acquire
-	 * @param time maximum time to wait for the lock
-	 * @param unit time unit of the timeout
+	 * @param lock          the lock to attempt to acquire
+	 * @param time          maximum time to wait for the lock
+	 * @param unit          time unit of the timeout
 	 * @param onLockSuccess computation executed if lock is acquired
-	 * @param onLockFail computation executed if lock is not acquired
-	 * @param <R> return type
-	 * @param <T1> exception type from success computation
-	 * @param <T2> exception type from failure computation
+	 * @param onLockFail    computation executed if lock is not acquired
+	 * @param <R>           return type
+	 * @param <T1>          exception type from success computation
+	 * @param <T2>          exception type from failure computation
 	 * @return result of either computation
-	 * @throws T1 if success computation throws an exception
-	 * @throws T2 if failure computation throws an exception
-	 * @throws InterruptedException if interrupted while waiting for the lock
-	 * @throws NullPointerException if {@code lock}, {@code unit}, {@code onLockSuccess}, or {@code onLockFail} is null
+	 * @throws T1                       if success computation throws an exception
+	 * @throws T2                       if failure computation throws an exception
+	 * @throws InterruptedException     if interrupted while waiting for the lock
+	 * @throws NullPointerException     if {@code lock}, {@code unit}, {@code onLockSuccess}, or {@code onLockFail} is null
 	 * @throws IllegalArgumentException if {@code time} is negative
 	 */
 	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
