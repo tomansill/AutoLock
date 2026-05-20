@@ -3,11 +3,11 @@ package com.ansill.lock.autolock.test;
 import com.ansill.lock.autolock.AutoLock;
 import com.ansill.lock.autolock.ThrowableRunnable;
 import com.ansill.lock.autolock.ThrowableSupplier;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import javax.annotation.Nonnull;
 import java.io.FileNotFoundException;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -1186,48 +1186,48 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 	static class LambdaWithExceptionTest extends AutoLockLambdasTest {
 
 		@Override
-		<T extends Throwable> void lockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable) throws T {
+		<T extends Throwable> void lockAndRun(@NonNull Lock lock, @NonNull ThrowableRunnable<T> runnable) throws T {
 			AutoLock.lockAndRun(lock, runnable);
 		}
 
 		@Override
-		<R, T extends Throwable> R lockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T> throwableSupplier)
+		<R, T extends Throwable> R lockAndGet(@NonNull Lock lock, @NonNull ThrowableSupplier<R, T> throwableSupplier)
 						throws T {
 			return AutoLock.lockAndGet(lock, throwableSupplier);
 		}
 
 		@Override
-		<T extends Throwable> void lockInterruptiblyAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable)
+		<T extends Throwable> void lockInterruptiblyAndRun(@NonNull Lock lock, @NonNull ThrowableRunnable<T> runnable)
 						throws T, InterruptedException {
 			AutoLock.lockInterruptiblyAndRun(lock, runnable);
 		}
 
 		@Override
 		<R, T extends Throwable> R lockInterruptiblyAndGet(
-						@Nonnull Lock lock,
-						@Nonnull ThrowableSupplier<R, T> throwableSupplier
+						@NonNull Lock lock,
+						@NonNull ThrowableSupplier<R, T> throwableSupplier
 		)
 						throws T, InterruptedException {
 			return AutoLock.lockInterruptiblyAndGet(lock, throwableSupplier);
 		}
 
 		@Override
-		<T extends Throwable> void tryLockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> onSuccess, ThrowableRunnable<T> onFail) throws T {
+		<T extends Throwable> void tryLockAndRun(@NonNull Lock lock, @NonNull ThrowableRunnable<T> onSuccess, ThrowableRunnable<T> onFail) throws T {
 			AutoLock.tryLockAndRun(lock, onSuccess, onFail);
 		}
 
 		@Override
-		<R, T extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T> onSuccess, ThrowableSupplier<R, T> onFail)
+		<R, T extends Throwable> R tryLockAndGet(@NonNull Lock lock, @NonNull ThrowableSupplier<R, T> onSuccess, ThrowableSupplier<R, T> onFail)
 						throws T {
 			return AutoLock.tryLockAndGet(lock, onSuccess, onFail);
 		}
 
 		@Override
 		<T extends Throwable> void tryLockAndRun(
-						@Nonnull Lock lock,
+						@NonNull Lock lock,
 						long time,
-						@Nonnull TimeUnit unit,
-						@Nonnull ThrowableRunnable<T> onSuccess,
+						@NonNull TimeUnit unit,
+						@NonNull ThrowableRunnable<T> onSuccess,
 						ThrowableRunnable<T> onFail)
 						throws T, InterruptedException {
 			AutoLock.tryLockAndRun(lock, time, unit, onSuccess, onFail);
@@ -1235,10 +1235,10 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 
 		@Override
 		<R, T extends Throwable> R tryLockAndGet(
-						@Nonnull Lock lock,
+						@NonNull Lock lock,
 						long time,
-						@Nonnull TimeUnit unit,
-						@Nonnull ThrowableSupplier<R, T> onSuccess,
+						@NonNull TimeUnit unit,
+						@NonNull ThrowableSupplier<R, T> onSuccess,
 						ThrowableSupplier<R, T> onFail)
 						throws T, InterruptedException {
 			return AutoLock.tryLockAndGet(lock, time, unit, onSuccess, onFail);
@@ -1246,19 +1246,19 @@ abstract class AutoLockLambdasTest implements AutoLockTest {
 
 		@Override
 		<T extends Throwable> void tryLockAndRun(
-						@Nonnull Lock lock,
-						@Nonnull Duration timeout,
-						@Nonnull ThrowableRunnable<T> onSuccess,
-						@Nonnull ThrowableRunnable<T> onFail)
+						@NonNull Lock lock,
+						@NonNull Duration timeout,
+						@NonNull ThrowableRunnable<T> onSuccess,
+						@NonNull ThrowableRunnable<T> onFail)
 						throws T, InterruptedException {
 			AutoLock.tryLockAndRun(lock, timeout, onSuccess, onFail);
 		}
 
 		@Override
 		<R, T extends Throwable> R tryLockAndGet(
-						@Nonnull Lock lock,
-						@Nonnull Duration timeout,
-						@Nonnull ThrowableSupplier<R, T> onSuccess,
+						@NonNull Lock lock,
+						@NonNull Duration timeout,
+						@NonNull ThrowableSupplier<R, T> onSuccess,
 						ThrowableSupplier<R, T> onFail)
 						throws T, InterruptedException {
 			return AutoLock.tryLockAndGet(lock, timeout, onSuccess, onFail);

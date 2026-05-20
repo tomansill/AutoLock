@@ -1,6 +1,7 @@
 package com.ansill.lock.autolock;
 
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
+
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,10 +13,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class NonThreadSafeObject<T> {
 
-	@Nonnull
+	@NonNull
 	private final AtomicBoolean modifying = new AtomicBoolean(false);
 
-	@Nonnull
+	@NonNull
 	private final AtomicBoolean corrupted = new AtomicBoolean(false);
 
 	private T value;
@@ -70,7 +71,7 @@ public final class NonThreadSafeObject<T> {
 	 * @param start    the start
 	 * @param cdl      the cdl
 	 */
-	public void modify(T newValue, @Nonnull CountDownLatch start, @Nonnull CountDownLatch cdl) {
+	public void modify(T newValue, @NonNull CountDownLatch start, @NonNull CountDownLatch cdl) {
 
 		try {
 			// Set modify flag, if flag is already true, then consider data corrupted
@@ -105,7 +106,7 @@ public final class NonThreadSafeObject<T> {
 	 * @param start         the start
 	 * @param executionTime the execution time
 	 */
-	public void modify(T newValue, @Nonnull CountDownLatch start, @Nonnull Duration executionTime) {
+	public void modify(T newValue, @NonNull CountDownLatch start, @NonNull Duration executionTime) {
 
 		try {
 			// Set modify flag, if flag is already true, then consider data corrupted

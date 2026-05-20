@@ -1,23 +1,24 @@
 package com.ansill.lock.autolock;
 
-import javax.annotation.Nonnull;
-
 /**
- * Supplier that throws a throwable
+ * A functional interface similar to {@link java.util.function.Supplier},
+ * but allowing a checked exception to be thrown.
  *
- * @param <R> value that this supplier supplies
- * @param <T> throwable
+ * <p>This interface is intended for lambda expressions or method references
+ * where a value must be computed but the computation may fail with a checked exception.</p>
+ *
+ * @param <R> the type of value supplied
+ * @param <T> the type of exception that may be thrown
  */
 @FunctionalInterface
 public interface ThrowableSupplier<R, T extends Throwable> {
 
 	/**
-	 * Supplies the value
+	 * Computes a value.
 	 *
-	 * @return value r
-	 * @throws T thrown if there are any exceptions thrown while running the supplier
+	 * @return the computed value
+	 * @throws T if the computation fails with a checked exception
 	 */
-	@Nonnull
 	R get() throws T;
 
 }

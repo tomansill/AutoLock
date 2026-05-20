@@ -3,9 +3,9 @@ package com.ansill.lock.autolock.test;
 import com.ansill.lock.autolock.AutoLock;
 import com.ansill.lock.autolock.ThrowableRunnable;
 import com.ansill.lock.autolock.ThrowableSupplier;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.DisplayName;
 
-import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -19,21 +19,21 @@ class AutoLockLambdaWithoutExceptionTest extends AutoLockLambdasTest {
 	}
 
 	@Override
-	<R, T extends Throwable> R lockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T> supplierWithException)
+	<R, T extends Throwable> R lockAndGet(@NonNull Lock lock, @NonNull ThrowableSupplier<R, T> supplierWithException)
 					throws T {
 		return AutoLock.lockAndGet(lock, supplierWithException);
 	}
 
 	@Override
-	<T extends Throwable> void lockInterruptiblyAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable)
+	<T extends Throwable> void lockInterruptiblyAndRun(@NonNull Lock lock, @NonNull ThrowableRunnable<T> runnable)
 					throws T, InterruptedException {
 		AutoLock.lockInterruptiblyAndRun(lock, runnable);
 	}
 
 	@Override
 	<R, T extends Throwable> R lockInterruptiblyAndGet(
-					@Nonnull Lock lock,
-					@Nonnull ThrowableSupplier<R, T> supplierWithException
+					@NonNull Lock lock,
+					@NonNull ThrowableSupplier<R, T> supplierWithException
 	)
 					throws T, InterruptedException {
 		return AutoLock.lockInterruptiblyAndGet(lock, supplierWithException);

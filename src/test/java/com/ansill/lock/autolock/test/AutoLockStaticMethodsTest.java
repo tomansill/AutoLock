@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @DisplayName("Static Methods")
+@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
 class AutoLockStaticMethodsTest implements AutoLockTest {
 
 	@DisplayName("Attempt to successfully run lock(Lock) method")

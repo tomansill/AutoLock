@@ -1,53 +1,69 @@
 package com.ansill.lock.autolock;
 
-import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
+
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 /**
- * AutoLock class that creates LockedAutoLock object AutoCloseable resource that can be used in Try-with-resources scope
+ * Utility class for working with {@link Lock} instances using try-with-resources semantics.
+ *
+ * <p>This class provides a set of convenience methods that wrap a {@link Lock} into an
+ * AutoCloseable-style resource, ensuring proper unlocking even in the presence of exceptions.</p>
+ *
+ * <p>It also provides higher-level helper methods for executing code under lock protection
+ * using either Runnable or Supplier-based APIs.</p>
  */
-public interface AutoLock {
+public final class AutoLock {
 
 	/**
-	 * Locks and creates a LockedAutoLock reference
+	 * Acquires the given lock and returns an {@link LockedAutoLock} that will release the lock
+	 * when closed.
 	 *
-	 * @param lock lock to lock on
-	 * @return LockedAutoLock locked auto lock
+	 * <p>This method blocks until the lock is acquired.</p>
+	 *
+	 * @param lock the lock to acquire
+	 * @return a scoped lock that will release the lock on close
+	 * @throws NullPointerException if {@code lock} is null
 	 */
-	@Nonnull
-	static LockedAutoLock lock(@Nonnull Lock lock) {
+	@NonNull
+	public static LockedAutoLock lock(@NonNull Lock lock) {
 		Objects.requireNonNull(lock, "lock must not be null");
 		lock.lock();
-		return new LockedAutoLockImplementation(lock);
+		return new LockedAutoLock(lock);
 	}
 
 	/**
-	 * Locks and creates a LockedAutoLock reference
+	 * Acquires the given lock interruptibly and returns an {@link LockedAutoLock}
+	 * that will release the lock when closed.
 	 *
-	 * @param lock lock to lock on
-	 * @return LockedAutoLock locked auto lock
-	 * @throws InterruptedException thrown if the thread was interrupted
+	 * @param lock the lock to acquire
+	 * @return a scoped lock that will release the lock on close
+	 * @throws NullPointerException if {@code lock} is null
+	 * @throws InterruptedException if the current thread is interrupted while waiting
 	 */
-	@Nonnull
-	static LockedAutoLock lockInterruptibly(@Nonnull Lock lock) throws InterruptedException {
+	@NonNull
+	public static LockedAutoLock lockInterruptibly(@NonNull Lock lock) throws InterruptedException {
 		Objects.requireNonNull(lock, "lock must not be null");
 		lock.lockInterruptibly();
-		return new LockedAutoLockImplementation(lock);
+		return new LockedAutoLock(lock);
 	}
 
 	/**
-	 * Locks the provided lock, runs the runnable during the lock, unlocks afterwards
+	 * Acquires the given lock, executes the provided action, and releases the lock.
 	 *
-	 * @param <T>      type of exception
-	 * @param lock     lock to lock on
-	 * @param runnable runnable to run while locked
-	 * @throws T thrown if runnable has thrown an exception
+	 * <p>The lock is held for the duration of the runnable execution.</p>
+	 *
+	 * @param lock the lock to acquire
+	 * @param runnable the action to execute under lock protection
+	 * @param <T> the type of exception thrown by the runnable
+	 * @throws T if the runnable throws an exception
+	 * @throws NullPointerException if {@code lock} or {@code runnable} is null
 	 */
-	static <T extends Throwable> void lockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T> runnable) throws T {
+	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
+	public static <T extends Throwable> void lockAndRun(@NonNull Lock lock, @NonNull ThrowableRunnable<T> runnable) throws T {
 
 		// Ensure inputs are not null
 		Objects.requireNonNull(lock, "lock must not be null");
@@ -62,17 +78,18 @@ public interface AutoLock {
 	}
 
 	/**
-	 * Locks the provided lock, runs the supplier during the lock, unlocks afterwards and, assuming if supplier does
-	 * not return an exception, value returned by the supplier will be returned
+	 * Acquires the given lock, executes the supplier, releases the lock, and returns the result.
 	 *
-	 * @param <R>      desired type of the return value
-	 * @param <T>      type of exception
-	 * @param lock     lock to lock on
-	 * @param supplier supplier to run while locked
-	 * @return result of supplier
-	 * @throws T thrown if runnable has thrown an exception
+	 * @param lock the lock to acquire
+	 * @param supplier the computation to execute under lock protection
+	 * @param <R> the return type
+	 * @param <T> the exception type thrown by the supplier
+	 * @return the result of the supplier
+	 * @throws T if the supplier throws an exception
+	 * @throws NullPointerException if {@code lock} or {@code supplier} is null
 	 */
-	static <R, T extends Throwable> R lockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T> supplier) throws T {
+	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
+	public static <R, T extends Throwable> R lockAndGet(@NonNull Lock lock, @NonNull ThrowableSupplier<R, T> supplier) throws T {
 
 		// Ensure inputs are not null
 		Objects.requireNonNull(lock, "lock must not be null");
@@ -87,17 +104,19 @@ public interface AutoLock {
 	}
 
 	/**
-	 * Locks the provided lock, runs the runnable during the lock, unlocks afterwards
+	 * Acquires the given lock interruptibly, executes the provided action, and releases the lock.
 	 *
-	 * @param <T>      type of exception
-	 * @param lock     lock to lock on
-	 * @param runnable runnable to run while locked
-	 * @throws T                    thrown if runnable has thrown an exception
-	 * @throws InterruptedException thrown if the thread was interrupted
+	 * @param lock the lock to acquire
+	 * @param runnable the action to execute under lock protection
+	 * @param <T> the exception type thrown by the runnable
+	 * @throws T if the runnable throws an exception
+	 * @throws InterruptedException if interrupted while waiting for the lock
+	 * @throws NullPointerException if {@code lock} or {@code runnable} is null
 	 */
-	static <T extends Throwable> void lockInterruptiblyAndRun(
-					@Nonnull Lock lock,
-					@Nonnull ThrowableRunnable<T> runnable
+	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
+	public static <T extends Throwable> void lockInterruptiblyAndRun(
+					@NonNull Lock lock,
+					@NonNull ThrowableRunnable<T> runnable
 	) throws T, InterruptedException {
 
 		// Ensure inputs are not null
@@ -113,20 +132,22 @@ public interface AutoLock {
 	}
 
 	/**
-	 * Locks the provided lock, runs the supplier during the lock, unlocks afterwards and, assuming if supplier does
-	 * not return an exception, value returned by the supplier will be returned
+	 * Acquires the given lock interruptibly, executes the supplier, releases the lock,
+	 * and returns the result.
 	 *
-	 * @param <R>      desired type of the return value
-	 * @param <T>      type of exception
-	 * @param lock     lock to lock on
-	 * @param supplier supplier to run while locked
-	 * @return result of supplier
-	 * @throws T                    thrown if runnable has thrown an exception
-	 * @throws InterruptedException thrown if the thread was interrupted
+	 * @param lock the lock to acquire
+	 * @param supplier the computation to execute under lock protection
+	 * @param <R> the return type
+	 * @param <T> the exception type thrown by the supplier
+	 * @return the result of the supplier
+	 * @throws T if the supplier throws an exception
+	 * @throws InterruptedException if interrupted while waiting for the lock
+	 * @throws NullPointerException if {@code lock} or {@code supplier} is null
 	 */
-	static <R, T extends Throwable> R lockInterruptiblyAndGet(
-					@Nonnull Lock lock,
-					@Nonnull ThrowableSupplier<R, T> supplier
+	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
+	public static <R, T extends Throwable> R lockInterruptiblyAndGet(
+					@NonNull Lock lock,
+					@NonNull ThrowableSupplier<R, T> supplier
 	) throws T, InterruptedException {
 
 		// Ensure inputs are not null
@@ -142,17 +163,20 @@ public interface AutoLock {
 	}
 
 	/**
-	 * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
+	 * Attempts to acquire the lock. If successful, executes {@code onLockSuccess}
+	 * while holding the lock. Otherwise, executes {@code onLockFail}.
 	 *
-	 * @param <T1>          type of exception to be thrown inside onLockSuccess runnable
-	 * @param <T2>          type of exception to be thrown inside onLockFail runnable
-	 * @param lock          lock to lock on
-	 * @param onLockSuccess runnable to run while locked
-	 * @param onLockFail    runnable to run when lock did not succeed
-	 * @throws T1 thrown if onLockSuccess runnable has thrown an exception
-	 * @throws T2 thrown if onLockFail runnable has thrown an exception
+	 * @param lock the lock to attempt to acquire
+	 * @param onLockSuccess action executed if the lock is acquired
+	 * @param onLockFail action executed if the lock is not acquired
+	 * @param <T1> exception type from success action
+	 * @param <T2> exception type from failure action
+	 * @throws T1 if the success action throws an exception
+	 * @throws T2 if the failure action throws an exception
+	 * @throws NullPointerException if any argument is null
 	 */
-	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(@Nonnull Lock lock, @Nonnull ThrowableRunnable<T1> onLockSuccess, @Nonnull ThrowableRunnable<T2> onLockFail) throws T1, T2 {
+	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
+	public static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(@NonNull Lock lock, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableRunnable<T2> onLockFail) throws T1, T2 {
 
 		// Ensure inputs are valid
 		Objects.requireNonNull(lock, "lock must not be null");
@@ -161,7 +185,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock()) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
+			try (LockedAutoLock ignored = new LockedAutoLock(lock)) {
 				onLockSuccess.run();
 			}
 		} else {
@@ -170,20 +194,22 @@ public interface AutoLock {
 	}
 
 	/**
-	 * Attempts to lock. If lock is obtained, then the supplier will be run. After running the supplier, lock is unlocked.
-	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
+	 * Attempts to acquire the lock. If successful, executes {@code onLockSuccess}
+	 * and returns its result. Otherwise, executes {@code onLockFail} and returns its result.
 	 *
-	 * @param <R>           desired type of the return value
-	 * @param <T1>          type of exception to be thrown inside onLockSuccess supplier
-	 * @param <T2>          type of exception to be thrown inside onLockFail supplier
-	 * @param lock          lock to lock on
-	 * @param onLockSuccess supplier to run while locked
-	 * @param onLockFail    supplier to run when lock did not succeed
-	 * @return result of supplier
-	 * @throws T1 thrown if onLockSuccess supplier has thrown an exception
-	 * @throws T2 thrown if onLockFail supplier has thrown an exception
+	 * @param lock the lock to attempt to acquire
+	 * @param onLockSuccess computation executed if lock is acquired
+	 * @param onLockFail computation executed if lock is not acquired
+	 * @param <R> return type
+	 * @param <T1> exception type from success computation
+	 * @param <T2> exception type from failure computation
+	 * @return result of either computation
+	 * @throws T1 if success computation throws an exception
+	 * @throws T2 if failure computation throws an exception
+	 * @throws NullPointerException if any argument is null
 	 */
-	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(@Nonnull Lock lock, @Nonnull ThrowableSupplier<R, T1> onLockSuccess, @Nonnull ThrowableSupplier<R, T2> onLockFail) throws T1, T2 {
+	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
+	public static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(@NonNull Lock lock, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableSupplier<R, T2> onLockFail) throws T1, T2 {
 
 		// Ensure inputs are valid
 		Objects.requireNonNull(lock, "lock must not be null");
@@ -192,7 +218,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock()) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
+			try (LockedAutoLock ignored = new LockedAutoLock(lock)) {
 				return onLockSuccess.get();
 			}
 		} else {
@@ -201,23 +227,27 @@ public interface AutoLock {
 	}
 
 	/**
-	 * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
+	 * Attempts to acquire the lock within the given timeout. If successful,
+	 * executes {@code onLockSuccess}. Otherwise, executes {@code onLockFail}.
 	 *
-	 * @param <T1>          type of exception to be thrown inside onLockSuccess runnable
-	 * @param <T2>          type of exception to be thrown inside onLockFail runnable
-	 * @param lock          lock to lock on
-	 * @param timeout       duration of the lock attempt
-	 * @param onLockSuccess runnable to run while locked
-	 * @param onLockFail    runnable to run if lock was not acquired
-	 * @throws T1                   thrown if onLockSuccess runnable has thrown an exception
-	 * @throws T2                   thrown if onLockFail runnable has thrown an exception
-	 * @throws InterruptedException thrown if the thread was interrupted
+	 * @param lock the lock to attempt to acquire
+	 * @param timeout maximum time to wait for the lock
+	 * @param onLockSuccess action executed if lock is acquired
+	 * @param onLockFail action executed if lock is not acquired
+	 * @param <T1> exception type from success action
+	 * @param <T2> exception type from failure action
+	 * @throws T1 if success action throws an exception
+	 * @throws T2 if failure action throws an exception
+	 * @throws InterruptedException if interrupted while waiting
+	 * @throws NullPointerException if any argument is null
+	 * @throws IllegalArgumentException if timeout is negative
 	 */
-	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(
-					@Nonnull Lock lock,
-					@Nonnull Duration timeout,
-					@Nonnull ThrowableRunnable<T1> onLockSuccess,
-					@Nonnull ThrowableRunnable<T2> onLockFail
+	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
+	public static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(
+					@NonNull Lock lock,
+					@NonNull Duration timeout,
+					@NonNull ThrowableRunnable<T1> onLockSuccess,
+					@NonNull ThrowableRunnable<T2> onLockFail
 	) throws T1, T2, InterruptedException {
 
 		// Ensure inputs are valid
@@ -229,7 +259,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
+			try (LockedAutoLock ignored = new LockedAutoLock(lock)) {
 				onLockSuccess.run();
 			}
 		} else {
@@ -239,26 +269,30 @@ public interface AutoLock {
 
 
 	/**
-	 * Attempts to lock. If lock is obtained, then the supplier will be run. After running the supplier, lock is unlocked.
-	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
+	 * Attempts to acquire the lock within the given timeout. If successful,
+	 * executes {@code onLockSuccess} and returns its result. Otherwise, executes
+	 * {@code onLockFail} and returns its result.
 	 *
-	 * @param <R>           desired type of the return value
-	 * @param <T1>          type of exception to be thrown inside onLockSuccess supplier
-	 * @param <T2>          type of exception to be thrown inside onLockFail supplier
-	 * @param lock          lock to lock on
-	 * @param timeout       duration of the lock attempt
-	 * @param onLockSuccess supplier to run while locked
-	 * @param onLockFail    supplier to run when lock fails to be acquired
-	 * @return result of either supplier
-	 * @throws T1                   thrown if onLockSuccess supplier has thrown an exception
-	 * @throws T2                   thrown if onLockFail supplier has thrown an exception
-	 * @throws InterruptedException thrown if the thread was interrupted
+	 * @param lock the lock to attempt to acquire
+	 * @param timeout maximum time to wait for the lock
+	 * @param onLockSuccess computation executed if lock is acquired
+	 * @param onLockFail computation executed if lock is not acquired
+	 * @param <R> return type
+	 * @param <T1> exception type from success computation
+	 * @param <T2> exception type from failure computation
+	 * @return result of either computation
+	 * @throws T1 if success computation throws an exception
+	 * @throws T2 if failure computation throws an exception
+	 * @throws InterruptedException if interrupted while waiting
+	 * @throws NullPointerException if any argument is null
+	 * @throws IllegalArgumentException if timeout is negative
 	 */
-	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(
-					@Nonnull Lock lock,
-					@Nonnull Duration timeout,
-					@Nonnull ThrowableSupplier<R, T1> onLockSuccess,
-					@Nonnull ThrowableSupplier<R, T2> onLockFail
+	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
+	public static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(
+					@NonNull Lock lock,
+					@NonNull Duration timeout,
+					@NonNull ThrowableSupplier<R, T1> onLockSuccess,
+					@NonNull ThrowableSupplier<R, T2> onLockFail
 	) throws T1, T2, InterruptedException {
 
 		// Ensure inputs are valid
@@ -270,7 +304,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
+			try (LockedAutoLock ignored = new LockedAutoLock(lock)) {
 				return onLockSuccess.get();
 			}
 		} else {
@@ -279,30 +313,33 @@ public interface AutoLock {
 	}
 
 	/**
-	 * Attempts to lock. If lock is obtained, then the runnable will be run. After running the runnable, lock is unlocked.
+	 * Attempts to acquire the lock within the given timeout. If successful,
+	 * executes {@code onLockSuccess}. Otherwise, executes {@code onLockFail}.
 	 *
-	 * @param <T1>          type of exception to be thrown inside onLockSuccess runnable
-	 * @param <T2>          type of exception to be thrown inside onLockFail runnable
-	 * @param lock          lock to lock on
-	 * @param time          timeout duration
-	 * @param unit          timeout timeunit
-	 * @param onLockSuccess runnable to run while locked
-	 * @param onLockFail    runnable to run if lock was not acquired
-	 * @throws T1                   thrown if onLockSuccess runnable has thrown an exception
-	 * @throws T2                   thrown if onLockFail runnable has thrown an exception
-	 * @throws InterruptedException thrown when the locking process was interrupted
+	 * @param lock the lock to attempt to acquire
+	 * @param time maximum time to wait for the lock
+	 * @param unit time unit of the timeout
+	 * @param onLockSuccess action executed if lock is acquired
+	 * @param onLockFail action executed if lock is not acquired
+	 * @param <T1> exception type from success action
+	 * @param <T2> exception type from failure action
+	 * @throws T1 if success action throws an exception
+	 * @throws T2 if failure action throws an exception
+	 * @throws InterruptedException if interrupted while waiting for the lock
+	 * @throws NullPointerException if {@code lock}, {@code unit}, {@code onLockSuccess}, or {@code onLockFail} is null
+	 * @throws IllegalArgumentException if {@code time} is negative
 	 */
-	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(
-					@Nonnull Lock lock,
-					@Nonnegative long time,
-					@Nonnull TimeUnit unit,
-					@Nonnull ThrowableRunnable<T1> onLockSuccess,
-					@Nonnull ThrowableRunnable<T2> onLockFail
+	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
+	public static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(
+					@NonNull Lock lock,
+					long time,
+					@NonNull TimeUnit unit,
+					@NonNull ThrowableRunnable<T1> onLockSuccess,
+					@NonNull ThrowableRunnable<T2> onLockFail
 	) throws T1, T2, InterruptedException {
 
 		// Ensure inputs are valid
 		Objects.requireNonNull(lock, "lock must not be null");
-		//noinspection ConstantValue
 		if (time < 0) throw new IllegalArgumentException("time must be non-negative");
 		Objects.requireNonNull(unit, "unit must not be null");
 		Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
@@ -310,7 +347,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock(time, unit)) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
+			try (LockedAutoLock ignored = new LockedAutoLock(lock)) {
 				onLockSuccess.run();
 			}
 		} else {
@@ -319,33 +356,36 @@ public interface AutoLock {
 	}
 
 	/**
-	 * Attempts to lock. If lock is obtained, then the supplier will be run. After running the supplier, lock is unlocked.
-	 * Assuming that supplier did not throw an exception, value returned by the supplier will be returned.
+	 * Attempts to acquire the lock within the given timeout. If successful,
+	 * executes {@code onLockSuccess} and returns its result. Otherwise, executes
+	 * {@code onLockFail} and returns its result.
 	 *
-	 * @param <R>           desired type of the return value
-	 * @param <T1>          type of exception to be thrown inside onLockSuccess supplier
-	 * @param <T2>          type of exception to be thrown inside onLockFail supplier
-	 * @param lock          lock to lock on
-	 * @param time          timeout duration
-	 * @param unit          timeout timeunit
-	 * @param onLockSuccess supplier to run while locked
-	 * @param onLockFail    supplier to run if lock was not acquired
-	 * @return result of supplier
-	 * @throws T1                   thrown if onLockSuccess supplier has thrown an exception
-	 * @throws T2                   thrown if onLockFail supplier has thrown an exception
-	 * @throws InterruptedException thrown if the thread was interrupted
+	 * @param lock the lock to attempt to acquire
+	 * @param time maximum time to wait for the lock
+	 * @param unit time unit of the timeout
+	 * @param onLockSuccess computation executed if lock is acquired
+	 * @param onLockFail computation executed if lock is not acquired
+	 * @param <R> return type
+	 * @param <T1> exception type from success computation
+	 * @param <T2> exception type from failure computation
+	 * @return result of either computation
+	 * @throws T1 if success computation throws an exception
+	 * @throws T2 if failure computation throws an exception
+	 * @throws InterruptedException if interrupted while waiting for the lock
+	 * @throws NullPointerException if {@code lock}, {@code unit}, {@code onLockSuccess}, or {@code onLockFail} is null
+	 * @throws IllegalArgumentException if {@code time} is negative
 	 */
-	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(
-					@Nonnull Lock lock,
-					@Nonnegative long time,
-					@Nonnull TimeUnit unit,
-					@Nonnull ThrowableSupplier<R, T1> onLockSuccess,
-					@Nonnull ThrowableSupplier<R, T2> onLockFail
+	@SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
+	public static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(
+					@NonNull Lock lock,
+					long time,
+					@NonNull TimeUnit unit,
+					@NonNull ThrowableSupplier<R, T1> onLockSuccess,
+					@NonNull ThrowableSupplier<R, T2> onLockFail
 	) throws T1, T2, InterruptedException {
 
 		// Ensure inputs are valid
 		Objects.requireNonNull(lock, "lock must not be null");
-		//noinspection ConstantValue
 		if (time < 0) throw new IllegalArgumentException("time must be non-negative");
 		Objects.requireNonNull(unit, "unit must not be null");
 		Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
@@ -353,7 +393,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock(time, unit)) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
+			try (LockedAutoLock ignored = new LockedAutoLock(lock)) {
 				return onLockSuccess.get();
 			}
 		} else {
