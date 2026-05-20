@@ -4,26 +4,12 @@ import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /**
  * AutoLock class that creates LockedAutoLock object AutoCloseable resource that can be used in Try-with-resources scope
  */
 public interface AutoLock {
-
-	/**
-	 * Creates AutoLock from lock
-	 *
-	 * @param lock lock
-	 * @return AutoLock auto lock
-	 */
-	@Nonnull
-	static AutoLock create(@Nonnull Lock lock) {
-		//noinspection ConstantConditions
-		if (lock == null) throw new IllegalArgumentException("'lock' is null");
-		return new AutoLockImplementation(lock);
-	}
 
 	/**
 	 * Locks and creates a LockedAutoLock reference
@@ -33,7 +19,10 @@ public interface AutoLock {
 	 */
 	@Nonnull
 	static LockedAutoLock doLock(@Nonnull Lock lock) {
-		return create(lock).doLock();
+		//noinspection ConstantValue
+		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		lock.lock();
+		return new LockedAutoLockImplementation(lock);
 	}
 
 	/**
@@ -45,7 +34,10 @@ public interface AutoLock {
 	 */
 	@Nonnull
 	static LockedAutoLock doLockInterruptibly(@Nonnull Lock lock) throws InterruptedException {
-		return create(lock).doLockInterruptibly();
+		//noinspection ConstantValue
+		if (lock == null) throw new IllegalArgumentException("'lock' is null");
+		lock.lockInterruptibly();
+		return new LockedAutoLockImplementation(lock);
 	}
 
 	/**
@@ -158,7 +150,7 @@ public interface AutoLock {
 	 * @param <T2>          type of exception to be thrown inside onLockFail runnable
 	 * @param lock          lock to lock on
 	 * @param onLockSuccess runnable to run while locked
-	 * @param onLockFail runnable to run when lock did not succeed
+	 * @param onLockFail    runnable to run when lock did not succeed
 	 * @throws T1 thrown if onLockSuccess runnable has thrown an exception
 	 * @throws T2 thrown if onLockFail runnable has thrown an exception
 	 */
@@ -174,7 +166,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock()) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
 				onLockSuccess.run();
 			}
 		} else {
@@ -191,7 +183,7 @@ public interface AutoLock {
 	 * @param <T2>          type of exception to be thrown inside onLockFail supplier
 	 * @param lock          lock to lock on
 	 * @param onLockSuccess supplier to run while locked
-	 * @param onLockFail supplier to run when lock did not succeed
+	 * @param onLockFail    supplier to run when lock did not succeed
 	 * @return result of supplier
 	 * @throws T1 thrown if onLockSuccess supplier has thrown an exception
 	 * @throws T2 thrown if onLockFail supplier has thrown an exception
@@ -208,7 +200,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock()) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
 				return onLockSuccess.get();
 			}
 		} else {
@@ -221,10 +213,10 @@ public interface AutoLock {
 	 *
 	 * @param <T1>          type of exception to be thrown inside onLockSuccess runnable
 	 * @param <T2>          type of exception to be thrown inside onLockFail runnable
-	 * @param lock             lock to lock on
-	 * @param timeout          duration of the lock attempt
+	 * @param lock          lock to lock on
+	 * @param timeout       duration of the lock attempt
 	 * @param onLockSuccess runnable to run while locked
-	 * @param onLockFail runnable to run if lock was not acquired
+	 * @param onLockFail    runnable to run if lock was not acquired
 	 * @throws T1                   thrown if onLockSuccess runnable has thrown an exception
 	 * @throws T2                   thrown if onLockFail runnable has thrown an exception
 	 * @throws InterruptedException thrown if the thread was interrupted
@@ -249,7 +241,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
 				onLockSuccess.run();
 			}
 		} else {
@@ -268,7 +260,7 @@ public interface AutoLock {
 	 * @param lock          lock to lock on
 	 * @param timeout       duration of the lock attempt
 	 * @param onLockSuccess supplier to run while locked
-	 * @param onLockFail supplier to run when lock fails to be acquired
+	 * @param onLockFail    supplier to run when lock fails to be acquired
 	 * @return result of either supplier
 	 * @throws T1                   thrown if onLockSuccess supplier has thrown an exception
 	 * @throws T2                   thrown if onLockFail supplier has thrown an exception
@@ -294,7 +286,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
 				return onLockSuccess.get();
 			}
 		} else {
@@ -311,9 +303,9 @@ public interface AutoLock {
 	 * @param time          timeout duration
 	 * @param unit          timeout timeunit
 	 * @param onLockSuccess runnable to run while locked
-	 * @param onLockFail runnable to run if lock was not acquired
+	 * @param onLockFail    runnable to run if lock was not acquired
 	 * @throws T1                   thrown if onLockSuccess runnable has thrown an exception
-	 * @throws T2 thrown if onLockFail runnable has thrown an exception
+	 * @throws T2                   thrown if onLockFail runnable has thrown an exception
 	 * @throws InterruptedException thrown when the locking process was interrupted
 	 */
 	static <T1 extends Throwable, T2 extends Throwable> void tryLockAndRun(
@@ -338,7 +330,7 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock(time, unit)) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
 				onLockSuccess.run();
 			}
 		} else {
@@ -357,10 +349,10 @@ public interface AutoLock {
 	 * @param time          timeout duration
 	 * @param unit          timeout timeunit
 	 * @param onLockSuccess supplier to run while locked
-	 * @param onLockFail supplier to run if lock was not acquired
+	 * @param onLockFail    supplier to run if lock was not acquired
 	 * @return result of supplier
 	 * @throws T1                   thrown if onLockSuccess supplier has thrown an exception
-	 * @throws T2 thrown if onLockFail supplier has thrown an exception
+	 * @throws T2                   thrown if onLockFail supplier has thrown an exception
 	 * @throws InterruptedException thrown if the thread was interrupted
 	 */
 	static <R, T1 extends Throwable, T2 extends Throwable> R tryLockAndGet(
@@ -385,36 +377,12 @@ public interface AutoLock {
 
 		// Lock it
 		if (lock.tryLock(time, unit)) {
-			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock, new AtomicBoolean(true))) {
+			try (LockedAutoLock ignored = new LockedAutoLockImplementation(lock)) {
 				return onLockSuccess.get();
 			}
 		} else {
 			return onLockFail.get();
 		}
 	}
-
-	/**
-	 * Locks this AutoLock and creates AutoCloseable LockedAutoLock resource
-	 *
-	 * @return LockedAutoLock resource
-	 */
-	@Nonnull
-	LockedAutoLock doLock();
-
-	/**
-	 * Locks this AutoLock and creates AutoCloseable LockedAutoLock resource
-	 *
-	 * @return LockedAutoLock resource
-	 * @throws InterruptedException thrown when the locking process was interrupted
-	 */
-	@Nonnull
-	LockedAutoLock doLockInterruptibly() throws InterruptedException;
-
-	/**
-	 * Returns lock state of this lock, true if locked, false if unlocked
-	 *
-	 * @return true if locked, false if unlocked
-	 */
-	boolean isLocked();
 
 }

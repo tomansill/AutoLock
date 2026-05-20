@@ -1,7 +1,6 @@
 package com.ansill.lock.autolock;
 
 import javax.annotation.Nonnull;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -16,24 +15,25 @@ final class LockedAutoLockImplementation implements LockedAutoLock {
 	private final Lock lock;
 
 	/**
-	 * Lock state
+	 * Closed state
 	 */
-	@Nonnull
-	private final AtomicBoolean lockState;
+	private boolean closed;
 
 	/**
 	 * Creates locked resource
 	 *
-	 * @param lock      lock
-	 * @param lockState lock state
+	 * @param lock lock
 	 */
-	LockedAutoLockImplementation(@Nonnull Lock lock, @Nonnull AtomicBoolean lockState) {
+	LockedAutoLockImplementation(@Nonnull Lock lock) {
 		this.lock = lock;
-		this.lockState = lockState;
+		this.closed = false;
 	}
 
 	@Override
 	public void unlock() {
-		if (this.lockState.compareAndSet(true, false)) this.lock.unlock();
+		if (!closed) {
+			closed = true;
+			this.lock.unlock();
+		}
 	}
 }
