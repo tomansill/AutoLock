@@ -14,16 +14,16 @@
  * <h2>Core Concepts</h2>
  *
  * <ul>
- *   <li><b>{@link com.ansill.lock.autolock.AutoLock}</b> – Entry point utilities for acquiring locks and executing
+ *   <li><b>{@link com.ansill.autolock.AutoLock}</b> – Entry point utilities for acquiring locks and executing
  *   code under lock protection.</li>
  *
- *   <li><b>{@link com.ansill.lock.autolock.LockedAutoLock}</b> – A scope-bound lock handle that releases the underlying
+ *   <li><b>{@link com.ansill.autolock.LockedAutoLock}</b> – A scope-bound lock handle that releases the underlying
  *   lock when closed (typically via try-with-resources).</li>
  *
- *   <li><b>{@link com.ansill.lock.autolock.ThrowableRunnable}</b> – A {@code Runnable}-like functional interface that
+ *   <li><b>{@link com.ansill.autolock.ThrowableRunnable}</b> – A {@code Runnable}-like functional interface that
  *   can throw checked exceptions.</li>
  *
- *   <li><b>{@link com.ansill.lock.autolock.ThrowableSupplier}</b> – A {@code Supplier}-like functional interface that
+ *   <li><b>{@link com.ansill.autolock.ThrowableSupplier}</b> – A {@code Supplier}-like functional interface that
  *   can throw checked exceptions.</li>
  * </ul>
  *
@@ -46,4 +46,4 @@
  * <p>All lock acquisition methods block unless explicitly stated otherwise,
  * and all resources are guaranteed to be released when the scope ends.</p>
  */
-package com.ansill.lock.autolock;
+package com.ansill.autolock;

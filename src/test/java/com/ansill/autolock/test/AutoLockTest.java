@@ -1,6 +1,6 @@
-package com.ansill.lock.autolock.test;
+package com.ansill.autolock.test;
 
-import com.ansill.lock.autolock.NonThreadSafeObject;
+import com.ansill.autolock.NonThreadSafeObject;
 import org.junit.jupiter.api.function.Executable;
 
 import java.security.SecureRandom;

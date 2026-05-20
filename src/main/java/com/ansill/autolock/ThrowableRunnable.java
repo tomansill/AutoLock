@@ -1,4 +1,4 @@
-package com.ansill.lock.autolock;
+package com.ansill.autolock;
 
 /**
  * A functional interface similar to {@link Runnable}, but allowing a checked exception to be thrown.

@@ -1,8 +1,8 @@
-package com.ansill.lock.autolock.test;
+package com.ansill.autolock.test;
 
-import com.ansill.lock.autolock.AutoLock;
-import com.ansill.lock.autolock.ThrowableRunnable;
-import com.ansill.lock.autolock.ThrowableSupplier;
+import com.ansill.autolock.AutoLock;
+import com.ansill.autolock.ThrowableRunnable;
+import com.ansill.autolock.ThrowableSupplier;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;

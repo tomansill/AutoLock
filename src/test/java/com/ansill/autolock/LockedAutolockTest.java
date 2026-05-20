@@ -1,4 +1,4 @@
-package com.ansill.lock.autolock;
+package com.ansill.autolock;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.DisplayName;

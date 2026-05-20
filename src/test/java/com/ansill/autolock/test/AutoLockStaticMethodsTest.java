@@ -1,7 +1,7 @@
-package com.ansill.lock.autolock.test;
+package com.ansill.autolock.test;
 
-import com.ansill.lock.autolock.AutoLock;
-import com.ansill.lock.autolock.LockedAutoLock;
+import com.ansill.autolock.AutoLock;
+import com.ansill.autolock.LockedAutoLock;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
