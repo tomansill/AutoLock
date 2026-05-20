@@ -15,15 +15,11 @@ I have been using `Lock` a lot for a while now, and I'm getting tired of writing
 
 Lock lock = new ReentrantLock();
 
-lock.
-
-lock();
+lock.lock();
 try{
-				// Do stuff
-				}finally{
-				lock.
-
-unlock();
+  // Do stuff
+}finally{
+  lock.unlock();
 }
 
 ```
@@ -38,10 +34,9 @@ Now it becomes:
 ```java
 Lock lock = new ReentrantLock();
 
-try(
-LockedAutoLock ignored = AutoLock.lock(lock)){
-				// Do stuff
-				}
+try(LockedAutoLock ignored = AutoLock.lock(lock)){
+  // Do stuff
+}
 ```
 
 Then I extended it further with lambda-based helpers so you don’t even need try-with-resources in simple cases:
@@ -49,11 +44,9 @@ Then I extended it further with lambda-based helpers so you don’t even need tr
 ```java
 Lock lock = new ReentrantLock();
 
-AutoLock.
-
-lockAndRun(lock, () ->{
-				// Do stuff
-				});
+AutoLock.lockAndRun(lock, () ->{
+  // Do stuff
+});
 ```
 
 You can also use supplier-style methods when you need a return value:
@@ -98,8 +91,8 @@ Lock lock = new ReentrantLock();
 
 try(
 LockedAutoLock ignored = AutoLock.lock(lock)){
-				// Do stuff here
-				} // automatically unlocked here
+  // Do stuff here
+} // automatically unlocked here
 ```
 
 When using AutoLock with try-with-resources, the returned LockedAutoLock does not need to be used directly. It is only
@@ -122,11 +115,9 @@ Try-with-resources can be avoided entirely while still getting the same guarante
 Lock lock = new ReentrantLock();
 
 // Will lock, run, then unlock when this method exits
-AutoLock.
-
-lockAndRun(lock, () ->{
-				// Do stuff here
-				});
+AutoLock.lockAndRun(lock, () ->{
+  // Do stuff here
+});
 ```
 
 `AutoLock.lockAndRun(Lock,ThrowableRunnable<T>)` will first attempt to acquire the lock, then run the supplied runnable,
@@ -142,10 +133,10 @@ Lock lock = new ReentrantLock();
 // Will lock, retrieve, unlock, then return (if no exception) when this method exits
 int value = AutoLock.lockAndGet(lock, () -> {
 
-	// Do stuff here
+  // Do stuff here
 
-	// Return value
-	return 100;
+  // Return value
+  return 100;
 });
 ```
 
