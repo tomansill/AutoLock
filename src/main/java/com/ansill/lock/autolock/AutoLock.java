@@ -19,6 +19,13 @@ import java.util.concurrent.locks.Lock;
 public final class AutoLock {
 
 	/**
+	 * Prevent instantiation.
+	 */
+	private AutoLock() {
+		throw new UnsupportedOperationException("AutoLock is a utility class and cannot be instantiated");
+	}
+
+	/**
 	 * Acquires the given lock and returns an {@link LockedAutoLock} that will release the lock
 	 * when closed.
 	 *

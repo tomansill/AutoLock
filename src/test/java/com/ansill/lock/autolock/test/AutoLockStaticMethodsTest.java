@@ -5,16 +5,28 @@ import com.ansill.lock.autolock.LockedAutoLock;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Constructor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Static Methods")
 @SuppressWarnings("try") // Suppresses warning about 'ignored' is never referenced in try statement
 class AutoLockStaticMethodsTest implements AutoLockTest {
+
+	@Test
+	void shouldNotAllowInstantiationViaReflection() throws Exception {
+		Constructor<AutoLock> constructor = AutoLock.class.getDeclaredConstructor();
+
+		constructor.setAccessible(true);
+
+		Exception exception = assertThrows(Exception.class, constructor::newInstance);
+
+		assertTrue(exception.getCause() instanceof UnsupportedOperationException || exception instanceof UnsupportedOperationException
+		);
+	}
 
 	@DisplayName("Attempt to successfully run lock(Lock) method")
 	@Test
