@@ -5,11 +5,10 @@ import org.jspecify.annotations.NonNull;
 import java.util.concurrent.locks.Lock;
 
 /**
- * A scope-bound lock holder that releases an underlying {@link java.util.concurrent.locks.Lock}
- * when closed.
+ * A scope-bound resource that executes a release action when closed.
  *
- * <p>This class is intended for use with try-with-resources to ensure that locks
- * are reliably released:</p>
+ * <p>This class is primarily used to represent acquired lock ownership in a
+ * try-with-resources block, ensuring that locks are reliably released:</p>
  *
  * <pre>{@code
  * try (LockedAutoLock ignored = AutoLock.lock(mutex)) {
@@ -17,17 +16,16 @@ import java.util.concurrent.locks.Lock;
  * }
  * }</pre>
  *
- * <p>When {@link #close()} is invoked, this instance delegates directly to
- * {@link Lock#unlock()} on the underlying lock.</p>
+ * <p>When {@link #close()} is invoked, this instance executes an internal
+ * release action, typically unlocking one or more {@link Lock} instances.</p>
  *
  * <p><b>Usage contract:</b> Each instance must be closed exactly once. Violations
  * of this contract (such as double-closing or closing from a non-owning thread)
- * will result in the underlying {@link Lock} throwing an exception, typically
- * {@link IllegalMonitorStateException}.</p>
+ * may result in exceptions thrown by the underlying lock implementation,
+ * commonly {@link IllegalMonitorStateException}.</p>
  *
- * <p>This class does not attempt to track or guard against misuse; it is a thin,
- * zero-overhead wrapper over {@link Lock} intended to provide structured locking
- * via try-with-resources.</p>
+ * <p>This class does not enforce ownership or idempotency guarantees; it is a
+ * minimal wrapper intended to support structured locking patterns.</p>
  *
  * <p>Instances are created internally by {@link AutoLock} and are not intended
  * for external construction or subclassing.</p>
@@ -35,21 +33,17 @@ import java.util.concurrent.locks.Lock;
 public final class LockedAutoLock implements AutoCloseable {
 
 	/**
-	 * The underlying lock being managed by this scope.
+	 * Runnable to run on close()
 	 */
 	@NonNull
-	private final Lock lock;
+	private final Runnable onClose;
 
 	/**
-	 * Creates a new scoped lock wrapper.
-	 *
-	 * <p>This constructor is package-private and should only be used by {@link AutoLock}.</p>
-	 *
-	 * @param lock the lock to manage
-	 * @throws NullPointerException if {@code lock} is null
+	 * Constructor with onClose runnable
+	 * @param onClose runnable to run when close() is called
 	 */
-	LockedAutoLock(@NonNull Lock lock) {
-		this.lock = lock;
+	LockedAutoLock(@NonNull Runnable onClose) {
+		this.onClose = onClose;
 	}
 
 	/**
@@ -59,10 +53,10 @@ public final class LockedAutoLock implements AutoCloseable {
 	 * calls {@link Lock#unlock()} on the underlying lock.</p>
 	 *
 	 * @throws IllegalMonitorStateException if the current thread does not hold
-	 *         the lock or if the lock has already been released
+	 *                                      the lock or if the lock has already been released
 	 */
 	@Override
 	public void close() {
-		this.lock.unlock();
+		onClose.run();
 	}
 }
