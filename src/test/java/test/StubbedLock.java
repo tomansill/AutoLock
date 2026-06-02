@@ -2,6 +2,7 @@ package test;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.opentest4j.AssertionFailedError;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -13,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -62,7 +62,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 	@NonNull
 	private final AtomicReference<ERunnable> onLockInterruptiblyRunnable = new AtomicReference<>();
 	@NonNull
-	private final AtomicReference<Supplier<Boolean>> onTryLockRunnable = new AtomicReference<>();
+	private final AtomicReference<ESupplier<Boolean>> onTryLockRunnable = new AtomicReference<>();
 	@NonNull
 	private final AtomicReference<TryLockWithTimeoutFunction> onTryLockTimeoutRunnable = new AtomicReference<>();
 
@@ -92,7 +92,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 		this.onUnlockRunnable.set(onUnlock);
 	}
 
-	public void setOnTryLockInstant(@NonNull Supplier<Boolean> onTryLock) {
+	public void setOnTryLockInstant(@NonNull ESupplier<Boolean> onTryLock) {
 		this.onTryLockRunnable.set(onTryLock);
 	}
 
@@ -125,9 +125,14 @@ public class StubbedLock implements Lock, AutoCloseable {
 	@Override
 	public boolean tryLock() {
 		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK));
-		Supplier<Boolean> function = onTryLockRunnable.getAndSet(null);
+		ESupplier<Boolean> function = onTryLockRunnable.getAndSet(null);
 		if (function == null) fail("unstubbed");
-		return function.get();
+		try {
+			return function.get();
+		} catch (Throwable e) {
+			sneakyThrow(e);
+			throw new AssertionFailedError("unreachable error");
+		}
 	}
 
 	@Override
@@ -141,6 +146,11 @@ public class StubbedLock implements Lock, AutoCloseable {
 	@FunctionalInterface
 	interface ERunnable {
 		void run() throws Throwable;
+	}
+
+	@FunctionalInterface
+	public interface ESupplier<Return> {
+		Return get() throws Throwable;
 	}
 
 	@NonNull
