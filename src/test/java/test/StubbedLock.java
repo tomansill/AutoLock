@@ -60,7 +60,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 		throw (T) t;
 	}
 	@NonNull
-	private final AtomicReference<RunnableWithInterruptedException> onLockInterruptiblyRunnable = new AtomicReference<>();
+	private final AtomicReference<ERunnable> onLockInterruptiblyRunnable = new AtomicReference<>();
 	@NonNull
 	private final AtomicReference<Supplier<Boolean>> onTryLockRunnable = new AtomicReference<>();
 	@NonNull
@@ -84,7 +84,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 		}
 	}
 
-	void setOnLockInterruptibly(@NonNull RunnableWithInterruptedException onLock) {
+	void setOnLockInterruptibly(@NonNull ERunnable onLock) {
 		this.onLockInterruptiblyRunnable.set(onLock);
 	}
 
@@ -111,9 +111,15 @@ public class StubbedLock implements Lock, AutoCloseable {
 	@Override
 	public void lockInterruptibly() throws InterruptedException {
 		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK_INTERRUPTIBLY));
-		RunnableWithInterruptedException runnable = onLockInterruptiblyRunnable.getAndSet(null);
+		ERunnable runnable = onLockInterruptiblyRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
-		runnable.run();
+		try {
+			runnable.run();
+		} catch (InterruptedException e) {
+			throw e;
+		} catch (Throwable e) {
+			sneakyThrow(e);
+		}
 	}
 
 	@Override
@@ -150,11 +156,6 @@ public class StubbedLock implements Lock, AutoCloseable {
 		TRY_LOCK,
 		TRY_LOCK_TIMEOUT,
 		UNLOCK
-	}
-
-	@FunctionalInterface
-	interface RunnableWithInterruptedException {
-		void run() throws InterruptedException;
 	}
 
 	@FunctionalInterface

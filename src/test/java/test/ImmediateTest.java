@@ -17,13 +17,13 @@ public class ImmediateTest implements AutoLockTest.LockRunTest, AutoLockTest.Loc
 	}
 
 	@Override
-	public void performLockInterruptiblyAndRun(@Nullable Lock lock, @Nullable Runnable runnable) throws InterruptedException {
-		AutoLock.lockInterruptiblyAndRun(lock, runnable == null ? null : runnable::run); // Cheat a bit
+	public <T extends Throwable> void performLockInterruptiblyAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T, InterruptedException {
+		AutoLock.lockInterruptiblyAndRun(lock, runnable);
 	}
 
 	@Override
-	public <Return> Return performLockInterruptiblyAndGet(@Nullable Lock lock, @Nullable Supplier<Return> supplier) throws InterruptedException {
-		return AutoLock.lockInterruptiblyAndGet(lock, supplier == null ? null : supplier::get); // Cheat a bit
+	public <Return, T extends Throwable> Return performLockInterruptiblyAndGet(@Nullable Lock lock, @Nullable ThrowableSupplier<Return, T> supplier) throws T, InterruptedException {
+		return AutoLock.lockInterruptiblyAndGet(lock, supplier);
 	}
 
 	@Override

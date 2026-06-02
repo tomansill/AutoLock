@@ -22,7 +22,7 @@ class TryWithResourcesTest implements AutoLockTest.LockRunTest, AutoLockTest.Loc
 	@Test
 	@Disabled("Not applicable")
 	@Override
-	public void testNullRunnableOnLockInterruptiblyRun() {
+	public void testLockInterruptiblyRun_NullRunnable() {
 		// Do nothing
 	}
 
@@ -34,7 +34,7 @@ class TryWithResourcesTest implements AutoLockTest.LockRunTest, AutoLockTest.Loc
 	}
 
 	@Override
-	public void performLockInterruptiblyAndRun(@Nullable Lock lock, @Nullable Runnable runnable) throws InterruptedException {
+	public <T extends Throwable> void performLockInterruptiblyAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T, InterruptedException {
 		try (LockedAutoLock ignored = AutoLock.lockInterruptibly(lock)) {
 			runnable.run();
 		}
