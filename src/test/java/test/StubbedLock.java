@@ -5,9 +5,9 @@ import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -66,7 +66,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 	@NonNull
 	private final AtomicReference<TryLockWithTimeoutFunction> onTryLockTimeoutRunnable = new AtomicReference<>();
 
-	private final List<TimestampedEvent> actualEvents = new LinkedList<>();
+	private final List<TimestampedEvent> actualEvents = new CopyOnWriteArrayList<>();
 
 	@NonNull List<TimestampedEvent> getActualEvents() {
 		return Collections.unmodifiableList(actualEvents);
