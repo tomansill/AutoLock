@@ -7,9 +7,7 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.*;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -225,13 +223,13 @@ abstract class AutoLockTest {
 			}
 		}
 
-		@DisplayName("test lock with error at lock (run)")
+		@DisplayName("test lock with throwable at lock (run)")
 		@TestFactory
-		default Iterable<DynamicTest> testLockRunnableWithErrorAtLock() {
-			return getRandomErrors(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRunnableWithErrorAtLock(entry.getValue()))).collect(Collectors.toList());
+		default Iterable<DynamicTest> testLockRunnableWithThrowableAtLock() {
+			return getRandomThrowables(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRunnableWithThrowableAtLock(entry.getValue()))).collect(Collectors.toList());
 		}
 
-		default void testLockRunnableWithErrorAtLock(@NonNull Supplier<? extends Error> supplier) {
+		default void testLockRunnableWithThrowableAtLock(@NonNull Supplier<? extends Throwable> supplier) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				Thread currentThread = Thread.currentThread();
@@ -252,30 +250,86 @@ abstract class AutoLockTest {
 			}
 		}
 
-		@DisplayName("test lock with RuntimeException at lock (run)")
+		@DisplayName("test lock with Error at unlock (run)")
 		@TestFactory
-		default Iterable<DynamicTest> testLockRunnableWithREAtLock() {
-			return getRandomRuntimeExceptions(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRunnableWithREAtLock(entry.getValue()))).collect(Collectors.toList());
+		default Iterable<DynamicTest> testLockRunnableWithErrorAtUnlock() {
+			return getRandomThrowables(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRunnableWithErrorAtUnlock(entry.getValue()))).collect(Collectors.toList());
 		}
 
-		default void testLockRunnableWithREAtLock(@NonNull Supplier<? extends RuntimeException> supplier) {
+		default void testLockRunnableWithErrorAtUnlock(@NonNull Supplier<? extends Throwable> supplier) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
+				AtomicInteger unlockCount = new AtomicInteger();
 				Thread currentThread = Thread.currentThread();
 				AtomicReference<Object> throwableRef = new AtomicReference<>();
 				lock.setOnLock(() -> {
 					lockCount.incrementAndGet();
 					assertSame(currentThread, Thread.currentThread());
+				});
+				Throwable actualThrowable = assertThrows(Throwable.class, () -> performLockAndRun(lock, () -> lock.setOnUnlock(() -> {
+					unlockCount.getAndIncrement();
 					try {
 						throw supplier.get();
 					} catch (Throwable throwable) {
 						throwableRef.set(throwable);
 						throw throwable;
 					}
-				});
-				Throwable actualThrowable = assertThrows(Throwable.class, () -> performLockAndRun(lock, Assertions::fail));
+				})));
 				assertSame(throwableRef.get(), actualThrowable);
 				assertEquals(1, lockCount.get());
+				assertEquals(1, unlockCount.get());
+			}
+		}
+
+		@DisplayName("test lock with Throwable during runnable then Throwable at unlock (run)")
+		@TestFactory
+		default Iterable<DynamicTest> testLockRunnableWithThrowableInMainThenThrowableAtUnlock() {
+			Random random = new Random(getSeed(0).hashCode());
+			Map<String, Supplier<? extends Throwable>> throwableMap = getRandomThrowables(random);
+			return throwableMap.entrySet().stream().map(entry -> {
+				Map<String, Supplier<? extends Throwable>> innerRandomMap = getRandomThrowables(random);
+				List<String> keys = new ArrayList<>(innerRandomMap.keySet());
+				Collections.shuffle(keys, random);
+				Supplier<? extends Throwable> mainThrowable = innerRandomMap.get(keys.iterator().next());
+				return DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRunnableWithThrowableInMainThenThrowableAtUnlock(mainThrowable, entry.getValue()));
+			}).collect(Collectors.toList());
+		}
+
+		default void testLockRunnableWithThrowableInMainThenThrowableAtUnlock(@NonNull Supplier<? extends Throwable> mainExceptionSupplier, @NonNull Supplier<? extends Throwable> supplier) {
+			try (StubbedLock lock = new StubbedLock()) {
+				AtomicInteger lockCount = new AtomicInteger();
+				AtomicInteger unlockCount = new AtomicInteger();
+				Thread currentThread = Thread.currentThread();
+				AtomicReference<Object> mainThrowableRef = new AtomicReference<>();
+				AtomicReference<Object> unlockThrowableRef = new AtomicReference<>();
+				lock.setOnLock(() -> {
+					lockCount.incrementAndGet();
+					assertSame(currentThread, Thread.currentThread());
+				});
+				Throwable actualThrowable = assertThrows(
+								Throwable.class,
+								() -> performLockAndRun(lock, () -> {
+									lock.setOnUnlock(() -> {
+										unlockCount.getAndIncrement();
+										try {
+											throw supplier.get();
+										} catch (Throwable throwable) {
+											unlockThrowableRef.set(throwable);
+											throw throwable;
+										}
+									});
+									try {
+										throw mainExceptionSupplier.get();
+									} catch (Throwable throwable) {
+										mainThrowableRef.set(throwable);
+										throw throwable;
+									}
+								}));
+				assertSame(mainThrowableRef.get(), actualThrowable);
+				assertEquals(1, actualThrowable.getSuppressed().length);
+				assertSame(unlockThrowableRef.get(), actualThrowable.getSuppressed()[0]);
+				assertEquals(1, lockCount.get());
+				assertEquals(1, unlockCount.get());
 			}
 		}
 

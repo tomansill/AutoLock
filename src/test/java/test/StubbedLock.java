@@ -19,8 +19,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class StubbedLock implements Lock, AutoCloseable {
 
-	@NonNull
-	private final AtomicReference<ERunnable> onLockRunnable = new AtomicReference<>();
 
 	@Override
 	public void close() {
@@ -46,13 +44,21 @@ public class StubbedLock implements Lock, AutoCloseable {
 	}
 
 	@NonNull
+	private final AtomicReference<ERunnable> onUnlockRunnable = new AtomicReference<>();
+
+	@NonNull
 	private final AtomicInteger callIndex = new AtomicInteger();
 
 	void setOnLock(@NonNull ERunnable onLock) {
 		this.onLockRunnable.set(onLock);
 	}
 	@NonNull
-	private final AtomicReference<Runnable> onUnlockRunnable = new AtomicReference<>();
+	private final AtomicReference<ERunnable> onLockRunnable = new AtomicReference<>();
+
+	@SuppressWarnings("unchecked")
+	static <T extends Throwable> void sneakyThrow(Throwable t) throws T {
+		throw (T) t;
+	}
 	@NonNull
 	private final AtomicReference<RunnableWithInterruptedException> onLockInterruptiblyRunnable = new AtomicReference<>();
 	@NonNull
@@ -71,14 +77,18 @@ public class StubbedLock implements Lock, AutoCloseable {
 		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.LOCK));
 		ERunnable runnable = onLockRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
-		runnable.run();
+		try {
+			runnable.run();
+		} catch (Throwable e) {
+			sneakyThrow(e);
+		}
 	}
 
 	void setOnLockInterruptibly(@NonNull RunnableWithInterruptedException onLock) {
 		this.onLockInterruptiblyRunnable.set(onLock);
 	}
 
-	void setOnUnlock(@NonNull Runnable onUnlock) {
+	void setOnUnlock(@NonNull ERunnable onUnlock) {
 		this.onUnlockRunnable.set(onUnlock);
 	}
 
@@ -86,9 +96,16 @@ public class StubbedLock implements Lock, AutoCloseable {
 		this.onTryLockRunnable.set(onTryLock);
 	}
 
-	@FunctionalInterface
-	interface ERunnable {
-		void run() throws Error;
+	@Override
+	public void unlock() {
+		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.UNLOCK));
+		ERunnable runnable = onUnlockRunnable.getAndSet(null);
+		if (runnable == null) fail("unstubbed");
+		try {
+			runnable.run();
+		} catch (Throwable e) {
+			sneakyThrow(e);
+		}
 	}
 
 	@Override
@@ -115,12 +132,9 @@ public class StubbedLock implements Lock, AutoCloseable {
 		return function.apply(time, unit);
 	}
 
-	@Override
-	public void unlock() {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.UNLOCK));
-		Runnable runnable = onUnlockRunnable.getAndSet(null);
-		if (runnable == null) fail("unstubbed");
-		runnable.run();
+	@FunctionalInterface
+	interface ERunnable {
+		void run() throws Throwable;
 	}
 
 	@NonNull
