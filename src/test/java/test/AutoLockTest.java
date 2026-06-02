@@ -60,6 +60,7 @@ abstract class AutoLockTest {
 		return returnObj;
 	}
 
+	@NonNull
 	static Map<String, Supplier<? extends RuntimeException>> getRandomRuntimeExceptions(@NonNull Random random) {
 		Map<String, Supplier<? extends RuntimeException>> returnObj = new HashMap<>();
 		{
@@ -93,6 +94,7 @@ abstract class AutoLockTest {
 		return returnObj;
 	}
 
+	@NonNull
 	static Map<String, Supplier<? extends Error>> getRandomErrors(@NonNull Random random) {
 		Map<String, Supplier<? extends Error>> returnObj = new HashMap<>();
 		{
@@ -123,16 +125,8 @@ abstract class AutoLockTest {
 	}
 
 	@NonNull
-	static Map<String, Supplier<? extends Throwable>> getRandomThrowables(@NonNull Random random) {
-		Map<String, Supplier<? extends Throwable>> returnObj = new HashMap<>(getRandomCheckedExceptions(random));
-		returnObj.putAll(getRandomRuntimeExceptions(random));
-		returnObj.putAll(getRandomErrors(random));
-		return returnObj;
-	}
-
-	@NonNull
-	static Map<String, Supplier<? extends Throwable>> getRandomCheckedExceptions(@NonNull Random random) {
-		Map<String, Supplier<? extends Throwable>> returnObj = new HashMap<>();
+	static Map<String, Supplier<? extends Exception>> getRandomCheckedExceptions(@NonNull Random random) {
+		Map<String, Supplier<? extends Exception>> returnObj = new HashMap<>();
 		{
 			long seed = random.nextLong();
 			returnObj.put("Exception", () -> new Exception("fake exception" + generateAlphanumericString(new Random(seed), 3, 32)));
@@ -148,27 +142,43 @@ abstract class AutoLockTest {
 		return returnObj;
 	}
 
+	@NonNull
+	static Map<String, Supplier<? extends Throwable>> getRandomUncheckeds(@NonNull Random random) {
+		Map<String, Supplier<? extends Throwable>> returnObj = new HashMap<>(getRandomRuntimeExceptions(random));
+		returnObj.putAll(getRandomErrors(random));
+		return returnObj;
+	}
+
+	@NonNull
+	static Map<String, Supplier<? extends Throwable>> getRandomThrowables(@NonNull Random random) {
+		Map<String, Supplier<? extends Throwable>> returnObj = new HashMap<>(getRandomCheckedExceptions(random));
+		returnObj.putAll(getRandomRuntimeExceptions(random));
+		returnObj.putAll(getRandomErrors(random));
+		return returnObj;
+	}
+
 	interface LockRunTest {
 
-		@DisplayName("test with null lock on lock run")
+		@DisplayName("lock-run: with null lock")
 		@Test
-		default void testNullLockOnLockRun() {
+		default void testLockRun_NullLock() {
 			NullPointerException exception = assertThrows(NullPointerException.class, () -> performLockAndRun(null, Assertions::fail));
 			assertEquals("lock must not be null", exception.getMessage());
 		}
 
-		@DisplayName("test with null runnable on lock run")
+		@DisplayName("lock-run: with null runnable")
 		@Test
-		default void testNullRunnableOnLockRun() {
+		default void testLockRun_NullRunnable() {
 			try (StubbedLock stubbedLock = new StubbedLock()) {
 				NullPointerException exception = assertThrows(NullPointerException.class, () -> performLockAndRun(stubbedLock, null));
 				assertEquals("runnable must not be null", exception.getMessage());
+				assertEquals(Collections.emptyList(), stubbedLock.getActualEvents());
 			}
 		}
 
-		@DisplayName("test successful lock (run)")
+		@DisplayName("lock-run: successful lock")
 		@Test
-		default void testSuccessfulLockRunnable() {
+		default void testLockRun_Success() {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicInteger executionCount = new AtomicInteger();
@@ -188,16 +198,23 @@ abstract class AutoLockTest {
 				assertEquals(1, lockCount.get());
 				assertEquals(1, executionCount.get());
 				assertEquals(1, unlockCount.get());
+				assertEquals(
+								Arrays.asList(
+												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+								),
+								lock.getActualEvents()
+				);
 			}
 		}
 
-		@DisplayName("test lock with exception inside runnable (run)")
+		@DisplayName("lock-run: exception thrown inside runnable")
 		@TestFactory
-		default Iterable<DynamicTest> testLockRunnableWithException() {
-			return getRandomThrowables(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRunnableWithException(entry.getValue()))).collect(Collectors.toList());
+		default Iterable<DynamicTest> testLockRun_ThrowableInsideRunnable() {
+			return getRandomThrowables(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRun_ThrowableInsideRunnable(entry.getValue()))).collect(Collectors.toList());
 		}
 
-		default void testLockRunnableWithException(@NonNull Supplier<? extends Throwable> supplier) {
+		default void testLockRun_ThrowableInsideRunnable(@NonNull Supplier<? extends Throwable> supplier) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicInteger executionCount = new AtomicInteger();
@@ -225,16 +242,23 @@ abstract class AutoLockTest {
 				assertEquals(1, lockCount.get());
 				assertEquals(1, executionCount.get());
 				assertEquals(1, unlockCount.get());
+				assertEquals(
+								Arrays.asList(
+												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+								),
+								lock.getActualEvents()
+				);
 			}
 		}
 
-		@DisplayName("test lock with throwable at lock (run)")
+		@DisplayName("lock-run: with Throwable thrown at lock()")
 		@TestFactory
-		default Iterable<DynamicTest> testLockRunnableWithThrowableAtLock() {
-			return getRandomThrowables(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRunnableWithThrowableAtLock(entry.getValue()))).collect(Collectors.toList());
+		default Iterable<DynamicTest> testLockRun_ThrowableAtLockMethod() {
+			return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRun_ThrowableAtLockMethod(entry.getValue()))).collect(Collectors.toList());
 		}
 
-		default void testLockRunnableWithThrowableAtLock(@NonNull Supplier<? extends Throwable> supplier) {
+		default void testLockRun_ThrowableAtLockMethod(@NonNull Supplier<? extends Throwable> supplier) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				Thread currentThread = Thread.currentThread();
@@ -252,16 +276,22 @@ abstract class AutoLockTest {
 				Throwable actualThrowable = assertThrows(Throwable.class, () -> performLockAndRun(lock, Assertions::fail));
 				assertSame(throwableRef.get(), actualThrowable);
 				assertEquals(1, lockCount.get());
+				assertEquals(
+								Collections.singletonList(
+												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK)
+								),
+								lock.getActualEvents()
+				);
 			}
 		}
 
-		@DisplayName("test lock with Error at unlock (run)")
+		@DisplayName("lock-run: with Throwable thrown at unlock()")
 		@TestFactory
-		default Iterable<DynamicTest> testLockRunnableWithErrorAtUnlock() {
-			return getRandomThrowables(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRunnableWithErrorAtUnlock(entry.getValue()))).collect(Collectors.toList());
+		default Iterable<DynamicTest> testLockRun_ThrowableAtUnlockMethod() {
+			return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRun_ThrowableAtUnlockMethod(entry.getValue()))).collect(Collectors.toList());
 		}
 
-		default void testLockRunnableWithErrorAtUnlock(@NonNull Supplier<? extends Throwable> supplier) {
+		default void testLockRun_ThrowableAtUnlockMethod(@NonNull Supplier<? extends Throwable> supplier) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicInteger unlockCount = new AtomicInteger();
@@ -283,24 +313,31 @@ abstract class AutoLockTest {
 				assertSame(throwableRef.get(), actualThrowable);
 				assertEquals(1, lockCount.get());
 				assertEquals(1, unlockCount.get());
+				assertEquals(
+								Arrays.asList(
+												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+								),
+								lock.getActualEvents()
+				);
 			}
 		}
 
-		@DisplayName("test lock with Throwable during runnable then Throwable at unlock (run)")
+		@DisplayName("lock-run: with Throwable thrown in runnable AND Throwable thrown in unlock()")
 		@TestFactory
-		default Iterable<DynamicTest> testLockRunnableWithThrowableInMainThenThrowableAtUnlock() {
+		default Iterable<DynamicTest> testLockRun_ThrowableInRunnableAndThrowableInUnlockMethod() {
 			Random random = new Random(getSeed(0).hashCode());
-			Map<String, Supplier<? extends Throwable>> throwableMap = getRandomThrowables(random);
+			Map<String, Supplier<? extends Throwable>> throwableMap = getRandomUncheckeds(random);
 			return throwableMap.entrySet().stream().map(entry -> {
 				Map<String, Supplier<? extends Throwable>> innerRandomMap = getRandomThrowables(random);
 				List<String> keys = new ArrayList<>(innerRandomMap.keySet());
 				Collections.shuffle(keys, random);
 				Supplier<? extends Throwable> mainThrowable = innerRandomMap.get(keys.iterator().next());
-				return DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRunnableWithThrowableInMainThenThrowableAtUnlock(mainThrowable, entry.getValue()));
+				return DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockRun_ThrowableInRunnableAndThrowableInUnlockMethod(mainThrowable, entry.getValue()));
 			}).collect(Collectors.toList());
 		}
 
-		default void testLockRunnableWithThrowableInMainThenThrowableAtUnlock(@NonNull Supplier<? extends Throwable> mainExceptionSupplier, @NonNull Supplier<? extends Throwable> supplier) {
+		default void testLockRun_ThrowableInRunnableAndThrowableInUnlockMethod(@NonNull Supplier<? extends Throwable> mainExceptionSupplier, @NonNull Supplier<? extends Throwable> supplier) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicInteger unlockCount = new AtomicInteger();
@@ -335,6 +372,13 @@ abstract class AutoLockTest {
 				assertSame(unlockThrowableRef.get(), actualThrowable.getSuppressed()[0]);
 				assertEquals(1, lockCount.get());
 				assertEquals(1, unlockCount.get());
+				assertEquals(
+								Arrays.asList(
+												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+								),
+								lock.getActualEvents()
+				);
 			}
 		}
 
@@ -343,14 +387,14 @@ abstract class AutoLockTest {
 
 	interface LockGetTest {
 
-		@DisplayName("test with null lock on lock get")
+		@DisplayName("with null lock on lock-get")
 		@Test
 		default void testNullLockOnLockGet() {
 			NullPointerException exception = assertThrows(NullPointerException.class, () -> performLockAndGet(null, Assertions::fail));
 			assertEquals("lock must not be null", exception.getMessage());
 		}
 
-		@DisplayName("test with null supplier on lock get")
+		@DisplayName("with null supplier on lock-get")
 		@Test
 		default void testNullRunnableOnLockGet() {
 			try (StubbedLock lock = new StubbedLock()) {
@@ -359,7 +403,7 @@ abstract class AutoLockTest {
 			}
 		}
 
-		@DisplayName("test successful lock (get)")
+		@DisplayName("successful lock on lock-get")
 		@TestFactory
 		default Iterable<DynamicTest> testSuccessfulLockGet() {
 			return getRandomObjects(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testSuccessfulLockGet(entry.getValue()))).collect(Collectors.toList());
@@ -396,21 +440,27 @@ abstract class AutoLockTest {
 
 	interface LockInterruptiblyRunTest {
 
-		@DisplayName("test with null lock on lock interruptibly run")
+		@DisplayName("with null lock on lock interruptibly run")
 		@Test
 		default void testNullLockOnLockInterruptiblyRun() {
 			NullPointerException exception = assertThrows(NullPointerException.class, () -> performLockInterruptiblyAndRun(null, Assertions::fail));
 			assertEquals("lock must not be null", exception.getMessage());
 		}
 
-		@DisplayName("test with null runnable on lock interruptibly run")
+		@DisplayName("with null runnable on lock interruptibly run")
 		@Test
 		default void testNullRunnableOnLockInterruptiblyRun() {
-			NullPointerException exception = assertThrows(NullPointerException.class, () -> performLockInterruptiblyAndRun(new StubbedLock(), null));
-			assertEquals("runnable must not be null", exception.getMessage());
+			try (StubbedLock lock = new StubbedLock()) {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> performLockInterruptiblyAndRun(lock, null));
+				assertEquals("runnable must not be null", exception.getMessage());
+				assertEquals(
+								Collections.emptyList(),
+								lock.getActualEvents()
+				);
+			}
 		}
 
-		@DisplayName("test successful lockInterruptibly (run)")
+		@DisplayName("successful lockInterruptibly (run)")
 		@Test
 		default void testSuccessfulLockInterruptiblyAndRun() throws InterruptedException {
 			try (StubbedLock lock = new StubbedLock()) {
@@ -432,10 +482,17 @@ abstract class AutoLockTest {
 				assertEquals(1, lockCount.get());
 				assertEquals(1, executionCount.get());
 				assertEquals(1, unlockCount.get());
+				assertEquals(
+								Arrays.asList(
+												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+								),
+								lock.getActualEvents()
+				);
 			}
 		}
 
-		@DisplayName("test lockInterruptibly with interrupt (run)")
+		@DisplayName("lockInterruptibly with interrupt (run)")
 		@Test
 		default void testLockInterruptiblyAndRunWithInterrupt() {
 			try (StubbedLock lock = new StubbedLock()) {
@@ -458,27 +515,27 @@ abstract class AutoLockTest {
 
 	interface LockInterruptiblyGetTest {
 
-		@DisplayName("test with null lock on lock interruptibly get")
+		@DisplayName("with null lock on lock interruptibly get")
 		@Test
 		default void testNullLockOnLockInterruptiblyGet() {
 			NullPointerException exception = assertThrows(NullPointerException.class, () -> performLockInterruptiblyAndGet(null, Assertions::fail));
 			assertEquals("lock must not be null", exception.getMessage());
 		}
 
-		@DisplayName("test with null lock on lock interruptibly get")
+		@DisplayName("with null lock on lock interruptibly get")
 		@Test
 		default void testNullSupplierOnLockInterruptiblyGet() {
 			NullPointerException exception = assertThrows(NullPointerException.class, () -> performLockInterruptiblyAndGet(new StubbedLock(), null));
 			assertEquals("supplier must not be null", exception.getMessage());
 		}
 
-		@DisplayName("test successful lockInterruptibly (get)")
+		@DisplayName("successful lockInterruptibly (get)")
 		@TestFactory
 		default Iterable<DynamicTest> testSuccessfulLockInterruptiblyAndGet() {
 			return getRandomObjects(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testSuccessfulLockInterruptiblyAndGet(entry.getValue()))).collect(Collectors.toList());
 		}
 
-		@DisplayName("test lockInterruptibly with interrupt (get)")
+		@DisplayName("lockInterruptibly with interrupt (get)")
 		@Test
 		default void testLockInterruptiblyAndGetWithInterrupt() {
 			try (StubbedLock lock = new StubbedLock()) {
@@ -527,7 +584,7 @@ abstract class AutoLockTest {
 
 	interface TryLockInstantTest {
 
-		@DisplayName("test successful instant try-lock (run)")
+		@DisplayName("successful instant try-lock (run)")
 		@Test
 		default void testSuccessfulTryLockInstantRun() {
 			try (StubbedLock lock = new StubbedLock()) {
@@ -554,7 +611,7 @@ abstract class AutoLockTest {
 			}
 		}
 
-		@DisplayName("test failed instant try-lock (run)")
+		@DisplayName("failed instant try-lock (run)")
 		@Test
 		default void testFailedTryLockInstantRun() {
 			try (StubbedLock lock = new StubbedLock()) {
@@ -576,7 +633,7 @@ abstract class AutoLockTest {
 
 		void performTryLockAndRun(@Nullable Lock lock, @Nullable Runnable onLockSuccess, @Nullable Runnable onLockFail);
 
-		@DisplayName("test successful instant try-lock (get)")
+		@DisplayName("successful instant try-lock (get)")
 		@TestFactory
 		default Iterable<DynamicTest> testSuccessfulTryLockInstantGet() {
 			return getRandomObjects(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testSuccessfulTryLockInstantGet(entry.getValue()))).collect(Collectors.toList());
@@ -609,7 +666,7 @@ abstract class AutoLockTest {
 			}
 		}
 
-		@DisplayName("test failed instant try-lock (get)")
+		@DisplayName("failed instant try-lock (get)")
 		@TestFactory
 		default Iterable<DynamicTest> testFailedTryLockInstantGet() {
 			return getRandomObjects(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testFailedTryLockInstantGet(entry.getValue()))).collect(Collectors.toList());

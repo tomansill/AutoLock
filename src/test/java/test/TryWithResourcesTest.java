@@ -15,7 +15,7 @@ class TryWithResourcesTest implements AutoLockTest.LockRunTest, AutoLockTest.Loc
 	@Test
 	@Disabled("Not applicable")
 	@Override
-	public void testNullRunnableOnLockRun() {
+	public void testLockRun_NullRunnable() {
 		// Do nothing
 	}
 

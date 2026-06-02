@@ -4,10 +4,10 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,7 +47,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 	private final AtomicReference<ERunnable> onUnlockRunnable = new AtomicReference<>();
 
 	@NonNull
-	private final AtomicInteger callIndex = new AtomicInteger();
+	private final AtomicInteger callIndex = new AtomicInteger(0);
 
 	void setOnLock(@NonNull ERunnable onLock) {
 		this.onLockRunnable.set(onLock);
@@ -74,7 +74,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public void lock() {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.LOCK));
+		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK));
 		ERunnable runnable = onLockRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
 		try {
@@ -98,7 +98,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public void unlock() {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.UNLOCK));
+		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.UNLOCK));
 		ERunnable runnable = onUnlockRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
 		try {
@@ -110,7 +110,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public void lockInterruptibly() throws InterruptedException {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.LOCK_INTERRUPTIBLY));
+		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK_INTERRUPTIBLY));
 		RunnableWithInterruptedException runnable = onLockInterruptiblyRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
 		runnable.run();
@@ -118,7 +118,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public boolean tryLock() {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.TRY_LOCK));
+		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK));
 		Supplier<Boolean> function = onTryLockRunnable.getAndSet(null);
 		if (function == null) fail("unstubbed");
 		return function.get();
@@ -126,7 +126,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public boolean tryLock(long time, @NonNull TimeUnit unit) throws InterruptedException {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.TRY_LOCK_TIMEOUT, Duration.ofNanos(unit.toNanos(time))));
+		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK_TIMEOUT, Duration.ofNanos(unit.toNanos(time))));
 		TryLockWithTimeoutFunction function = onTryLockTimeoutRunnable.getAndSet(null);
 		if (function == null) fail("unstubbed");
 		return function.apply(time, unit);
@@ -165,28 +165,46 @@ public class StubbedLock implements Lock, AutoCloseable {
 	public static class TimestampedEvent {
 		private final int callIndex;
 		@NonNull
-		private final Instant time;
-		@NonNull
 		private final Thread thread;
 		@NonNull
 		private final Event event;
 		@Nullable
 		private final Duration timeout;
 
-		private TimestampedEvent(int callIndex, @NonNull Instant time, @NonNull Thread thread, @NonNull Event event) {
+		TimestampedEvent(int callIndex, @NonNull Thread thread, @NonNull Event event) {
 			this.callIndex = callIndex;
-			this.time = time;
 			this.thread = thread;
 			this.event = event;
 			this.timeout = null;
 		}
 
-		private TimestampedEvent(int callIndex, @NonNull Instant time, @NonNull Thread thread, @NonNull Event event, @NonNull Duration timeout) {
+		private TimestampedEvent(int callIndex, @NonNull Thread thread, @NonNull Event event, @NonNull Duration timeout) {
 			this.callIndex = callIndex;
-			this.time = time;
 			this.thread = thread;
 			this.event = event;
 			this.timeout = timeout;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (o == null || getClass() != o.getClass()) return false;
+			TimestampedEvent that = (TimestampedEvent) o;
+			return callIndex == that.callIndex && Objects.equals(thread, that.thread) && event == that.event && Objects.equals(timeout, that.timeout);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(callIndex, thread, event, timeout);
+		}
+
+		@Override
+		public String toString() {
+			return "TimestampedEvent{" +
+							"callIndex=" + callIndex +
+							", thread=" + thread +
+							", event=" + event +
+							", timeout=" + timeout +
+							'}';
 		}
 	}
 }
