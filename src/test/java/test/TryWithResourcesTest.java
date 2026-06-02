@@ -2,34 +2,39 @@ package test;
 
 import com.ansill.autolock.AutoLock;
 import com.ansill.autolock.LockedAutoLock;
-import org.jspecify.annotations.NonNull;
-import org.junit.jupiter.api.DisplayName;
+import com.ansill.autolock.ThrowableRunnable;
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.locks.Lock;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+@SuppressWarnings("DataFlowIssue")
+class TryWithResourcesTest implements AutoLockTest.LockRunTest, AutoLockTest.LockInterruptiblyRunTest {
 
-@SuppressWarnings({"DataFlowIssue", "resource"})
-class TryWithResourcesTest implements AutoLockTest.LockRunTest, AutoLockTest.LockInterruptiblyTest {
-
-	@DisplayName("test with null lock")
 	@Test
-	void testNullLock() {
-		NullPointerException exception = assertThrows(NullPointerException.class, () -> AutoLock.lock(null));
-		assertEquals("lock must not be null", exception.getMessage());
+	@Disabled("Not applicable")
+	@Override
+	public void testNullRunnableOnLockRun() {
+		// Do nothing
+	}
+
+	@Test
+	@Disabled("Not applicable")
+	@Override
+	public void testNullRunnableOnLockInterruptiblyRun() {
+		// Do nothing
 	}
 
 	@Override
-	public void performLockAndRun(@NonNull Lock lock, @NonNull Runnable runnable) {
+	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
 		try (LockedAutoLock ignored = AutoLock.lock(lock)) {
 			runnable.run();
 		}
 	}
 
 	@Override
-	public void performLockInterruptiblyAndRun(@NonNull Lock lock, @NonNull Runnable runnable) throws InterruptedException {
+	public void performLockInterruptiblyAndRun(@Nullable Lock lock, @Nullable Runnable runnable) throws InterruptedException {
 		try (LockedAutoLock ignored = AutoLock.lockInterruptibly(lock)) {
 			runnable.run();
 		}

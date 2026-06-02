@@ -364,7 +364,8 @@ public final class AutoLock {
 		Objects.requireNonNull(runnable, "runnable must not be null");
 
 		// Lock it
-		try (LockedAutoLock ignored = lock(lock)) {
+		lock.lock();
+		try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 
 			// Run it
 			runnable.run();
@@ -390,7 +391,8 @@ public final class AutoLock {
 		Objects.requireNonNull(supplier, "supplier must not be null");
 
 		// Lock it
-		try (LockedAutoLock ignored = lock(lock)) {
+		lock.lock();
+		try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 
 			// Get it
 			return supplier.get();
@@ -418,7 +420,8 @@ public final class AutoLock {
 		Objects.requireNonNull(runnable, "runnable must not be null");
 
 		// Lock it
-		try (LockedAutoLock ignored = lockInterruptibly(lock)) {
+		lock.lockInterruptibly();
+		try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 
 			// Run it
 			runnable.run();
@@ -449,7 +452,8 @@ public final class AutoLock {
 		Objects.requireNonNull(supplier, "supplier must not be null");
 
 		// Lock it
-		try (LockedAutoLock ignored = lockInterruptibly(lock)) {
+		lock.lockInterruptibly();
+		try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 
 			// Get it
 			return supplier.get();
@@ -939,6 +943,7 @@ public final class AutoLock {
 		 * {@inheritDoc}
 		 */
 		public <T extends Throwable> void run(@NonNull ThrowableRunnable<T> runnable) throws T {
+			Objects.requireNonNull(runnable, "runnable must not be null");
 			lock.lock();
 			try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 				runnable.run();
@@ -991,6 +996,7 @@ public final class AutoLock {
 			 * {@inheritDoc}
 			 */
 			public <T extends Throwable> void run(@NonNull ThrowableRunnable<T> runnable) throws T, InterruptedException {
+				Objects.requireNonNull(runnable, "runnable must not be null");
 				lock.lockInterruptibly();
 				try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 					runnable.run();
@@ -1001,6 +1007,7 @@ public final class AutoLock {
 			 * {@inheritDoc}
 			 */
 			public <R, T extends Throwable> R get(@NonNull ThrowableSupplier<R, T> supplier) throws T, InterruptedException {
+				Objects.requireNonNull(supplier, "supplier must not be null");
 				lock.lockInterruptibly();
 				try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 					return supplier.get();

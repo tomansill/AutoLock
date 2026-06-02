@@ -50,6 +50,10 @@ public class StubbedLock implements Lock {
 		this.onUnlockRunnable.set(onUnlock);
 	}
 
+	public void setOnTryLockInstant(@NonNull Supplier<Boolean> onTryLock) {
+		this.onTryLockRunnable.set(onTryLock);
+	}
+
 	@Override
 	public void lock() {
 		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.LOCK));

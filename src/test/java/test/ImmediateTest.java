@@ -1,62 +1,43 @@
 package test;
 
 import com.ansill.autolock.AutoLock;
-import org.jspecify.annotations.NonNull;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import com.ansill.autolock.ThrowableRunnable;
+import com.ansill.autolock.ThrowableSupplier;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 @SuppressWarnings("DataFlowIssue")
-public class ImmediateTest implements AutoLockTest.LockRunTest, AutoLockTest.LockGetTest, AutoLockTest.LockInterruptiblyTest {
+public class ImmediateTest implements AutoLockTest.LockRunTest, AutoLockTest.LockGetTest, AutoLockTest.LockInterruptiblyRunTest, AutoLockTest.LockInterruptiblyGetTest, AutoLockTest.TryLockInstantTest {
 
-	@DisplayName("test lockAndRun with null lock")
-	@Test
-	void testLockAndRunNullLock() {
-		NullPointerException exception = assertThrows(NullPointerException.class, () -> AutoLock.lockAndRun(null, Assertions::fail));
-		assertEquals("lock must not be null", exception.getMessage());
-	}
-
-	@DisplayName("test lockAndGet with null lock")
-	@Test
-	void testLockAndGetNullLock() {
-		NullPointerException exception = assertThrows(NullPointerException.class, () -> AutoLock.lockAndGet(null, Assertions::fail));
-		assertEquals("lock must not be null", exception.getMessage());
-	}
-
-	@DisplayName("test lockAndRun with null runnable")
-	@Test
-	void testLockAndRunNullRunnable() {
-		StubbedLock stubbedLock = new StubbedLock();
-		NullPointerException exception = assertThrows(NullPointerException.class, () -> AutoLock.lockAndRun(stubbedLock, null));
-		assertEquals("runnable must not be null", exception.getMessage());
-	}
-
-	@DisplayName("test lockAndGet with null runnable")
-	@Test
-	void testLockAndGetNullRunnable() {
-		StubbedLock stubbedLock = new StubbedLock();
-		NullPointerException exception = assertThrows(NullPointerException.class, () -> AutoLock.lockAndGet(stubbedLock, null));
-		assertEquals("supplier must not be null", exception.getMessage());
+	@Override
+	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
+		AutoLock.lockAndRun(lock, runnable);
 	}
 
 	@Override
-	public void performLockAndRun(@NonNull Lock lock, @NonNull Runnable runnable) {
-		AutoLock.lockAndRun(lock, runnable::run);
+	public void performLockInterruptiblyAndRun(@Nullable Lock lock, @Nullable Runnable runnable) throws InterruptedException {
+		AutoLock.lockInterruptiblyAndRun(lock, runnable == null ? null : runnable::run); // Cheat a bit
 	}
 
 	@Override
-	public void performLockInterruptiblyAndRun(@NonNull Lock lock, @NonNull Runnable runnable) throws InterruptedException {
-		AutoLock.lockInterruptiblyAndRun(lock, runnable::run);
+	public <Return> Return performLockInterruptiblyAndGet(@Nullable Lock lock, @Nullable Supplier<Return> supplier) throws InterruptedException {
+		return AutoLock.lockInterruptiblyAndGet(lock, supplier == null ? null : supplier::get); // Cheat a bit
 	}
 
 	@Override
-	public <Return> Return performLockAndGet(@NonNull Lock lock, @NonNull Supplier<Return> supplier) {
-		return AutoLock.lockAndGet(lock, supplier::get);
+	public <Return, T extends Throwable> Return performLockAndGet(@Nullable Lock lock, @Nullable ThrowableSupplier<Return, T> supplier) throws T {
+		return AutoLock.lockAndGet(lock, supplier);
+	}
+
+	@Override
+	public void performTryLockAndRun(@Nullable Lock lock, @Nullable Runnable onLockSuccess, @Nullable Runnable onLockFail) {
+		AutoLock.tryLockAndRun(lock, onLockSuccess == null ? null : onLockSuccess::run, onLockFail == null ? null : onLockFail::run); // Cheat a bit
+	}
+
+	@Override
+	public <Return> Return performTryLockAndGet(@Nullable Lock lock, @Nullable Supplier<Return> onLockSuccess, @Nullable Supplier<Return> onLockFail) {
+		return AutoLock.tryLockAndGet(lock, onLockSuccess == null ? null : onLockSuccess::get, onLockFail == null ? null : onLockFail::get); // Cheat a bit
 	}
 }
