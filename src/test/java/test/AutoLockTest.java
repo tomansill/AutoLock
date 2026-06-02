@@ -6,6 +6,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.*;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -139,6 +140,10 @@ abstract class AutoLockTest {
 		{
 			long seed = random.nextLong();
 			returnObj.put("InterruptedException", () -> new InterruptedException("fake exception" + generateAlphanumericString(new Random(seed), 3, 32)));
+		}
+		{
+			long seed = random.nextLong();
+			returnObj.put("IOException", () -> new IOException("fake exception" + generateAlphanumericString(new Random(seed), 3, 32)));
 		}
 		return returnObj;
 	}
