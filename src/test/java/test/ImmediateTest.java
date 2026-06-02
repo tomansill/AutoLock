@@ -6,10 +6,9 @@ import com.ansill.autolock.ThrowableSupplier;
 import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.locks.Lock;
-import java.util.function.Supplier;
 
 @SuppressWarnings("DataFlowIssue")
-public class ImmediateTest implements AutoLockTest.LockRunTest, AutoLockTest.LockGetTest, AutoLockTest.LockInterruptiblyRunTest, AutoLockTest.LockInterruptiblyGetTest, AutoLockTest.TryLockInstantTest {
+public class ImmediateTest implements AutoLockTest.LockRunTest, AutoLockTest.LockGetTest, AutoLockTest.LockInterruptiblyRunTest, AutoLockTest.LockInterruptiblyGetTest, AutoLockTest.TryLockInstantRunTest, AutoLockTest.TryLockInstantGetTest {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
@@ -32,12 +31,12 @@ public class ImmediateTest implements AutoLockTest.LockRunTest, AutoLockTest.Loc
 	}
 
 	@Override
-	public void performTryLockAndRun(@Nullable Lock lock, @Nullable Runnable onLockSuccess, @Nullable Runnable onLockFail) {
-		AutoLock.tryLockAndRun(lock, onLockSuccess == null ? null : onLockSuccess::run, onLockFail == null ? null : onLockFail::run); // Cheat a bit
+	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws T1, T2 {
+		AutoLock.tryLockAndRun(lock, onLockSuccess, onLockFail);
 	}
 
 	@Override
-	public <Return> Return performTryLockAndGet(@Nullable Lock lock, @Nullable Supplier<Return> onLockSuccess, @Nullable Supplier<Return> onLockFail) {
-		return AutoLock.tryLockAndGet(lock, onLockSuccess == null ? null : onLockSuccess::get, onLockFail == null ? null : onLockFail::get); // Cheat a bit
+	public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock lock, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws T1, T2 {
+		return AutoLock.tryLockAndGet(lock, onLockSuccess, onLockFail);
 	}
 }

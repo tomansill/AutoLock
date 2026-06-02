@@ -169,10 +169,10 @@ abstract class AutoLockTest {
 		@DisplayName("lock-run: with null runnable")
 		@Test
 		default void testLockRun_NullRunnable() {
-			try (StubbedLock stubbedLock = new StubbedLock()) {
-				NullPointerException exception = assertThrows(NullPointerException.class, () -> performLockAndRun(stubbedLock, null));
+			try (StubbedLock lock = new StubbedLock()) {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> performLockAndRun(lock, null));
 				assertEquals("runnable must not be null", exception.getMessage());
-				assertEquals(Collections.emptyList(), stubbedLock.getActualEvents());
+				assertEquals(Collections.emptyList(), lock.getActualEvents());
 			}
 		}
 
@@ -200,8 +200,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -244,8 +244,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -278,7 +278,7 @@ abstract class AutoLockTest {
 				assertEquals(1, lockCount.get());
 				assertEquals(
 								Collections.singletonList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -315,8 +315,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -374,8 +374,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -472,8 +472,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -506,7 +506,7 @@ abstract class AutoLockTest {
 				assertEquals(1, lockCount.get());
 				assertEquals(
 								Collections.singletonList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -550,8 +550,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -609,8 +609,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -666,8 +666,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -691,7 +691,7 @@ abstract class AutoLockTest {
 				assertSame(thrownInterruptedException.get(), ie);
 				assertEquals(
 								Collections.singletonList(
-												new StubbedLock.TimestampedEvent(0, Thread.currentThread(), StubbedLock.Event.LOCK_INTERRUPTIBLY)
+												new StubbedLock.CallEvents(0, Thread.currentThread(), StubbedLock.Event.LOCK_INTERRUPTIBLY)
 								),
 								lock.getActualEvents()
 				);
@@ -734,8 +734,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -768,7 +768,7 @@ abstract class AutoLockTest {
 				assertEquals(1, lockCount.get());
 				assertEquals(
 								Collections.singletonList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY)
 								),
 								lock.getActualEvents()
 				);
@@ -805,8 +805,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -864,8 +864,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -925,8 +925,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -950,7 +950,7 @@ abstract class AutoLockTest {
 				assertSame(thrownInterruptedException.get(), ie);
 				assertEquals(
 								Collections.singletonList(
-												new StubbedLock.TimestampedEvent(0, Thread.currentThread(), StubbedLock.Event.LOCK_INTERRUPTIBLY)
+												new StubbedLock.CallEvents(0, Thread.currentThread(), StubbedLock.Event.LOCK_INTERRUPTIBLY)
 								),
 								lock.getActualEvents()
 				);
@@ -993,8 +993,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -1027,7 +1027,7 @@ abstract class AutoLockTest {
 				assertEquals(1, lockCount.get());
 				assertEquals(
 								Collections.singletonList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY)
 								),
 								lock.getActualEvents()
 				);
@@ -1067,8 +1067,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -1126,8 +1126,8 @@ abstract class AutoLockTest {
 				assertEquals(1, unlockCount.get());
 				assertEquals(
 								Arrays.asList(
-												new StubbedLock.TimestampedEvent(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-												new StubbedLock.TimestampedEvent(1, currentThread, StubbedLock.Event.UNLOCK)
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
 								),
 								lock.getActualEvents()
 				);
@@ -1137,11 +1137,38 @@ abstract class AutoLockTest {
 		<Return, T extends Throwable> Return performLockInterruptiblyAndGet(@Nullable Lock lock, @Nullable ThrowableSupplier<Return, T> supplier) throws T, InterruptedException;
 	}
 
-	interface TryLockInstantTest {
+	interface TryLockInstantRunTest {
 
-		@DisplayName("successful instant try-lock (run)")
+		@DisplayName("tryLock-instant-run: with null lock")
 		@Test
-		default void testSuccessfulTryLockInstantRun() {
+		default void testTryLockInstantRun_NullLock() {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRun(null, Assertions::fail, Assertions::fail));
+			assertEquals("lock must not be null", exception.getMessage());
+		}
+
+		@DisplayName("tryLock-instant-run: with null onLockSuccess runnable")
+		@Test
+		default void testTryLockInstantRun_NullOnLockSuccessRunnable() {
+			try (StubbedLock lock = new StubbedLock()) {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRun(lock, null, Assertions::fail));
+				assertEquals("onLockSuccess must not be null", exception.getMessage());
+				assertEquals(Collections.emptyList(), lock.getActualEvents());
+			}
+		}
+
+		@DisplayName("tryLock-instant-run: with null onLockFail runnable")
+		@Test
+		default void testTryLockInstantRun_NullOnLockFailRunnable() {
+			try (StubbedLock lock = new StubbedLock()) {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRun(lock, Assertions::fail, null));
+				assertEquals("onLockFail must not be null", exception.getMessage());
+				assertEquals(Collections.emptyList(), lock.getActualEvents());
+			}
+		}
+
+		@DisplayName("tryLock-instant-run: successful lock")
+		@Test
+		default void testTryLockInstantRun_Success() {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicInteger executionCount = new AtomicInteger();
@@ -1163,12 +1190,19 @@ abstract class AutoLockTest {
 				assertEquals(1, lockCount.get());
 				assertEquals(1, executionCount.get());
 				assertEquals(1, unlockCount.get());
+				assertEquals(
+								Arrays.asList(
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+								),
+								lock.getActualEvents()
+				);
 			}
 		}
 
-		@DisplayName("failed instant try-lock (run)")
+		@DisplayName("tryLock-instant-run: failed lock")
 		@Test
-		default void testFailedTryLockInstantRun() {
+		default void testTryLockInstantRun_Failed() {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicBoolean failedRunnableReached = new AtomicBoolean(false);
@@ -1178,15 +1212,22 @@ abstract class AutoLockTest {
 					assertSame(currentThread, Thread.currentThread());
 					return false;
 				});
-				performTryLockAndRun(lock, Assertions::fail, () -> {
-					failedRunnableReached.set(true);
-				});
+				performTryLockAndRun(lock, Assertions::fail, () -> failedRunnableReached.set(true));
 				assertTrue(failedRunnableReached.get());
 				assertEquals(1, lockCount.get());
+				assertEquals(
+								Collections.singletonList(
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK)
+								),
+								lock.getActualEvents()
+				);
 			}
 		}
 
-		void performTryLockAndRun(@Nullable Lock lock, @Nullable Runnable onLockSuccess, @Nullable Runnable onLockFail);
+		<T1 extends Throwable, T2 extends Throwable> void performTryLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws T1, T2;
+	}
+
+	interface TryLockInstantGetTest {
 
 		@DisplayName("successful instant try-lock (get)")
 		@TestFactory
@@ -1248,7 +1289,7 @@ abstract class AutoLockTest {
 			}
 		}
 
-		<Return> Return performTryLockAndGet(@Nullable Lock lock, @Nullable Supplier<Return> onLockSuccess, @Nullable Supplier<Return> onLockFail);
+		<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock lock, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws T1, T2;
 	}
 
 	interface TryLockTimeoutTest {

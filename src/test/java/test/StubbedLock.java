@@ -66,15 +66,15 @@ public class StubbedLock implements Lock, AutoCloseable {
 	@NonNull
 	private final AtomicReference<TryLockWithTimeoutFunction> onTryLockTimeoutRunnable = new AtomicReference<>();
 
-	private final List<TimestampedEvent> actualEvents = new CopyOnWriteArrayList<>();
+	private final List<CallEvents> actualEvents = new CopyOnWriteArrayList<>();
 
-	@NonNull List<TimestampedEvent> getActualEvents() {
+	@NonNull List<CallEvents> getActualEvents() {
 		return Collections.unmodifiableList(actualEvents);
 	}
 
 	@Override
 	public void lock() {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK));
+		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK));
 		ERunnable runnable = onLockRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
 		try {
@@ -98,7 +98,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public void unlock() {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.UNLOCK));
+		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.UNLOCK));
 		ERunnable runnable = onUnlockRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
 		try {
@@ -110,7 +110,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public void lockInterruptibly() throws InterruptedException {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK_INTERRUPTIBLY));
+		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK_INTERRUPTIBLY));
 		ERunnable runnable = onLockInterruptiblyRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
 		try {
@@ -124,7 +124,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public boolean tryLock() {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK));
+		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK));
 		Supplier<Boolean> function = onTryLockRunnable.getAndSet(null);
 		if (function == null) fail("unstubbed");
 		return function.get();
@@ -132,7 +132,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public boolean tryLock(long time, @NonNull TimeUnit unit) throws InterruptedException {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK_TIMEOUT, Duration.ofNanos(unit.toNanos(time))));
+		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK_TIMEOUT, Duration.ofNanos(unit.toNanos(time))));
 		TryLockWithTimeoutFunction function = onTryLockTimeoutRunnable.getAndSet(null);
 		if (function == null) fail("unstubbed");
 		return function.apply(time, unit);
@@ -163,7 +163,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 		boolean apply(long time, TimeUnit timeUnit) throws InterruptedException;
 	}
 
-	public static class TimestampedEvent {
+	public static class CallEvents {
 		private final int callIndex;
 		@NonNull
 		private final Thread thread;
@@ -172,14 +172,14 @@ public class StubbedLock implements Lock, AutoCloseable {
 		@Nullable
 		private final Duration timeout;
 
-		TimestampedEvent(int callIndex, @NonNull Thread thread, @NonNull Event event) {
+		CallEvents(int callIndex, @NonNull Thread thread, @NonNull Event event) {
 			this.callIndex = callIndex;
 			this.thread = thread;
 			this.event = event;
 			this.timeout = null;
 		}
 
-		private TimestampedEvent(int callIndex, @NonNull Thread thread, @NonNull Event event, @NonNull Duration timeout) {
+		private CallEvents(int callIndex, @NonNull Thread thread, @NonNull Event event, @NonNull Duration timeout) {
 			this.callIndex = callIndex;
 			this.thread = thread;
 			this.event = event;
@@ -189,7 +189,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 		@Override
 		public boolean equals(Object o) {
 			if (o == null || getClass() != o.getClass()) return false;
-			TimestampedEvent that = (TimestampedEvent) o;
+			CallEvents that = (CallEvents) o;
 			return callIndex == that.callIndex && Objects.equals(thread, that.thread) && event == that.event && Objects.equals(timeout, that.timeout);
 		}
 
