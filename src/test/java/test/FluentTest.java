@@ -8,7 +8,13 @@ import org.jspecify.annotations.Nullable;
 import java.util.concurrent.locks.Lock;
 
 @SuppressWarnings("DataFlowIssue")
-public class FluentTest implements AutoLockTest.LockRunTest, AutoLockTest.LockInterruptiblyRunTest, AutoLockTest.LockInterruptiblyGetTest, AutoLockTest.TryLockInstantRunTest, AutoLockTest.TryLockInstantGetTest {
+public class FluentTest implements
+				AutoLockTest.LockRunTest,
+				AutoLockTest.LockGetTest,
+				AutoLockTest.LockInterruptiblyRunTest,
+				AutoLockTest.LockInterruptiblyGetTest,
+				AutoLockTest.TryLockInstantRunTest,
+				AutoLockTest.TryLockInstantGetTest {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
@@ -27,11 +33,16 @@ public class FluentTest implements AutoLockTest.LockRunTest, AutoLockTest.LockIn
 
 	@Override
 	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws T1, T2 {
-		AutoLock.tryLockAndRun(lock, onLockSuccess, onLockFail);
+		AutoLock.with(lock).tryAcquire().run(onLockSuccess, onLockFail);
 	}
 
 	@Override
 	public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock lock, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws T1, T2 {
-		return AutoLock.tryLockAndGet(lock, onLockSuccess, onLockFail);
+		return AutoLock.with(lock).tryAcquire().get(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <Return, T extends Throwable> Return performLockAndGet(@Nullable Lock lock, @Nullable ThrowableSupplier<Return, T> supplier) throws T {
+		return AutoLock.with(lock).get(supplier);
 	}
 }

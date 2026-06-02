@@ -8,8 +8,10 @@ import org.junit.jupiter.api.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1759,7 +1761,52 @@ abstract class AutoLockTest {
 		<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock lock, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws T1, T2;
 	}
 
-	interface TryLockTimeoutTest {
+	interface TryLockTimeoutRun {
+
+		@TestFactory
+		default Iterable<DynamicTest> testTryLockRun_NullLock() {
+			return Collections.singletonList(DynamicTest.dynamicTest("tryLock-" + this.getType() + "-run: with null lock", () -> {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> innerPerformTryLockAndRun(null, Duration.ofMillis(50), Assertions::fail, Assertions::fail));
+				assertEquals("lock must not be null", exception.getMessage());
+			}));
+		}
+
+		@NonNull String getType();
+
+		<T1 extends Throwable, T2 extends Throwable> void innerPerformTryLockAndRun(@Nullable Lock lock, @NonNull Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
+
+		interface LongAndTimeUnitTest extends TryLockTimeoutRun {
+			@Override
+			@NonNull
+			default String getType() {
+				return "long-unit";
+			}
+
+			@Override
+			default <T1 extends Throwable, T2 extends Throwable> void innerPerformTryLockAndRun(@Nullable Lock lock, @NonNull Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
+				this.performTryLockAndRun(lock, duration.toMillis(), TimeUnit.MILLISECONDS, onLockSuccess, onLockFail);
+			}
+
+			<T1 extends Throwable, T2 extends Throwable> void performTryLockAndRun(@Nullable Lock lock, long time, @Nullable TimeUnit unit, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
+		}
+
+		interface DurationTest extends TryLockTimeoutRun {
+			@Override
+			@NonNull
+			default String getType() {
+				return "duration";
+			}
+
+			@Override
+			default <T1 extends Throwable, T2 extends Throwable> void innerPerformTryLockAndRun(@Nullable Lock lock, @NonNull Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
+				this.performTryLockAndRun(lock, duration, onLockSuccess, onLockFail);
+			}
+
+			<T1 extends Throwable, T2 extends Throwable> void performTryLockAndRun(@Nullable Lock lock, @Nullable Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
+		}
+	}
+
+	interface TryLockTimeoutGetTest {
 
 	}
 }

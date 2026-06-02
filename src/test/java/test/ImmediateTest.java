@@ -8,7 +8,13 @@ import org.jspecify.annotations.Nullable;
 import java.util.concurrent.locks.Lock;
 
 @SuppressWarnings("DataFlowIssue")
-public class ImmediateTest implements AutoLockTest.LockRunTest, AutoLockTest.LockGetTest, AutoLockTest.LockInterruptiblyRunTest, AutoLockTest.LockInterruptiblyGetTest, AutoLockTest.TryLockInstantRunTest, AutoLockTest.TryLockInstantGetTest {
+public class ImmediateTest implements
+				AutoLockTest.LockRunTest,
+				AutoLockTest.LockGetTest,
+				AutoLockTest.LockInterruptiblyRunTest,
+				AutoLockTest.LockInterruptiblyGetTest,
+				AutoLockTest.TryLockInstantRunTest,
+				AutoLockTest.TryLockInstantGetTest {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
