@@ -17,12 +17,40 @@ import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class StubbedLock implements Lock {
+public class StubbedLock implements Lock, AutoCloseable {
+
+	@NonNull
+	private final AtomicReference<ERunnable> onLockRunnable = new AtomicReference<>();
+
+	@Override
+	public void close() {
+		confirmNoMoreExpectedCalls();
+	}
+
+	public void confirmNoMoreExpectedCalls() {
+		if (onLockRunnable.get() != null) {
+			fail("lock() waiting to be called");
+		}
+		if (onUnlockRunnable.get() != null) {
+			fail("unlock() waiting to be called");
+		}
+		if (onLockInterruptiblyRunnable.get() != null) {
+			fail("lockInterruptibly() waiting to be called");
+		}
+		if (onTryLockRunnable.get() != null) {
+			fail("tryLock() waiting to be called");
+		}
+		if (onTryLockTimeoutRunnable.get() != null) {
+			fail("tryLock(long,TimeUnit) waiting to be called");
+		}
+	}
 
 	@NonNull
 	private final AtomicInteger callIndex = new AtomicInteger();
-	@NonNull
-	private final AtomicReference<Runnable> onLockRunnable = new AtomicReference<>();
+
+	void setOnLock(@NonNull ERunnable onLock) {
+		this.onLockRunnable.set(onLock);
+	}
 	@NonNull
 	private final AtomicReference<Runnable> onUnlockRunnable = new AtomicReference<>();
 	@NonNull
@@ -38,8 +66,12 @@ public class StubbedLock implements Lock {
 		return Collections.unmodifiableList(actualEvents);
 	}
 
-	void setOnLock(@NonNull Runnable onLock) {
-		this.onLockRunnable.set(onLock);
+	@Override
+	public void lock() {
+		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.LOCK));
+		ERunnable runnable = onLockRunnable.getAndSet(null);
+		if (runnable == null) fail("unstubbed");
+		runnable.run();
 	}
 
 	void setOnLockInterruptibly(@NonNull RunnableWithInterruptedException onLock) {
@@ -54,12 +86,9 @@ public class StubbedLock implements Lock {
 		this.onTryLockRunnable.set(onTryLock);
 	}
 
-	@Override
-	public void lock() {
-		actualEvents.add(new TimestampedEvent(callIndex.getAndIncrement(), Instant.now(), Thread.currentThread(), Event.LOCK));
-		Runnable runnable = onLockRunnable.getAndSet(null);
-		if (runnable == null) fail("unstubbed");
-		runnable.run();
+	@FunctionalInterface
+	interface ERunnable {
+		void run() throws Error;
 	}
 
 	@Override
