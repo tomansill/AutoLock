@@ -1,5 +1,6 @@
 package test;
 
+import com.ansill.autolock.AutoLock;
 import com.ansill.autolock.ThrowableRunnable;
 import com.ansill.autolock.ThrowableSupplier;
 import org.jspecify.annotations.NonNull;
@@ -7,6 +8,8 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.*;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.*;
@@ -25,7 +28,23 @@ import static test.TestUtility.generateAlphanumericString;
 import static test.TestUtility.getSeed;
 
 @DisplayName("AutoLock Test")
-abstract class AutoLockTest {
+class AutoLockTest {
+
+	@Test
+	void testUtilityClassInstantiation() {
+		for (Constructor<?> ctor : AutoLock.class.getDeclaredConstructors()) {
+			if (ctor.isSynthetic()) continue;
+
+			assertEquals(0, ctor.getParameterCount(), "Constructor should have no parameters: " + ctor);
+
+			ctor.setAccessible(true);
+			InvocationTargetException ite = assertThrows(InvocationTargetException.class, ctor::newInstance,
+							"Constructor should throw when invoked: " + ctor);
+			Throwable cause = ite.getCause();
+			assertNotNull(cause, "InvocationTargetException must have a cause");
+			assertInstanceOf(UnsupportedOperationException.class, cause, () -> "Expected UnsupportedOperationException but was: " + cause.getClass());
+		}
+	}
 
 	@NonNull
 	static Map<String, Supplier<Object>> getRandomObjects(@NonNull Random random1) {
