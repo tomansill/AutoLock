@@ -5,6 +5,8 @@ import com.ansill.autolock.ThrowableRunnable;
 import com.ansill.autolock.ThrowableSupplier;
 import org.jspecify.annotations.Nullable;
 
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 @SuppressWarnings("DataFlowIssue")
@@ -14,7 +16,8 @@ public class FluentTest implements
 				AutoLockTest.LockInterruptiblyRunTest,
 				AutoLockTest.LockInterruptiblyGetTest,
 				AutoLockTest.TryLockInstantRunTest,
-				AutoLockTest.TryLockInstantGetTest {
+				AutoLockTest.TryLockInstantGetTest,
+				AutoLockTest.TryLockTimeoutRun {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
@@ -44,5 +47,15 @@ public class FluentTest implements
 	@Override
 	public <Return, T extends Throwable> Return performLockAndGet(@Nullable Lock lock, @Nullable ThrowableSupplier<Return, T> supplier) throws T {
 		return AutoLock.with(lock).get(supplier);
+	}
+
+	@Override
+	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunLongAndTimeUnit(@Nullable Lock lock, long time, @Nullable TimeUnit unit, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
+		AutoLock.with(lock).tryAcquire(time, unit).run(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunDuration(@Nullable Lock lock, @Nullable Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
+		AutoLock.with(lock).tryAcquire(duration).run(onLockSuccess, onLockFail);
 	}
 }

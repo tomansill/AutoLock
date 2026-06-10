@@ -781,7 +781,8 @@ public final class AutoLock {
 		 * @return timed try-lock execution strategy
 		 */
 		default @NonNull TryWithTimeout tryAcquire(@NonNull Duration timeout) {
-			Objects.requireNonNull(timeout, "timeout must be not null");
+			Objects.requireNonNull(timeout, "timeout must not be null");
+			if (timeout.isNegative()) throw new IllegalArgumentException("timeout must be non-negative");
 			return tryAcquire(timeout.toMillis(), TimeUnit.MILLISECONDS);
 		}
 

@@ -4,6 +4,7 @@ import com.ansill.autolock.ThrowableConsumer;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.DynamicTest;
 
+import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -49,5 +50,10 @@ public class TestUtility {
 			charArray[i] = ALPHABET_UPPERCASE_LOWERCASE_NUMBERS.charAt(random.nextInt(ALPHABET_UPPERCASE_LOWERCASE_NUMBERS.length()));
 		}
 		return new String(charArray);
+	}
+
+	@NonNull
+	public static Duration generateDuration(@NonNull Random random, @NonNull Duration minimum, @NonNull Duration maximum) {
+		return minimum.plus(Duration.ofMillis(random.nextInt((int) maximum.minus(minimum).toMillis())));
 	}
 }

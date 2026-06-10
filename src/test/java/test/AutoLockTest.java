@@ -24,11 +24,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static test.TestUtility.generateAlphanumericString;
-import static test.TestUtility.getSeed;
+import static test.TestUtility.*;
 
 @DisplayName("AutoLock Test")
 class AutoLockTest {
+
+	private static final int MAX_REPETITIONS = 5;
 
 	@Test
 	void testUtilityClassInstantiation() {
@@ -1782,47 +1783,358 @@ class AutoLockTest {
 
 	interface TryLockTimeoutRun {
 
+		@DisplayName("tryLock-timeout-duration-run: with null lock")
+		@Test
+		default void testTryLockTimeoutDurationRun_NullLock() {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRunDuration(null, Duration.ZERO, Assertions::fail, Assertions::fail));
+			assertEquals("lock must not be null", exception.getMessage());
+		}
+
+		@DisplayName("tryLock-timeout-duration-run: with null duration")
+		@Test
+		default void testTryLockTimeoutDurationRun_NullDuration() {
+			try (StubbedLock lock = new StubbedLock()) {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRunDuration(lock, null, Assertions::fail, Assertions::fail));
+				assertEquals("timeout must not be null", exception.getMessage());
+			}
+		}
+
+		@DisplayName("tryLock-timeout-duration-run: with negative duration")
+		@Test
+		default void testTryLockTimeoutDurationRun_NegativeDuration() {
+			try (StubbedLock lock = new StubbedLock()) {
+				IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> performTryLockAndRunDuration(lock, Duration.ofSeconds(-1), Assertions::fail, Assertions::fail));
+				assertEquals("timeout must be non-negative", exception.getMessage());
+			}
+		}
+
+		@DisplayName("tryLock-timeout-duration-run: with null onLockSuccess supplier")
+		@Test
+		default void testTryLockTimeoutDurationRun_NullOnLockSuccessSupplier() {
+			try (StubbedLock lock = new StubbedLock()) {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRunDuration(lock, Duration.ZERO, null, Assertions::fail));
+				assertEquals("onLockSuccess must not be null", exception.getMessage());
+				assertEquals(Collections.emptyList(), lock.getActualEvents());
+			}
+		}
+
+		@DisplayName("tryLock-timeout-duration-run: with null onLockFail supplier")
+		@Test
+		default void testTryLockTimeoutDurationRun_NullOnLockFailSupplier() {
+			try (StubbedLock lock = new StubbedLock()) {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRunDuration(lock, Duration.ZERO, Assertions::fail, null));
+				assertEquals("onLockFail must not be null", exception.getMessage());
+				assertEquals(Collections.emptyList(), lock.getActualEvents());
+			}
+		}
+
+		@DisplayName("tryLock-timeout-duration-run: successful lock")
 		@TestFactory
-		default Iterable<DynamicTest> testTryLockRun_NullLock() {
-			return Collections.singletonList(DynamicTest.dynamicTest("tryLock-" + this.getType() + "-run: with null lock", () -> {
-				NullPointerException exception = assertThrows(NullPointerException.class, () -> innerPerformTryLockAndRun(null, Duration.ofMillis(50), Assertions::fail, Assertions::fail));
-				assertEquals("lock must not be null", exception.getMessage());
-			}));
+		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_Success() {
+			Random random = new Random(getSeed(0).hashCode());
+			return IntStream.range(0, MAX_REPETITIONS).mapToObj(i -> {
+				Duration testDuration = TestUtility.generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
+				return DynamicTest.dynamicTest(testDuration.toString(), () -> testTryLockTimeoutDurationRun_Success(testDuration));
+			}).collect(Collectors.toList());
 		}
 
-		@NonNull String getType();
+		default void testTryLockTimeoutDurationRun_Success(@NonNull Duration testDuration) throws InterruptedException {
+			try (StubbedLock lock = new StubbedLock()) {
+				AtomicInteger lockCount = new AtomicInteger();
+				AtomicInteger executionCount = new AtomicInteger();
+				AtomicInteger unlockCount = new AtomicInteger();
+				Thread currentThread = Thread.currentThread();
+				lock.setOnTryLockTimeout((time, unit) -> {
+					assertEquals(testDuration.toMillis(), time);
+					assertEquals(TimeUnit.MILLISECONDS, unit);
+					lockCount.incrementAndGet();
+					assertSame(currentThread, Thread.currentThread());
+					return true;
+				});
+				performTryLockAndRunDuration(lock, testDuration, () -> {
+					executionCount.incrementAndGet();
+					lock.setOnUnlock(() -> {
+						unlockCount.getAndIncrement();
+						assertSame(currentThread, Thread.currentThread());
+					});
 
-		<T1 extends Throwable, T2 extends Throwable> void innerPerformTryLockAndRun(@Nullable Lock lock, @NonNull Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
-
-		interface LongAndTimeUnitTest extends TryLockTimeoutRun {
-			@Override
-			@NonNull
-			default String getType() {
-				return "long-unit";
+				}, Assertions::fail);
+				assertEquals(1, lockCount.get());
+				assertEquals(1, executionCount.get());
+				assertEquals(1, unlockCount.get());
+				assertEquals(
+								Arrays.asList(
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+								),
+								lock.getActualEvents()
+				);
 			}
-
-			@Override
-			default <T1 extends Throwable, T2 extends Throwable> void innerPerformTryLockAndRun(@Nullable Lock lock, @NonNull Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
-				this.performTryLockAndRun(lock, duration.toMillis(), TimeUnit.MILLISECONDS, onLockSuccess, onLockFail);
-			}
-
-			<T1 extends Throwable, T2 extends Throwable> void performTryLockAndRun(@Nullable Lock lock, long time, @Nullable TimeUnit unit, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
 		}
 
-		interface DurationTest extends TryLockTimeoutRun {
-			@Override
-			@NonNull
-			default String getType() {
-				return "duration";
-			}
-
-			@Override
-			default <T1 extends Throwable, T2 extends Throwable> void innerPerformTryLockAndRun(@Nullable Lock lock, @NonNull Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
-				this.performTryLockAndRun(lock, duration, onLockSuccess, onLockFail);
-			}
-
-			<T1 extends Throwable, T2 extends Throwable> void performTryLockAndRun(@Nullable Lock lock, @Nullable Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
+		@DisplayName("tryLock-timeout-duration-run: failed lock")
+		@TestFactory
+		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_Failed() {
+			Random random = new Random(getSeed(0).hashCode());
+			return IntStream.range(0, MAX_REPETITIONS).mapToObj(i -> {
+				Duration testDuration = TestUtility.generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
+				return DynamicTest.dynamicTest(testDuration.toString(), () -> testTryLockTimeoutDurationRun_Failed(testDuration));
+			}).collect(Collectors.toList());
 		}
+
+		default void testTryLockTimeoutDurationRun_Failed(@NonNull Duration testDuration) throws InterruptedException {
+			try (StubbedLock lock = new StubbedLock()) {
+				AtomicInteger lockCount = new AtomicInteger();
+				AtomicBoolean failedRunnableReached = new AtomicBoolean(false);
+				Thread currentThread = Thread.currentThread();
+				lock.setOnTryLockTimeout((time, unit) -> {
+					assertEquals(testDuration.toMillis(), time);
+					assertEquals(TimeUnit.MILLISECONDS, unit);
+					lockCount.incrementAndGet();
+					assertSame(currentThread, Thread.currentThread());
+					return false;
+				});
+				performTryLockAndRunDuration(lock, testDuration, Assertions::fail, () -> failedRunnableReached.set(true));
+				assertTrue(failedRunnableReached.get());
+				assertEquals(1, lockCount.get());
+				assertEquals(
+								Collections.singletonList(
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
+								),
+								lock.getActualEvents()
+				);
+			}
+		}
+
+		@DisplayName("tryLock-timeout-duration-run: exception thrown inside onSuccessLock runnable")
+		@TestFactory
+		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_ThrowableInsideOnSuccessLockRunnable() {
+			Random random = new Random(getSeed(0).hashCode());
+			return getRandomThrowables(random).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testTryLockTimeoutDurationRun_ThrowableInsideOnSuccessLockRunnable(entry.getValue(), generateDuration(random, Duration.ZERO, Duration.ofMinutes(60))))).collect(Collectors.toList());
+		}
+
+		default void testTryLockTimeoutDurationRun_ThrowableInsideOnSuccessLockRunnable(@NonNull Supplier<? extends Throwable> supplier, @NonNull Duration testDuration) {
+			try (StubbedLock lock = new StubbedLock()) {
+				AtomicInteger lockCount = new AtomicInteger();
+				AtomicInteger executionCount = new AtomicInteger();
+				AtomicInteger unlockCount = new AtomicInteger();
+				Thread currentThread = Thread.currentThread();
+				lock.setOnTryLockTimeout((time, unit) -> {
+					assertEquals(testDuration.toMillis(), time);
+					assertEquals(TimeUnit.MILLISECONDS, unit);
+					lockCount.incrementAndGet();
+					assertSame(currentThread, Thread.currentThread());
+					return true;
+				});
+				AtomicReference<Object> throwableRef = new AtomicReference<>();
+				Throwable actualThrowable = assertThrows(Throwable.class, () -> performTryLockAndRunDuration(lock, testDuration, () -> {
+					executionCount.incrementAndGet();
+					lock.setOnUnlock(() -> {
+						unlockCount.getAndIncrement();
+						assertSame(currentThread, Thread.currentThread());
+					});
+					try {
+						throw supplier.get();
+					} catch (Throwable throwable) {
+						throwableRef.set(throwable);
+						throw throwable;
+					}
+				}, Assertions::fail));
+				assertSame(throwableRef.get(), actualThrowable);
+				assertEquals(1, lockCount.get());
+				assertEquals(1, executionCount.get());
+				assertEquals(1, unlockCount.get());
+				assertEquals(
+								Arrays.asList(
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+								),
+								lock.getActualEvents()
+				);
+			}
+		}
+
+		@DisplayName("tryLock-timeout-duration-run: with Throwable thrown at tryLock()")
+		@TestFactory
+		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_ThrowableAtTryLockMethod() {
+			Random random = new Random(getSeed(0).hashCode());
+			return getRandomUncheckeds(random).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testTryLockTimeoutDurationRun_ThrowableAtTryLockMethod(entry.getValue(), generateDuration(random, Duration.ZERO, Duration.ofMinutes(60))))).collect(Collectors.toList());
+		}
+
+		default void testTryLockTimeoutDurationRun_ThrowableAtTryLockMethod(@NonNull Supplier<? extends Throwable> supplier, @NonNull Duration testDuration) {
+			try (StubbedLock lock = new StubbedLock()) {
+				AtomicInteger lockCount = new AtomicInteger();
+				Thread currentThread = Thread.currentThread();
+				AtomicReference<Object> throwableRef = new AtomicReference<>();
+				lock.setOnTryLockTimeout((time, unit) -> {
+					assertEquals(testDuration.toMillis(), time);
+					assertEquals(TimeUnit.MILLISECONDS, unit);
+					lockCount.incrementAndGet();
+					assertSame(currentThread, Thread.currentThread());
+					try {
+						throw supplier.get();
+					} catch (Throwable throwable) {
+						throwableRef.set(throwable);
+						throw throwable;
+					}
+				});
+				Throwable actualThrowable = assertThrows(Throwable.class, () -> performTryLockAndRunDuration(lock, testDuration, Assertions::fail, Assertions::fail));
+				assertSame(throwableRef.get(), actualThrowable);
+				assertEquals(1, lockCount.get());
+				assertEquals(
+								Collections.singletonList(
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
+								),
+								lock.getActualEvents()
+				);
+			}
+		}
+
+		@DisplayName("tryLock-timeout-duration-run: with Throwable thrown at unlock()")
+		@TestFactory
+		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_ThrowableAtUnlockMethod() {
+			Random random = new Random(getSeed(0).hashCode());
+			return getRandomUncheckeds(random).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testTryLockTimeoutDurationRun_ThrowableAtUnlockMethod(entry.getValue(), generateDuration(random, Duration.ZERO, Duration.ofMinutes(60))))).collect(Collectors.toList());
+		}
+
+		default void testTryLockTimeoutDurationRun_ThrowableAtUnlockMethod(@NonNull Supplier<? extends Throwable> supplier, @NonNull Duration testDuration) {
+			try (StubbedLock lock = new StubbedLock()) {
+				AtomicInteger lockCount = new AtomicInteger();
+				AtomicInteger unlockCount = new AtomicInteger();
+				Thread currentThread = Thread.currentThread();
+				AtomicReference<Object> throwableRef = new AtomicReference<>();
+				lock.setOnTryLockTimeout((time, unit) -> {
+					assertEquals(testDuration.toMillis(), time);
+					assertEquals(TimeUnit.MILLISECONDS, unit);
+					lockCount.incrementAndGet();
+					assertSame(currentThread, Thread.currentThread());
+					return true;
+				});
+				Throwable actualThrowable = assertThrows(Throwable.class, () -> performTryLockAndRunDuration(lock, testDuration, () -> lock.setOnUnlock(() -> {
+					unlockCount.getAndIncrement();
+					try {
+						throw supplier.get();
+					} catch (Throwable throwable) {
+						throwableRef.set(throwable);
+						throw throwable;
+					}
+				}), Assertions::fail));
+				assertSame(throwableRef.get(), actualThrowable);
+				assertEquals(1, lockCount.get());
+				assertEquals(1, unlockCount.get());
+				assertEquals(
+								Arrays.asList(
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+								),
+								lock.getActualEvents()
+				);
+			}
+		}
+
+		@DisplayName("tryLock-timeout-duration-run: with Throwable thrown in onLockSuccess runnable AND Throwable thrown in unlock()")
+		@TestFactory
+		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_ThrowableInOnLockSuccessRunnableAndThrowableInUnlockMethod() {
+			Random random = new Random(getSeed(0).hashCode());
+			Map<String, Supplier<? extends Throwable>> throwableMap = getRandomUncheckeds(random);
+			return throwableMap.entrySet().stream().map(entry -> {
+				Map<String, Supplier<? extends Throwable>> innerRandomMap = getRandomThrowables(random);
+				List<String> keys = new ArrayList<>(innerRandomMap.keySet());
+				Collections.shuffle(keys, random);
+				Supplier<? extends Throwable> mainThrowable = innerRandomMap.get(keys.iterator().next());
+				return DynamicTest.dynamicTest(entry.getKey(), () -> this.testTryLockTimeoutDurationRun_ThrowableInOnLockSuccessRunnableAndThrowableInUnlockMethod(mainThrowable, entry.getValue(), generateDuration(random, Duration.ZERO, Duration.ofMinutes(60))));
+			}).collect(Collectors.toList());
+		}
+
+		default void testTryLockTimeoutDurationRun_ThrowableInOnLockSuccessRunnableAndThrowableInUnlockMethod(@NonNull Supplier<? extends Throwable> mainExceptionSupplier, @NonNull Supplier<? extends Throwable> supplier, @NonNull Duration testDuration) {
+			try (StubbedLock lock = new StubbedLock()) {
+				AtomicInteger lockCount = new AtomicInteger();
+				AtomicInteger unlockCount = new AtomicInteger();
+				Thread currentThread = Thread.currentThread();
+				AtomicReference<Object> mainThrowableRef = new AtomicReference<>();
+				AtomicReference<Object> unlockThrowableRef = new AtomicReference<>();
+				lock.setOnTryLockTimeout((time, unit) -> {
+					assertEquals(testDuration.toMillis(), time);
+					assertEquals(TimeUnit.MILLISECONDS, unit);
+					lockCount.incrementAndGet();
+					assertSame(currentThread, Thread.currentThread());
+					return true;
+				});
+				Throwable actualThrowable = assertThrows(
+								Throwable.class,
+								() -> performTryLockAndRunDuration(lock, testDuration, () -> {
+									lock.setOnUnlock(() -> {
+										unlockCount.getAndIncrement();
+										try {
+											throw supplier.get();
+										} catch (Throwable throwable) {
+											unlockThrowableRef.set(throwable);
+											throw throwable;
+										}
+									});
+									try {
+										throw mainExceptionSupplier.get();
+									} catch (Throwable throwable) {
+										mainThrowableRef.set(throwable);
+										throw throwable;
+									}
+								}, Assertions::fail));
+				assertSame(mainThrowableRef.get(), actualThrowable);
+				assertEquals(1, actualThrowable.getSuppressed().length);
+				assertSame(unlockThrowableRef.get(), actualThrowable.getSuppressed()[0]);
+				assertEquals(1, lockCount.get());
+				assertEquals(1, unlockCount.get());
+				assertEquals(
+								Arrays.asList(
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+												new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+								),
+								lock.getActualEvents()
+				);
+			}
+		}
+
+		@DisplayName("tryLock-timeout-duration-run: exception thrown inside onLockFail runnable")
+		@TestFactory
+		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_ThrowableInsideOnFailLockRunnable() {
+			Random random = new Random(getSeed(0).hashCode());
+			return getRandomThrowables(random).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testTryLockTimeoutDurationRun_ThrowableInsideOnFailLockRunnable(entry.getValue(), generateDuration(random, Duration.ZERO, Duration.ofMinutes(60))))).collect(Collectors.toList());
+		}
+
+		default void testTryLockTimeoutDurationRun_ThrowableInsideOnFailLockRunnable(@NonNull Supplier<? extends Throwable> supplier, @NonNull Duration testDuration) {
+			try (StubbedLock lock = new StubbedLock()) {
+				AtomicInteger lockCount = new AtomicInteger();
+				Thread currentThread = Thread.currentThread();
+				lock.setOnTryLockTimeout((time, unit) -> {
+					assertEquals(testDuration.toMillis(), time);
+					assertEquals(TimeUnit.MILLISECONDS, unit);
+					lockCount.incrementAndGet();
+					assertSame(currentThread, Thread.currentThread());
+					return false;
+				});
+				AtomicReference<Object> throwableRef = new AtomicReference<>();
+				Throwable actualThrowable = assertThrows(Throwable.class, () -> performTryLockAndRunDuration(lock, testDuration, Assertions::fail, () -> {
+					try {
+						throw supplier.get();
+					} catch (Throwable throwable) {
+						throwableRef.set(throwable);
+						throw throwable;
+					}
+				}));
+				assertSame(throwableRef.get(), actualThrowable);
+				assertEquals(1, lockCount.get());
+				assertEquals(
+								Collections.singletonList(
+												new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
+								),
+								lock.getActualEvents()
+				);
+			}
+		}
+
+		<T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunLongAndTimeUnit(@Nullable Lock lock, long time, @Nullable TimeUnit unit, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
+
+		<T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunDuration(@Nullable Lock lock, @Nullable Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
 	}
 
 	interface TryLockTimeoutGetTest {

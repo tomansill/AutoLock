@@ -4,7 +4,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.opentest4j.AssertionFailedError;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -25,23 +24,8 @@ public class StubbedLock implements Lock, AutoCloseable {
 		confirmNoMoreExpectedCalls();
 	}
 
-	public void confirmNoMoreExpectedCalls() {
-		if (onLockRunnable.get() != null) {
-			fail("lock() waiting to be called");
-		}
-		if (onUnlockRunnable.get() != null) {
-			fail("unlock() waiting to be called");
-		}
-		if (onLockInterruptiblyRunnable.get() != null) {
-			fail("lockInterruptibly() waiting to be called");
-		}
-		if (onTryLockRunnable.get() != null) {
-			fail("tryLock() waiting to be called");
-		}
-		if (onTryLockTimeoutRunnable.get() != null) {
-			fail("tryLock(long,TimeUnit) waiting to be called");
-		}
-	}
+	@NonNull
+	private final AtomicReference<ESupplier<Boolean>> onTryLockInstantRunnable = new AtomicReference<>();
 
 	@NonNull
 	private final AtomicReference<ERunnable> onUnlockRunnable = new AtomicReference<>();
@@ -61,8 +45,24 @@ public class StubbedLock implements Lock, AutoCloseable {
 	}
 	@NonNull
 	private final AtomicReference<ERunnable> onLockInterruptiblyRunnable = new AtomicReference<>();
-	@NonNull
-	private final AtomicReference<ESupplier<Boolean>> onTryLockRunnable = new AtomicReference<>();
+
+	public void confirmNoMoreExpectedCalls() {
+		if (onLockRunnable.get() != null) {
+			fail("lock() waiting to be called");
+		}
+		if (onUnlockRunnable.get() != null) {
+			fail("unlock() waiting to be called");
+		}
+		if (onLockInterruptiblyRunnable.get() != null) {
+			fail("lockInterruptibly() waiting to be called");
+		}
+		if (onTryLockInstantRunnable.get() != null) {
+			fail("tryLock() waiting to be called");
+		}
+		if (onTryLockTimeoutRunnable.get() != null) {
+			fail("tryLock(long,TimeUnit) waiting to be called");
+		}
+	}
 	@NonNull
 	private final AtomicReference<TryLockWithTimeoutFunction> onTryLockTimeoutRunnable = new AtomicReference<>();
 
@@ -93,7 +93,12 @@ public class StubbedLock implements Lock, AutoCloseable {
 	}
 
 	public void setOnTryLockInstant(@NonNull ESupplier<Boolean> onTryLock) {
-		this.onTryLockRunnable.set(onTryLock);
+		this.onTryLockInstantRunnable.set(onTryLock);
+	}
+
+
+	public void setOnTryLockTimeout(@NonNull TryLockWithTimeoutFunction onTryLock) {
+		this.onTryLockTimeoutRunnable.set(onTryLock);
 	}
 
 	@Override
@@ -125,7 +130,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 	@Override
 	public boolean tryLock() {
 		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK));
-		ESupplier<Boolean> function = onTryLockRunnable.getAndSet(null);
+		ESupplier<Boolean> function = onTryLockInstantRunnable.getAndSet(null);
 		if (function == null) fail("unstubbed");
 		try {
 			return function.get();
@@ -137,10 +142,17 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public boolean tryLock(long time, @NonNull TimeUnit unit) throws InterruptedException {
-		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK_TIMEOUT, Duration.ofNanos(unit.toNanos(time))));
+		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK_TIMEOUT, time, unit));
 		TryLockWithTimeoutFunction function = onTryLockTimeoutRunnable.getAndSet(null);
 		if (function == null) fail("unstubbed");
-		return function.apply(time, unit);
+		try {
+			return function.apply(time, unit);
+		} catch (InterruptedException e) {
+			throw e;
+		} catch (Throwable e) {
+			sneakyThrow(e);
+			throw new AssertionFailedError("unreachable error");
+		}
 	}
 
 	@FunctionalInterface
@@ -151,6 +163,11 @@ public class StubbedLock implements Lock, AutoCloseable {
 	@FunctionalInterface
 	public interface ESupplier<Return> {
 		Return get() throws Throwable;
+	}
+
+	@FunctionalInterface
+	public interface TryLockWithTimeoutFunction {
+		boolean apply(long time, TimeUnit timeUnit) throws Throwable;
 	}
 
 	@NonNull
@@ -168,11 +185,6 @@ public class StubbedLock implements Lock, AutoCloseable {
 		UNLOCK
 	}
 
-	@FunctionalInterface
-	interface TryLockWithTimeoutFunction {
-		boolean apply(long time, TimeUnit timeUnit) throws InterruptedException;
-	}
-
 	public static class CallEvents {
 		private final int callIndex;
 		@NonNull
@@ -180,42 +192,47 @@ public class StubbedLock implements Lock, AutoCloseable {
 		@NonNull
 		private final Event event;
 		@Nullable
-		private final Duration timeout;
+		private final Long time;
+		@Nullable
+		private final TimeUnit unit;
 
 		CallEvents(int callIndex, @NonNull Thread thread, @NonNull Event event) {
 			this.callIndex = callIndex;
 			this.thread = thread;
 			this.event = event;
-			this.timeout = null;
+			this.time = null;
+			this.unit = null;
 		}
 
-		private CallEvents(int callIndex, @NonNull Thread thread, @NonNull Event event, @NonNull Duration timeout) {
+		CallEvents(int callIndex, @NonNull Thread thread, @NonNull Event event, long time, @NonNull TimeUnit timeUnit) {
 			this.callIndex = callIndex;
 			this.thread = thread;
 			this.event = event;
-			this.timeout = timeout;
+			this.time = time;
+			this.unit = timeUnit;
+		}
+
+		@Override
+		public String toString() {
+			return "CallEvents{" +
+							"callIndex=" + callIndex +
+							", thread=" + thread +
+							", event=" + event +
+							", time=" + time +
+							", unit=" + unit +
+							'}';
 		}
 
 		@Override
 		public boolean equals(Object o) {
 			if (o == null || getClass() != o.getClass()) return false;
 			CallEvents that = (CallEvents) o;
-			return callIndex == that.callIndex && Objects.equals(thread, that.thread) && event == that.event && Objects.equals(timeout, that.timeout);
+			return callIndex == that.callIndex && Objects.equals(thread, that.thread) && event == that.event && Objects.equals(time, that.time) && unit == that.unit;
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(callIndex, thread, event, timeout);
-		}
-
-		@Override
-		public String toString() {
-			return "TimestampedEvent{" +
-							"callIndex=" + callIndex +
-							", thread=" + thread +
-							", event=" + event +
-							", timeout=" + timeout +
-							'}';
+			return Objects.hash(callIndex, thread, event, time, unit);
 		}
 	}
 }
