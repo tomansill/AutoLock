@@ -22,6 +22,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static test.TestUtility.*;
@@ -30,22 +31,6 @@ import static test.TestUtility.*;
 class AutoLockTest {
 
 	private static final int MAX_REPETITIONS = 5;
-
-	@Test
-	void testUtilityClassInstantiation() {
-		for (Constructor<?> ctor : AutoLock.class.getDeclaredConstructors()) {
-			if (ctor.isSynthetic()) continue;
-
-			assertEquals(0, ctor.getParameterCount(), "Constructor should have no parameters: " + ctor);
-
-			ctor.setAccessible(true);
-			InvocationTargetException ite = assertThrows(InvocationTargetException.class, ctor::newInstance,
-							"Constructor should throw when invoked: " + ctor);
-			Throwable cause = ite.getCause();
-			assertNotNull(cause, "InvocationTargetException must have a cause");
-			assertInstanceOf(UnsupportedOperationException.class, cause, () -> "Expected UnsupportedOperationException but was: " + cause.getClass());
-		}
-	}
 
 	@NonNull
 	static Map<String, Supplier<Object>> getRandomObjects(@NonNull Random random1) {
@@ -177,6 +162,22 @@ class AutoLockTest {
 		returnObj.putAll(getRandomRuntimeExceptions(random));
 		returnObj.putAll(getRandomErrors(random));
 		return returnObj;
+	}
+
+	@Test
+	void testUtilityClassInstantiation() {
+		for (Constructor<?> ctor : AutoLock.class.getDeclaredConstructors()) {
+			if (ctor.isSynthetic()) continue;
+
+			assertEquals(0, ctor.getParameterCount(), "Constructor should have no parameters: " + ctor);
+
+			ctor.setAccessible(true);
+			InvocationTargetException ite = assertThrows(InvocationTargetException.class, ctor::newInstance,
+							"Constructor should throw when invoked: " + ctor);
+			Throwable cause = ite.getCause();
+			assertNotNull(cause, "InvocationTargetException must have a cause");
+			assertInstanceOf(UnsupportedOperationException.class, cause, () -> "Expected UnsupportedOperationException but was: " + cause.getClass());
+		}
 	}
 
 	interface LockRunTest {
@@ -1828,17 +1829,41 @@ class AutoLockTest {
 			}
 		}
 
-		@DisplayName("tryLock-timeout-duration-run: successful lock")
+		default TimeoutLessPerform convertFromDuration(@NonNull Duration duration) {
+			return new TimeoutLessPerform() {
+				@Override
+				public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
+					performTryLockAndRunDuration(lock, duration, onLockSuccess, onLockFail);
+				}
+			};
+		}
+
+		default TimeoutLessPerform convertFromTimeUnit(@NonNull Duration duration) {
+			return new TimeoutLessPerform() {
+				@Override
+				public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
+					performTryLockAndRunLongAndTimeUnit(lock, duration.toMillis(), TimeUnit.MILLISECONDS, onLockSuccess, onLockFail);
+				}
+			};
+		}
+
+		@DisplayName("tryLock-timeout-run: successful lock")
 		@TestFactory
-		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_Success() {
+		default Iterable<DynamicTest> testTryLockTimeoutRun_Success() {
 			Random random = new Random(getSeed(0).hashCode());
-			return IntStream.range(0, MAX_REPETITIONS).mapToObj(i -> {
+			return IntStream.range(0, MAX_REPETITIONS).boxed().flatMap(i -> {
 				Duration testDuration = TestUtility.generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
-				return DynamicTest.dynamicTest(testDuration.toString(), () -> testTryLockTimeoutDurationRun_Success(testDuration));
+				return Stream.of(
+								DynamicTest.dynamicTest("duration " + testDuration, () -> testTryLockTimeoutRun_Success(
+												convertFromDuration(testDuration),
+												testDuration
+								)),
+								DynamicTest.dynamicTest("time/unit " + testDuration, () -> testTryLockTimeoutRun_Success(convertFromTimeUnit(testDuration), testDuration))
+				);
 			}).collect(Collectors.toList());
 		}
 
-		default void testTryLockTimeoutDurationRun_Success(@NonNull Duration testDuration) throws InterruptedException {
+		default void testTryLockTimeoutRun_Success(@NonNull TimeoutLessPerform perform, @NonNull Duration testDuration) throws InterruptedException {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicInteger executionCount = new AtomicInteger();
@@ -1851,7 +1876,7 @@ class AutoLockTest {
 					assertSame(currentThread, Thread.currentThread());
 					return true;
 				});
-				performTryLockAndRunDuration(lock, testDuration, () -> {
+				perform.performTryLockAndRun(lock, () -> {
 					executionCount.incrementAndGet();
 					lock.setOnUnlock(() -> {
 						unlockCount.getAndIncrement();
@@ -1876,13 +1901,19 @@ class AutoLockTest {
 		@TestFactory
 		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_Failed() {
 			Random random = new Random(getSeed(0).hashCode());
-			return IntStream.range(0, MAX_REPETITIONS).mapToObj(i -> {
+			return IntStream.range(0, MAX_REPETITIONS).boxed().flatMap(i -> {
 				Duration testDuration = TestUtility.generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
-				return DynamicTest.dynamicTest(testDuration.toString(), () -> testTryLockTimeoutDurationRun_Failed(testDuration));
+				return Stream.of(
+								DynamicTest.dynamicTest("duration " + testDuration, () -> testTryLockTimeoutDurationRun_Failed(
+												convertFromDuration(testDuration),
+												testDuration
+								)),
+								DynamicTest.dynamicTest("time/unit " + testDuration, () -> testTryLockTimeoutDurationRun_Failed(convertFromTimeUnit(testDuration), testDuration))
+				);
 			}).collect(Collectors.toList());
 		}
 
-		default void testTryLockTimeoutDurationRun_Failed(@NonNull Duration testDuration) throws InterruptedException {
+		default void testTryLockTimeoutDurationRun_Failed(@NonNull TimeoutLessPerform perform, @NonNull Duration testDuration) throws InterruptedException {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicBoolean failedRunnableReached = new AtomicBoolean(false);
@@ -1894,7 +1925,7 @@ class AutoLockTest {
 					assertSame(currentThread, Thread.currentThread());
 					return false;
 				});
-				performTryLockAndRunDuration(lock, testDuration, Assertions::fail, () -> failedRunnableReached.set(true));
+				perform.performTryLockAndRun(lock, Assertions::fail, () -> failedRunnableReached.set(true));
 				assertTrue(failedRunnableReached.get());
 				assertEquals(1, lockCount.get());
 				assertEquals(
@@ -2135,6 +2166,12 @@ class AutoLockTest {
 		<T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunLongAndTimeUnit(@Nullable Lock lock, long time, @Nullable TimeUnit unit, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
 
 		<T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunDuration(@Nullable Lock lock, @Nullable Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
+
+		/* Attempt to reduce boilerplate by reusing test code across Duration and Long+TimeUnit */
+		@FunctionalInterface
+		interface TimeoutLessPerform {
+			<T1 extends Throwable, T2 extends Throwable> void performTryLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2;
+		}
 	}
 
 	interface TryLockTimeoutGetTest {
