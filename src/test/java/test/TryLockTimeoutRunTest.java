@@ -172,8 +172,8 @@ interface TryLockTimeoutRunTest {
 			assertEquals(1, unlockCount.get());
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-											new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
 							lock.getActualEvents()
 			);
@@ -213,7 +213,7 @@ interface TryLockTimeoutRunTest {
 			assertEquals(1, lockCount.get());
 			assertEquals(
 							Collections.singletonList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
 							),
 							lock.getActualEvents()
 			);
@@ -265,8 +265,8 @@ interface TryLockTimeoutRunTest {
 			assertEquals(1, unlockCount.get());
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-											new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
 							lock.getActualEvents()
 			);
@@ -307,7 +307,7 @@ interface TryLockTimeoutRunTest {
 			assertEquals(1, lockCount.get());
 			assertEquals(
 							Collections.singletonList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
 							),
 							lock.getActualEvents()
 			);
@@ -353,8 +353,8 @@ interface TryLockTimeoutRunTest {
 			assertEquals(1, unlockCount.get());
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-											new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
 							lock.getActualEvents()
 			);
@@ -418,8 +418,8 @@ interface TryLockTimeoutRunTest {
 			assertEquals(1, unlockCount.get());
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-											new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
 							lock.getActualEvents()
 			);
@@ -462,7 +462,7 @@ interface TryLockTimeoutRunTest {
 			assertEquals(1, lockCount.get());
 			assertEquals(
 							Collections.singletonList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
 							),
 							lock.getActualEvents()
 			);

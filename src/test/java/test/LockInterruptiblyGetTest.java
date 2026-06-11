@@ -65,8 +65,8 @@ interface LockInterruptiblyGetTest {
 			assertEquals(1, unlockCount.get());
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-											new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
 							lock.getActualEvents()
 			);
@@ -90,7 +90,7 @@ interface LockInterruptiblyGetTest {
 			assertSame(thrownInterruptedException.get(), ie);
 			assertEquals(
 							Collections.singletonList(
-											new StubbedLock.CallEvents(0, Thread.currentThread(), StubbedLock.Event.LOCK_INTERRUPTIBLY)
+											new StubbedLock.CallEvent(lock, 0, Thread.currentThread(), StubbedLock.Event.LOCK_INTERRUPTIBLY)
 							),
 							lock.getActualEvents()
 			);
@@ -133,8 +133,8 @@ interface LockInterruptiblyGetTest {
 			assertEquals(1, unlockCount.get());
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-											new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
 							lock.getActualEvents()
 			);
@@ -167,7 +167,7 @@ interface LockInterruptiblyGetTest {
 			assertEquals(1, lockCount.get());
 			assertEquals(
 							Collections.singletonList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY)
 							),
 							lock.getActualEvents()
 			);
@@ -207,8 +207,8 @@ interface LockInterruptiblyGetTest {
 			assertEquals(1, unlockCount.get());
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-											new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
 							lock.getActualEvents()
 			);
@@ -266,8 +266,8 @@ interface LockInterruptiblyGetTest {
 			assertEquals(1, unlockCount.get());
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-											new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
 							lock.getActualEvents()
 			);

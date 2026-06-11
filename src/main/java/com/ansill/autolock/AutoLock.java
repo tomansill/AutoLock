@@ -164,7 +164,7 @@ public final class AutoLock {
 				}
 
 				// Recursive walk through the remaining locks and lock them
-				LockedAutoLock lockedAutoLock = multipleLock(2, locks, success);
+				LockedAutoLock lockedAutoLock = recursiveMultipleLock(2, locks, success);
 
 				// Set up close method that unlocks the inner locks, then lock the remaining locks that has been
 				// locked in this method
@@ -191,7 +191,7 @@ public final class AutoLock {
 
 	@SuppressWarnings("resource")
 	@NonNull
-	private static LockedAutoLock multipleLock(int index, @NonNull Lock[] locks, boolean @NonNull [] success) {
+	private static LockedAutoLock recursiveMultipleLock(int index, @NonNull Lock[] locks, boolean @NonNull [] success) {
 
 		// Grab the current lock and lock that one
 		Lock currentLock = locks[index++];
@@ -206,7 +206,7 @@ public final class AutoLock {
 			}
 
 			// Continue with inner locking then build close() that unlocks the inner lock then lock from this level
-			LockedAutoLock innerLock = multipleLock(index, locks, success);
+			LockedAutoLock innerLock = recursiveMultipleLock(index, locks, success);
 			return new LockedAutoLock(() -> {
 				try {
 					innerLock.close();
@@ -272,7 +272,7 @@ public final class AutoLock {
 				}
 
 				// Recursive walk through the remaining locks and lock them
-				LockedAutoLock lockedAutoLock = multipleLockInterruptibly(2, locks, success);
+				LockedAutoLock lockedAutoLock = recursiveMultipleLockInterruptibly(2, locks, success);
 
 				// Set up close method that unlocks the inner locks, then lock the remaining locks that has been
 				// locked in this method
@@ -299,7 +299,7 @@ public final class AutoLock {
 
 	@SuppressWarnings("resource")
 	@NonNull
-	private static LockedAutoLock multipleLockInterruptibly(int index, @NonNull Lock[] locks, boolean @NonNull [] success) throws InterruptedException {
+	private static LockedAutoLock recursiveMultipleLockInterruptibly(int index, @NonNull Lock[] locks, boolean @NonNull [] success) throws InterruptedException {
 
 		// Grab the current lock and lock that one
 		Lock currentLock = locks[index++];
@@ -314,7 +314,7 @@ public final class AutoLock {
 			}
 
 			// Continue with inner locking then build close() that unlocks the inner lock then lock from this level
-			LockedAutoLock innerLock = multipleLockInterruptibly(index, locks, success);
+			LockedAutoLock innerLock = recursiveMultipleLockInterruptibly(index, locks, success);
 			return new LockedAutoLock(() -> {
 				try {
 					innerLock.close();

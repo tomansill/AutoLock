@@ -4,6 +4,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.opentest4j.AssertionFailedError;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -66,15 +67,15 @@ public class StubbedLock implements Lock, AutoCloseable {
 	@NonNull
 	private final AtomicReference<TryLockWithTimeoutFunction> onTryLockTimeoutRunnable = new AtomicReference<>();
 
-	private final List<CallEvents> actualEvents = new CopyOnWriteArrayList<>();
+	private final List<CallEvent> actualEvents = new CopyOnWriteArrayList<>();
 
-	@NonNull List<CallEvents> getActualEvents() {
+	@NonNull List<CallEvent> getActualEvents() {
 		return Collections.unmodifiableList(actualEvents);
 	}
 
 	@Override
 	public void lock() {
-		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK));
+		actualEvents.add(new CallEvent(this, callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK));
 		ERunnable runnable = onLockRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
 		try {
@@ -103,7 +104,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public void unlock() {
-		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.UNLOCK));
+		actualEvents.add(new CallEvent(this, callIndex.getAndIncrement(), Thread.currentThread(), Event.UNLOCK));
 		ERunnable runnable = onUnlockRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
 		try {
@@ -115,7 +116,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public void lockInterruptibly() throws InterruptedException {
-		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK_INTERRUPTIBLY));
+		actualEvents.add(new CallEvent(this, callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK_INTERRUPTIBLY));
 		ERunnable runnable = onLockInterruptiblyRunnable.getAndSet(null);
 		if (runnable == null) fail("unstubbed");
 		try {
@@ -129,7 +130,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public boolean tryLock() {
-		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK));
+		actualEvents.add(new CallEvent(this, callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK));
 		ESupplier<Boolean> function = onTryLockInstantRunnable.getAndSet(null);
 		if (function == null) fail("unstubbed");
 		try {
@@ -142,7 +143,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@Override
 	public boolean tryLock(long time, @NonNull TimeUnit unit) throws InterruptedException {
-		actualEvents.add(new CallEvents(callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK_TIMEOUT, time, unit));
+		actualEvents.add(new CallEvent(this, callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK_TIMEOUT, time, unit));
 		TryLockWithTimeoutFunction function = onTryLockTimeoutRunnable.getAndSet(null);
 		if (function == null) fail("unstubbed");
 		try {
@@ -185,7 +186,8 @@ public class StubbedLock implements Lock, AutoCloseable {
 		UNLOCK
 	}
 
-	public static class CallEvents {
+	public static class CallEvent {
+		final Instant timestamp;
 		private final int callIndex;
 		@NonNull
 		private final Thread thread;
@@ -195,8 +197,12 @@ public class StubbedLock implements Lock, AutoCloseable {
 		private final Long time;
 		@Nullable
 		private final TimeUnit unit;
+		@NonNull
+		private final StubbedLock lock;
 
-		CallEvents(int callIndex, @NonNull Thread thread, @NonNull Event event) {
+		CallEvent(@NonNull StubbedLock lock, int callIndex, @NonNull Thread thread, @NonNull Event event) {
+			this.lock = lock;
+			this.timestamp = Instant.now();
 			this.callIndex = callIndex;
 			this.thread = thread;
 			this.event = event;
@@ -204,7 +210,9 @@ public class StubbedLock implements Lock, AutoCloseable {
 			this.unit = null;
 		}
 
-		CallEvents(int callIndex, @NonNull Thread thread, @NonNull Event event, long time, @NonNull TimeUnit timeUnit) {
+		CallEvent(@NonNull StubbedLock lock, int callIndex, @NonNull Thread thread, @NonNull Event event, long time, @NonNull TimeUnit timeUnit) {
+			this.lock = lock;
+			this.timestamp = Instant.now();
 			this.callIndex = callIndex;
 			this.thread = thread;
 			this.event = event;
@@ -220,19 +228,21 @@ public class StubbedLock implements Lock, AutoCloseable {
 							", event=" + event +
 							", time=" + time +
 							", unit=" + unit +
+							", timestamp=" + timestamp +
+							", lock=" + lock +
 							'}';
 		}
 
 		@Override
 		public boolean equals(Object o) {
 			if (o == null || getClass() != o.getClass()) return false;
-			CallEvents that = (CallEvents) o;
-			return callIndex == that.callIndex && Objects.equals(thread, that.thread) && event == that.event && Objects.equals(time, that.time) && unit == that.unit;
+			CallEvent that = (CallEvent) o;
+			return callIndex == that.callIndex && Objects.equals(thread, that.thread) && event == that.event && Objects.equals(time, that.time) && unit == that.unit && lock == that.lock;
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(callIndex, thread, event, time, unit);
+			return Objects.hash(callIndex, thread, event, time, unit, lock);
 		}
 	}
 }

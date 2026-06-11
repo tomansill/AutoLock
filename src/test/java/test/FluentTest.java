@@ -154,10 +154,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.LOCK),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
@@ -205,10 +205,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.LOCK),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
@@ -244,10 +244,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
@@ -295,10 +295,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
@@ -336,10 +336,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.TRY_LOCK),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
@@ -389,10 +389,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.TRY_LOCK),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
@@ -436,10 +436,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
@@ -494,10 +494,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
@@ -541,10 +541,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
@@ -599,10 +599,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
@@ -654,10 +654,10 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration1.toMillis(), TimeUnit.MILLISECONDS),
-							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
-							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration1.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
+							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
 	}
