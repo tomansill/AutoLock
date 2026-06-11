@@ -17,7 +17,8 @@ public class FluentTest implements
 				AutoLockTest.LockInterruptiblyGetTest,
 				AutoLockTest.TryLockInstantRunTest,
 				AutoLockTest.TryLockInstantGetTest,
-				AutoLockTest.TryLockTimeoutRunTest {
+				AutoLockTest.TryLockTimeoutRunTest,
+				AutoLockTest.TryLockTimeoutGetTest {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
@@ -57,5 +58,15 @@ public class FluentTest implements
 	@Override
 	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunDuration(@Nullable Lock lock, @Nullable Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
 		AutoLock.with(lock).tryAcquire(duration).run(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetLongAndTimeUnit(@Nullable Lock lock, long time, @Nullable TimeUnit unit, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2 {
+		return AutoLock.with(lock).tryAcquire(time, unit).get(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetDuration(@Nullable Lock lock, @Nullable Duration duration, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2 {
+		return AutoLock.with(lock).tryAcquire(duration).get(onLockSuccess, onLockFail);
 	}
 }
