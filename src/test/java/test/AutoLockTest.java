@@ -1782,7 +1782,7 @@ class AutoLockTest {
 		<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock lock, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws T1, T2;
 	}
 
-	interface TryLockTimeoutRun {
+	interface TryLockTimeoutRunTest {
 
 		@DisplayName("tryLock-timeout-duration-run: with null lock")
 		@Test

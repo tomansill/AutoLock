@@ -17,7 +17,7 @@ public class ImmediateTest implements
 				AutoLockTest.LockInterruptiblyGetTest,
 				AutoLockTest.TryLockInstantRunTest,
 				AutoLockTest.TryLockInstantGetTest,
-				AutoLockTest.TryLockTimeoutRun {
+				AutoLockTest.TryLockTimeoutRunTest {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
