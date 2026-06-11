@@ -45,13 +45,6 @@ class TryWithResourcesTest implements LockRunTest, LockInterruptiblyRunTest, Mul
 		}
 	}
 
-	@Test
-	@Disabled("Not applicable")
-	@Override
-	public void testMultiLockGet_NullLocks() {
-
-	}
-
 	@DisplayName("multi-lock-get: with null rest")
 	@Test
 	void testMultiLockGet_NullRest() {

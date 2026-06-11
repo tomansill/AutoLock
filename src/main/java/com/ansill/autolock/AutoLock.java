@@ -145,7 +145,7 @@ public final class AutoLock {
 		locks[0].lock();
 		try {
 
-			// Do seocnd one
+			// Do the second one
 			locks[1].lock();
 			try {
 

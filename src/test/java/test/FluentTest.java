@@ -26,7 +26,8 @@ public class FluentTest implements
 				TryLockInstantRunTest,
 				TryLockInstantGetTest,
 				TryLockTimeoutRunTest,
-				TryLockTimeoutGetTest {
+				TryLockTimeoutGetTest,
+				MultiLockGetTest {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
@@ -660,5 +661,13 @@ public class FluentTest implements
 							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
+	}
+
+	@Override
+	public <Return, T extends Throwable> Return performLockAndGet(@Nullable Lock[] locks, @Nullable ThrowableSupplier<Return, T> supplier) throws T {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		return AutoLock.with(lock1, lock2, rest).get(supplier);
 	}
 }
