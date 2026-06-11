@@ -166,7 +166,7 @@ public class FluentTest implements
 	@Test
 	void testReusableWithGet() {
 		Random random = new Random(TestUtility.getSeed(0).hashCode());
-		List<Supplier<Object>> objs = new ArrayList<>(AutoLockTest.getRandomObjects(random).values());
+		List<Supplier<Object>> objs = new ArrayList<>(TestUtility.getRandomObjects(random).values());
 		Collections.shuffle(objs, random);
 		final Object testObj1 = objs.get(0).get();
 		final Object testObj2 = objs.get(1).get();
@@ -256,7 +256,7 @@ public class FluentTest implements
 	@Test
 	void testReusableWithInterruptiblyGet() throws InterruptedException {
 		Random random = new Random(TestUtility.getSeed(0).hashCode());
-		List<Supplier<Object>> objs = new ArrayList<>(AutoLockTest.getRandomObjects(random).values());
+		List<Supplier<Object>> objs = new ArrayList<>(TestUtility.getRandomObjects(random).values());
 		Collections.shuffle(objs, random);
 		final Object testObj1 = objs.get(0).get();
 		final Object testObj2 = objs.get(1).get();
@@ -348,7 +348,7 @@ public class FluentTest implements
 	@Test
 	void testReusableWithTryAcquireGet() {
 		Random random = new Random(TestUtility.getSeed(0).hashCode());
-		List<Supplier<Object>> objs = new ArrayList<>(AutoLockTest.getRandomObjects(random).values());
+		List<Supplier<Object>> objs = new ArrayList<>(TestUtility.getRandomObjects(random).values());
 		Collections.shuffle(objs, random);
 		final Object testObj1 = objs.get(0).get();
 		final Object testObj2 = objs.get(1).get();
@@ -449,7 +449,7 @@ public class FluentTest implements
 	void testReusableWithTryAcquireDurationGet() throws InterruptedException {
 		Random random = new Random(TestUtility.getSeed(0).hashCode());
 		Duration testDuration = TestUtility.generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
-		List<Supplier<Object>> objs = new ArrayList<>(AutoLockTest.getRandomObjects(random).values());
+		List<Supplier<Object>> objs = new ArrayList<>(TestUtility.getRandomObjects(random).values());
 		Collections.shuffle(objs, random);
 		final Object testObj1 = objs.get(0).get();
 		final Object testObj2 = objs.get(1).get();
@@ -554,7 +554,7 @@ public class FluentTest implements
 	void testReusableWithTryAcquireLongTimeUnitGet() throws InterruptedException {
 		Random random = new Random(TestUtility.getSeed(0).hashCode());
 		Duration testDuration = TestUtility.generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
-		List<Supplier<Object>> objs = new ArrayList<>(AutoLockTest.getRandomObjects(random).values());
+		List<Supplier<Object>> objs = new ArrayList<>(TestUtility.getRandomObjects(random).values());
 		Collections.shuffle(objs, random);
 		final Object testObj1 = objs.get(0).get();
 		final Object testObj2 = objs.get(1).get();
@@ -602,6 +602,61 @@ public class FluentTest implements
 							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
 							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
 							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
+			), lock.getActualEvents());
+		}
+	}
+
+	@DisplayName("reusable mixed")
+	@Test
+	void testReusableMixed() throws InterruptedException {
+		Random random = new Random(TestUtility.getSeed(0).hashCode());
+		Duration testDuration1 = TestUtility.generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
+		List<Supplier<Object>> objs = new ArrayList<>(TestUtility.getRandomObjects(random).values());
+		Collections.shuffle(objs, random);
+		final Object testObj1 = objs.get(0).get();
+		final Object testObj2 = objs.get(1).get();
+		assertNotEquals(testObj1, testObj2);
+		try (StubbedLock lock = new StubbedLock()) {
+			final AutoLock.WithLock withLock = AutoLock.with(lock);
+			AtomicInteger locked = new AtomicInteger(0);
+			AtomicInteger execution = new AtomicInteger(0);
+			AtomicInteger unlocked = new AtomicInteger(0);
+			final Thread currentThread = Thread.currentThread();
+			lock.setOnTryLockTimeout((time, unit) -> {
+				assertEquals(testDuration1.toMillis(), time);
+				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(0, locked.getAndIncrement());
+				assertSame(currentThread, Thread.currentThread());
+				lock.setOnUnlock(() -> {
+					assertEquals(0, unlocked.getAndIncrement());
+					assertSame(currentThread, Thread.currentThread());
+				});
+				return true;
+			});
+			assertEquals(testObj1, withLock.tryAcquire(testDuration1.toMillis(), TimeUnit.MILLISECONDS).get(() -> {
+				assertEquals(0, execution.getAndIncrement());
+				return testObj1;
+			}, Assertions::fail));
+			lock.setOnLockInterruptibly(() -> {
+				assertEquals(1, locked.getAndIncrement());
+				assertSame(currentThread, Thread.currentThread());
+				lock.setOnUnlock(() -> {
+					assertEquals(1, unlocked.getAndIncrement());
+					assertSame(currentThread, Thread.currentThread());
+				});
+			});
+			assertEquals(testObj2, withLock.interruptibly().get(() -> {
+				assertEquals(1, execution.getAndIncrement());
+				return testObj2;
+			}));
+			assertEquals(2, locked.get());
+			assertEquals(2, unlocked.get());
+			assertEquals(2, execution.get());
+			assertEquals(Arrays.asList(
+							new StubbedLock.CallEvents(0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration1.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvents(1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvents(2, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
 							new StubbedLock.CallEvents(3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
