@@ -1829,6 +1829,51 @@ class AutoLockTest {
 			}
 		}
 
+		@DisplayName("tryLock-timeout-long/unit-run: with null lock")
+		@Test
+		default void testTryLockTimeoutLongUnitRun_NullLock() {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRunLongAndTimeUnit(null, 0, TimeUnit.MILLISECONDS, Assertions::fail, Assertions::fail));
+			assertEquals("lock must not be null", exception.getMessage());
+		}
+
+		@DisplayName("tryLock-timeout-long/unit-run: with null TimeUnit")
+		@Test
+		default void testTryLockTimeoutLongUnitRun_NullTimeUnit() {
+			try (StubbedLock lock = new StubbedLock()) {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRunLongAndTimeUnit(lock, 0, null, Assertions::fail, Assertions::fail));
+				assertEquals("unit must not be null", exception.getMessage());
+			}
+		}
+
+		@DisplayName("tryLock-timeout-long/unit-run: with negative time")
+		@Test
+		default void testTryLockTimeoutLongUnitRun_NegativeTime() {
+			try (StubbedLock lock = new StubbedLock()) {
+				IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> performTryLockAndRunLongAndTimeUnit(lock, -1, TimeUnit.MILLISECONDS, Assertions::fail, Assertions::fail));
+				assertEquals("time must be non-negative", exception.getMessage());
+			}
+		}
+
+		@DisplayName("tryLock-timeout-long/unit-run: with null onLockSuccess supplier")
+		@Test
+		default void testTryLockTimeoutLongUnitRun_NullOnLockSuccessSupplier() {
+			try (StubbedLock lock = new StubbedLock()) {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRunLongAndTimeUnit(lock, 0, TimeUnit.MILLISECONDS, null, Assertions::fail));
+				assertEquals("onLockSuccess must not be null", exception.getMessage());
+				assertEquals(Collections.emptyList(), lock.getActualEvents());
+			}
+		}
+
+		@DisplayName("tryLock-timeout-long/unit-run: with null onLockFail supplier")
+		@Test
+		default void testTryLockTimeoutLongUnitRun_NullOnLockFailSupplier() {
+			try (StubbedLock lock = new StubbedLock()) {
+				NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndRunLongAndTimeUnit(lock, 0, TimeUnit.MILLISECONDS, Assertions::fail, null));
+				assertEquals("onLockFail must not be null", exception.getMessage());
+				assertEquals(Collections.emptyList(), lock.getActualEvents());
+			}
+		}
+
 		default TimeoutLessPerform convertFromDuration(@NonNull Duration duration) {
 			return new TimeoutLessPerform() {
 				@Override
@@ -2056,7 +2101,7 @@ class AutoLockTest {
 					assertSame(currentThread, Thread.currentThread());
 					return true;
 				});
-				Throwable actualThrowable = assertThrows(Throwable.class, () -> performTryLockAndRunDuration(lock, testDuration, () -> lock.setOnUnlock(() -> {
+				Throwable actualThrowable = assertThrows(Throwable.class, () -> perform.performTryLockAndRun(lock, () -> lock.setOnUnlock(() -> {
 					unlockCount.getAndIncrement();
 					try {
 						throw supplier.get();

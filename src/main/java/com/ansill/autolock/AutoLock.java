@@ -982,8 +982,10 @@ public final class AutoLock {
 		 * {@inheritDoc}
 		 */
 		@NonNull
-		public TryWithTimeout tryAcquire(long time, @NonNull TimeUnit timeUnit) {
-			return new TryWithTimeout(time, timeUnit);
+		public TryWithTimeout tryAcquire(long time, @NonNull TimeUnit unit) {
+			if (time < 0) throw new IllegalArgumentException("time must be non-negative");
+			Objects.requireNonNull(unit, "unit must not be null");
+			return new TryWithTimeout(time, unit);
 		}
 
 		/**
@@ -1171,6 +1173,7 @@ public final class AutoLock {
 		 */
 		@NonNull
 		public TryWithTimeout tryAcquire(long time, @NonNull TimeUnit unit) {
+			if (time < 0) throw new IllegalArgumentException("time must be non-negative");
 			Objects.requireNonNull(unit, "unit must not be null");
 			return new TryWithTimeout(time, unit);
 		}
