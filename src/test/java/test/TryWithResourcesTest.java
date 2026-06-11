@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.locks.Lock;
 
 @SuppressWarnings("DataFlowIssue")
-class TryWithResourcesTest implements AutoLockTest.LockRunTest, AutoLockTest.LockInterruptiblyRunTest {
+class TryWithResourcesTest implements LockRunTest, LockInterruptiblyRunTest {
 
 	@Test
 	@Disabled("Not applicable")

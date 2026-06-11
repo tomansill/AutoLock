@@ -19,14 +19,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("DataFlowIssue")
 public class FluentTest implements
-				AutoLockTest.LockRunTest,
-				AutoLockTest.LockGetTest,
-				AutoLockTest.LockInterruptiblyRunTest,
-				AutoLockTest.LockInterruptiblyGetTest,
-				AutoLockTest.TryLockInstantRunTest,
-				AutoLockTest.TryLockInstantGetTest,
-				AutoLockTest.TryLockTimeoutRunTest,
-				AutoLockTest.TryLockTimeoutGetTest {
+				LockRunTest,
+				LockGetTest,
+				LockInterruptiblyRunTest,
+				LockInterruptiblyGetTest,
+				TryLockInstantRunTest,
+				TryLockInstantGetTest,
+				TryLockTimeoutRunTest,
+				TryLockTimeoutGetTest {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {

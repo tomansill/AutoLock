@@ -22,7 +22,7 @@ public final class AutoLock {
 	 * Prevent instantiation.
 	 */
 	private AutoLock() {
-		throw new UnsupportedOperationException("AutoLock is a utility class and cannot be instantiated");
+		throw new UnsupportedOperationException(String.format("%s is a utility class and cannot be instantiated", AutoLock.class.getSimpleName()));
 	}
 
 	/**
