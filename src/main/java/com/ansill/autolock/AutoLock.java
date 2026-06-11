@@ -18,6 +18,65 @@ import java.util.concurrent.locks.Lock;
  */
 public final class AutoLock {
 
+	@SuppressWarnings("resource")
+	@NonNull
+	private static LockedAutoLock multipleLock(@NonNull Lock[] locks) {
+
+		// Mutable boolean pointer so it can be mutated inside other function and changes be propagated back
+		MutableBoolean success = new MutableBoolean(false);
+
+		// Attempt to lock the first one
+		locks[0].lock();
+		try {
+
+			// Do the second one
+			locks[1].lock();
+			try {
+
+				// Check if we need to lock more
+				if (locks.length == 2) {
+
+					// Only 2 locks, no need to do a recursive lock, just set up unlock for close(), then exit
+					success.value = true;
+					return new LockedAutoLock(() -> {
+						try {
+							locks[1].unlock();
+						} finally {
+							locks[0].unlock();
+						}
+					});
+				}
+
+				// Recursive walk through the remaining locks and lock them
+				LockedAutoLock lockedAutoLock = recursiveMultipleLock(2, locks, success);
+
+				// Set up close method that unlocks the inner locks, then lock the remaining locks that has been
+				// locked in this method
+				return new LockedAutoLock(() -> {
+					try {
+						lockedAutoLock.close();
+					} finally {
+						try {
+							locks[1].unlock();
+						} finally {
+							locks[0].unlock();
+						}
+					}
+				});
+			} finally {
+				// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
+				if (!success.value) {
+					locks[1].unlock();
+				}
+			}
+		} finally {
+			// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
+			if (!success.value) {
+				locks[0].unlock();
+			}
+		}
+	}
+
 	/**
 	 * Prevent instantiation.
 	 */
@@ -136,62 +195,7 @@ public final class AutoLock {
 
 	@SuppressWarnings("resource")
 	@NonNull
-	private static LockedAutoLock multipleLock(@NonNull Lock[] locks) {
-
-		// Mutable boolean pointer so it can be mutated inside other function and changes be propagated back
-		boolean[] success = {false};
-
-		// Attempt to lock the first one
-		locks[0].lock();
-		try {
-
-			// Do the second one
-			locks[1].lock();
-			try {
-
-				// Check if we need to lock more
-				if (locks.length == 2) {
-
-					// Only 2 locks, no need to do a recursive lock, just set up unlock for close(), then exit
-					success[0] = true;
-					return new LockedAutoLock(() -> {
-						try {
-							locks[1].unlock();
-						} finally {
-							locks[0].unlock();
-						}
-					});
-				}
-
-				// Recursive walk through the remaining locks and lock them
-				LockedAutoLock lockedAutoLock = recursiveMultipleLock(2, locks, success);
-
-				// Set up close method that unlocks the inner locks, then lock the remaining locks that has been
-				// locked in this method
-				return new LockedAutoLock(() -> {
-					try {
-						lockedAutoLock.close();
-					} finally {
-						try {
-							locks[1].unlock();
-						} finally {
-							locks[0].unlock();
-						}
-					}
-				});
-			} finally {
-				// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
-				if (!success[0]) locks[1].unlock();
-			}
-		} finally {
-			// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
-			if (!success[0]) locks[0].unlock();
-		}
-	}
-
-	@SuppressWarnings("resource")
-	@NonNull
-	private static LockedAutoLock recursiveMultipleLock(int index, @NonNull Lock[] locks, boolean @NonNull [] success) {
+	private static LockedAutoLock recursiveMultipleLock(int index, @NonNull Lock[] locks, @NonNull MutableBoolean success) {
 
 		// Grab the current lock and lock that one
 		Lock currentLock = locks[index++];
@@ -201,7 +205,7 @@ public final class AutoLock {
 
 			// If no more locks left to lock, mark as success and build close() for later unlock
 			if (index == locks.length) {
-				success[0] = true;
+				success.value = true;
 				return new LockedAutoLock(currentLock::unlock);
 			}
 
@@ -217,7 +221,18 @@ public final class AutoLock {
 
 		} finally {
 			// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
-			if (!success[0]) currentLock.unlock();
+			if (!success.value) {
+				currentLock.unlock();
+			}
+		}
+	}
+
+	/* Mutable Boolean */
+	private static class MutableBoolean {
+		private boolean value;
+
+		private MutableBoolean(boolean value) {
+			this.value = value;
 		}
 	}
 

@@ -110,7 +110,7 @@ interface MultiLockGetTest {
 			});
 			assertSame(expected, actual);
 			assertEquals(1, lockCount1.get());
-			assertEquals(1, unlockCount2.get());
+			assertEquals(1, unlockCount1.get());
 			assertEquals(1, lockCount2.get());
 			assertEquals(1, unlockCount2.get());
 			assertEquals(1, lockCount3.get());
@@ -174,7 +174,7 @@ interface MultiLockGetTest {
 			});
 			assertSame(expected, actual);
 			assertEquals(1, lockCount1.get());
-			assertEquals(1, unlockCount2.get());
+			assertEquals(1, unlockCount1.get());
 			assertEquals(1, lockCount2.get());
 			assertEquals(1, unlockCount2.get());
 			assertEquals(1, executionCount.get());
@@ -252,7 +252,7 @@ interface MultiLockGetTest {
 			}));
 			assertSame(throwableRef.get(), actualThrowable);
 			assertEquals(1, lockCount1.get());
-			assertEquals(1, unlockCount2.get());
+			assertEquals(1, unlockCount1.get());
 			assertEquals(1, lockCount2.get());
 			assertEquals(1, unlockCount2.get());
 			assertEquals(1, lockCount3.get());
@@ -278,6 +278,229 @@ interface MultiLockGetTest {
 		}
 	}
 
+	@DisplayName("lock-get: with Throwable thrown at lock() on 4th lock")
+	@TestFactory
+	default Iterable<DynamicTest> testLockGet_ThrowableAtLockMethod4th() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtLockMethod4th(entry.getValue()))).collect(Collectors.toList());
+	}
+
+	default void testLockGet_ThrowableAtLockMethod4th(@NonNull Supplier<? extends Throwable> supplier) {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			Thread currentThread = Thread.currentThread();
+			AtomicInteger lockCount1 = new AtomicInteger();
+			AtomicInteger unlockCount1 = new AtomicInteger();
+			lock1.setOnLock(() -> {
+				lockCount1.incrementAndGet();
+				assertSame(currentThread, Thread.currentThread());
+			});
+			AtomicInteger lockCount2 = new AtomicInteger();
+			AtomicInteger unlockCount2 = new AtomicInteger();
+			lock2.setOnLock(() -> {
+				lockCount2.incrementAndGet();
+				assertSame(currentThread, Thread.currentThread());
+			});
+			AtomicInteger lockCount3 = new AtomicInteger();
+			AtomicInteger unlockCount3 = new AtomicInteger();
+			lock3.setOnLock(() -> {
+				lockCount3.incrementAndGet();
+				assertSame(currentThread, Thread.currentThread());
+			});
+			AtomicInteger lockCount4 = new AtomicInteger();
+			AtomicReference<Object> throwableRef = new AtomicReference<>();
+			lock4.setOnLock(() -> {
+				lockCount4.incrementAndGet();
+				assertSame(currentThread, Thread.currentThread());
+				lock1.setOnUnlock(() -> {
+					unlockCount1.getAndIncrement();
+					assertSame(currentThread, Thread.currentThread());
+				});
+				lock2.setOnUnlock(() -> {
+					unlockCount2.getAndIncrement();
+					assertSame(currentThread, Thread.currentThread());
+				});
+				lock3.setOnUnlock(() -> {
+					unlockCount3.getAndIncrement();
+					assertSame(currentThread, Thread.currentThread());
+				});
+				try {
+					throw supplier.get();
+				} catch (Throwable throwable) {
+					throwableRef.set(throwable);
+					throw throwable;
+				}
+			});
+			Throwable actualThrowable = assertThrows(Throwable.class, () -> performLockAndGet(new Lock[]{lock1, lock2, lock3, lock4}, Assertions::fail));
+			assertSame(throwableRef.get(), actualThrowable);
+			assertEquals(1, lockCount1.get());
+			assertEquals(1, unlockCount1.get());
+			assertEquals(1, lockCount2.get());
+			assertEquals(1, unlockCount2.get());
+			assertEquals(1, lockCount3.get());
+			assertEquals(1, unlockCount3.get());
+			assertEquals(1, lockCount4.get());
+			List<StubbedLock.CallEvent> finalEvents = new ArrayList<>(lock1.getActualEvents());
+			finalEvents.addAll(lock2.getActualEvents());
+			finalEvents.addAll(lock3.getActualEvents());
+			finalEvents.addAll(lock4.getActualEvents());
+			finalEvents.sort(Comparator.comparing(one -> one.timestamp));
+			assertEquals(Arrays.asList(
+							new StubbedLock.CallEvent(lock1, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock2, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock3, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock4, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock3, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock2, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock1, 1, currentThread, StubbedLock.Event.UNLOCK)
+			), finalEvents);
+		}
+	}
+
+	@DisplayName("lock-get: with Throwable thrown at lock() on 3rd lock")
+	@TestFactory
+	default Iterable<DynamicTest> testLockGet_ThrowableAtLockMethod3rd() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtLockMethod3rd(entry.getValue()))).collect(Collectors.toList());
+	}
+
+	default void testLockGet_ThrowableAtLockMethod3rd(@NonNull Supplier<? extends Throwable> supplier) {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			Thread currentThread = Thread.currentThread();
+			AtomicInteger lockCount1 = new AtomicInteger();
+			AtomicInteger unlockCount1 = new AtomicInteger();
+			lock1.setOnLock(() -> {
+				lockCount1.incrementAndGet();
+				assertSame(currentThread, Thread.currentThread());
+			});
+			AtomicInteger lockCount2 = new AtomicInteger();
+			AtomicInteger unlockCount2 = new AtomicInteger();
+			lock2.setOnLock(() -> {
+				lockCount2.incrementAndGet();
+				assertSame(currentThread, Thread.currentThread());
+			});
+			AtomicInteger lockCount3 = new AtomicInteger();
+			AtomicReference<Object> throwableRef = new AtomicReference<>();
+			lock3.setOnLock(() -> {
+				lockCount3.incrementAndGet();
+				assertSame(currentThread, Thread.currentThread());
+				lock1.setOnUnlock(() -> {
+					unlockCount1.getAndIncrement();
+					assertSame(currentThread, Thread.currentThread());
+				});
+				lock2.setOnUnlock(() -> {
+					unlockCount2.getAndIncrement();
+					assertSame(currentThread, Thread.currentThread());
+				});
+				try {
+					throw supplier.get();
+				} catch (Throwable throwable) {
+					throwableRef.set(throwable);
+					throw throwable;
+				}
+			});
+			Throwable actualThrowable = assertThrows(Throwable.class, () -> performLockAndGet(new Lock[]{lock1, lock2, lock3, lock4}, Assertions::fail));
+			assertSame(throwableRef.get(), actualThrowable);
+			assertEquals(1, lockCount1.get());
+			assertEquals(1, unlockCount1.get());
+			assertEquals(1, lockCount2.get());
+			assertEquals(1, unlockCount2.get());
+			assertEquals(1, lockCount3.get());
+			List<StubbedLock.CallEvent> finalEvents = new ArrayList<>(lock1.getActualEvents());
+			finalEvents.addAll(lock2.getActualEvents());
+			finalEvents.addAll(lock3.getActualEvents());
+			finalEvents.addAll(lock4.getActualEvents());
+			finalEvents.sort(Comparator.comparing(one -> one.timestamp));
+			assertEquals(Arrays.asList(
+							new StubbedLock.CallEvent(lock1, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock2, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock3, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock2, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock1, 1, currentThread, StubbedLock.Event.UNLOCK)
+			), finalEvents);
+		}
+	}
+
+	@DisplayName("lock-get: with Throwable thrown at lock() on 2nd lock")
+	@TestFactory
+	default Iterable<DynamicTest> testLockGet_ThrowableAtLockMethod2nd() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtLockMethod2nd(entry.getValue()))).collect(Collectors.toList());
+	}
+
+	default void testLockGet_ThrowableAtLockMethod2nd(@NonNull Supplier<? extends Throwable> supplier) {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			Thread currentThread = Thread.currentThread();
+			AtomicInteger lockCount1 = new AtomicInteger();
+			AtomicInteger unlockCount1 = new AtomicInteger();
+			lock1.setOnLock(() -> {
+				lockCount1.incrementAndGet();
+				assertSame(currentThread, Thread.currentThread());
+			});
+			AtomicInteger lockCount2 = new AtomicInteger();
+			AtomicReference<Object> throwableRef = new AtomicReference<>();
+			lock2.setOnLock(() -> {
+				lockCount2.incrementAndGet();
+				assertSame(currentThread, Thread.currentThread());
+				lock1.setOnUnlock(() -> {
+					unlockCount1.getAndIncrement();
+					assertSame(currentThread, Thread.currentThread());
+				});
+				try {
+					throw supplier.get();
+				} catch (Throwable throwable) {
+					throwableRef.set(throwable);
+					throw throwable;
+				}
+			});
+			Throwable actualThrowable = assertThrows(Throwable.class, () -> performLockAndGet(new Lock[]{lock1, lock2, lock3, lock4}, Assertions::fail));
+			assertSame(throwableRef.get(), actualThrowable);
+			assertEquals(1, lockCount1.get());
+			assertEquals(1, unlockCount1.get());
+			assertEquals(1, lockCount2.get());
+			List<StubbedLock.CallEvent> finalEvents = new ArrayList<>(lock1.getActualEvents());
+			finalEvents.addAll(lock2.getActualEvents());
+			finalEvents.addAll(lock3.getActualEvents());
+			finalEvents.addAll(lock4.getActualEvents());
+			finalEvents.sort(Comparator.comparing(one -> one.timestamp));
+			assertEquals(Arrays.asList(
+							new StubbedLock.CallEvent(lock1, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock2, 0, currentThread, StubbedLock.Event.LOCK),
+							new StubbedLock.CallEvent(lock1, 1, currentThread, StubbedLock.Event.UNLOCK)
+			), finalEvents);
+		}
+	}
+
+	@DisplayName("lock-get: with Throwable thrown at lock() on 1st lock")
+	@TestFactory
+	default Iterable<DynamicTest> testLockGet_ThrowableAtLockMethod1st() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtLockMethod1st(entry.getValue()))).collect(Collectors.toList());
+	}
+
+	default void testLockGet_ThrowableAtLockMethod1st(@NonNull Supplier<? extends Throwable> supplier) {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			Thread currentThread = Thread.currentThread();
+			AtomicInteger lockCount1 = new AtomicInteger();
+			AtomicReference<Object> throwableRef = new AtomicReference<>();
+			lock1.setOnLock(() -> {
+				lockCount1.incrementAndGet();
+				assertSame(currentThread, Thread.currentThread());
+				try {
+					throw supplier.get();
+				} catch (Throwable throwable) {
+					throwableRef.set(throwable);
+					throw throwable;
+				}
+			});
+			Throwable actualThrowable = assertThrows(Throwable.class, () -> performLockAndGet(new Lock[]{lock1, lock2, lock3, lock4}, Assertions::fail));
+			assertSame(throwableRef.get(), actualThrowable);
+			assertEquals(1, lockCount1.get());
+			List<StubbedLock.CallEvent> finalEvents = new ArrayList<>(lock1.getActualEvents());
+			finalEvents.addAll(lock2.getActualEvents());
+			finalEvents.addAll(lock3.getActualEvents());
+			finalEvents.addAll(lock4.getActualEvents());
+			finalEvents.sort(Comparator.comparing(one -> one.timestamp));
+			assertEquals(Collections.singletonList(
+							new StubbedLock.CallEvent(lock1, 0, currentThread, StubbedLock.Event.LOCK)
+			), finalEvents);
+		}
+	}
 
 	<Return, T extends Throwable> Return performLockAndGet(@NonNull Lock[] locks, @Nullable ThrowableSupplier<Return, T> supplier) throws T;
 }
