@@ -1941,10 +1941,15 @@ class AutoLockTest {
 		@TestFactory
 		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_ThrowableInsideOnSuccessLockRunnable() {
 			Random random = new Random(getSeed(0).hashCode());
-			return getRandomThrowables(random).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testTryLockTimeoutDurationRun_ThrowableInsideOnSuccessLockRunnable(entry.getValue(), generateDuration(random, Duration.ZERO, Duration.ofMinutes(60))))).collect(Collectors.toList());
+			return getRandomThrowables(random).entrySet().stream().flatMap(entry -> {
+				Duration testDuration = generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
+				return Stream.of(
+								DynamicTest.dynamicTest("duration " + testDuration, () -> testTryLockTimeoutDurationRun_ThrowableInsideOnSuccessLockRunnable(entry.getValue(), convertFromDuration(testDuration), testDuration)),
+								DynamicTest.dynamicTest("time/unit " + testDuration, () -> testTryLockTimeoutDurationRun_ThrowableInsideOnSuccessLockRunnable(entry.getValue(), convertFromTimeUnit(testDuration), testDuration)));
+			}).collect(Collectors.toList());
 		}
 
-		default void testTryLockTimeoutDurationRun_ThrowableInsideOnSuccessLockRunnable(@NonNull Supplier<? extends Throwable> supplier, @NonNull Duration testDuration) {
+		default void testTryLockTimeoutDurationRun_ThrowableInsideOnSuccessLockRunnable(@NonNull Supplier<? extends Throwable> supplier, @NonNull TimeoutLessPerform perform, @NonNull Duration testDuration) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicInteger executionCount = new AtomicInteger();
@@ -1958,7 +1963,7 @@ class AutoLockTest {
 					return true;
 				});
 				AtomicReference<Object> throwableRef = new AtomicReference<>();
-				Throwable actualThrowable = assertThrows(Throwable.class, () -> performTryLockAndRunDuration(lock, testDuration, () -> {
+				Throwable actualThrowable = assertThrows(Throwable.class, () -> perform.performTryLockAndRun(lock, () -> {
 					executionCount.incrementAndGet();
 					lock.setOnUnlock(() -> {
 						unlockCount.getAndIncrement();
@@ -1989,10 +1994,15 @@ class AutoLockTest {
 		@TestFactory
 		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_ThrowableAtTryLockMethod() {
 			Random random = new Random(getSeed(0).hashCode());
-			return getRandomUncheckeds(random).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testTryLockTimeoutDurationRun_ThrowableAtTryLockMethod(entry.getValue(), generateDuration(random, Duration.ZERO, Duration.ofMinutes(60))))).collect(Collectors.toList());
+			return getRandomThrowables(random).entrySet().stream().flatMap(entry -> {
+				Duration testDuration = generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
+				return Stream.of(
+								DynamicTest.dynamicTest("duration " + testDuration, () -> testTryLockTimeoutDurationRun_ThrowableAtTryLockMethod(entry.getValue(), convertFromDuration(testDuration), testDuration)),
+								DynamicTest.dynamicTest("time/unit " + testDuration, () -> testTryLockTimeoutDurationRun_ThrowableAtTryLockMethod(entry.getValue(), convertFromTimeUnit(testDuration), testDuration)));
+			}).collect(Collectors.toList());
 		}
 
-		default void testTryLockTimeoutDurationRun_ThrowableAtTryLockMethod(@NonNull Supplier<? extends Throwable> supplier, @NonNull Duration testDuration) {
+		default void testTryLockTimeoutDurationRun_ThrowableAtTryLockMethod(@NonNull Supplier<? extends Throwable> supplier, @NonNull TimeoutLessPerform perform, @NonNull Duration testDuration) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				Thread currentThread = Thread.currentThread();
@@ -2025,10 +2035,15 @@ class AutoLockTest {
 		@TestFactory
 		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_ThrowableAtUnlockMethod() {
 			Random random = new Random(getSeed(0).hashCode());
-			return getRandomUncheckeds(random).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testTryLockTimeoutDurationRun_ThrowableAtUnlockMethod(entry.getValue(), generateDuration(random, Duration.ZERO, Duration.ofMinutes(60))))).collect(Collectors.toList());
+			return getRandomThrowables(random).entrySet().stream().flatMap(entry -> {
+				Duration testDuration = generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
+				return Stream.of(
+								DynamicTest.dynamicTest("duration " + testDuration, () -> testTryLockTimeoutDurationRun_ThrowableAtUnlockMethod(entry.getValue(), convertFromDuration(testDuration), testDuration)),
+								DynamicTest.dynamicTest("time/unit " + testDuration, () -> testTryLockTimeoutDurationRun_ThrowableAtUnlockMethod(entry.getValue(), convertFromTimeUnit(testDuration), testDuration)));
+			}).collect(Collectors.toList());
 		}
 
-		default void testTryLockTimeoutDurationRun_ThrowableAtUnlockMethod(@NonNull Supplier<? extends Throwable> supplier, @NonNull Duration testDuration) {
+		default void testTryLockTimeoutDurationRun_ThrowableAtUnlockMethod(@NonNull Supplier<? extends Throwable> supplier, @NonNull TimeoutLessPerform perform, @NonNull Duration testDuration) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicInteger unlockCount = new AtomicInteger();
@@ -2068,16 +2083,19 @@ class AutoLockTest {
 		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_ThrowableInOnLockSuccessRunnableAndThrowableInUnlockMethod() {
 			Random random = new Random(getSeed(0).hashCode());
 			Map<String, Supplier<? extends Throwable>> throwableMap = getRandomUncheckeds(random);
-			return throwableMap.entrySet().stream().map(entry -> {
+			return throwableMap.entrySet().stream().flatMap(entry -> {
+				Duration testDuration = generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
 				Map<String, Supplier<? extends Throwable>> innerRandomMap = getRandomThrowables(random);
 				List<String> keys = new ArrayList<>(innerRandomMap.keySet());
 				Collections.shuffle(keys, random);
 				Supplier<? extends Throwable> mainThrowable = innerRandomMap.get(keys.iterator().next());
-				return DynamicTest.dynamicTest(entry.getKey(), () -> this.testTryLockTimeoutDurationRun_ThrowableInOnLockSuccessRunnableAndThrowableInUnlockMethod(mainThrowable, entry.getValue(), generateDuration(random, Duration.ZERO, Duration.ofMinutes(60))));
+				return Stream.of(
+								DynamicTest.dynamicTest("duration " + testDuration, () -> testTryLockTimeoutDurationRun_ThrowableInOnLockSuccessRunnableAndThrowableInUnlockMethod(mainThrowable, entry.getValue(), convertFromDuration(testDuration), testDuration)),
+								DynamicTest.dynamicTest("time/unit " + testDuration, () -> testTryLockTimeoutDurationRun_ThrowableInOnLockSuccessRunnableAndThrowableInUnlockMethod(mainThrowable, entry.getValue(), convertFromTimeUnit(testDuration), testDuration)));
 			}).collect(Collectors.toList());
 		}
 
-		default void testTryLockTimeoutDurationRun_ThrowableInOnLockSuccessRunnableAndThrowableInUnlockMethod(@NonNull Supplier<? extends Throwable> mainExceptionSupplier, @NonNull Supplier<? extends Throwable> supplier, @NonNull Duration testDuration) {
+		default void testTryLockTimeoutDurationRun_ThrowableInOnLockSuccessRunnableAndThrowableInUnlockMethod(@NonNull Supplier<? extends Throwable> mainExceptionSupplier, @NonNull Supplier<? extends Throwable> supplier, @NonNull TimeoutLessPerform perform, @NonNull Duration testDuration) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				AtomicInteger unlockCount = new AtomicInteger();
@@ -2093,7 +2111,7 @@ class AutoLockTest {
 				});
 				Throwable actualThrowable = assertThrows(
 								Throwable.class,
-								() -> performTryLockAndRunDuration(lock, testDuration, () -> {
+								() -> perform.performTryLockAndRun(lock, () -> {
 									lock.setOnUnlock(() -> {
 										unlockCount.getAndIncrement();
 										try {
@@ -2129,10 +2147,15 @@ class AutoLockTest {
 		@TestFactory
 		default Iterable<DynamicTest> testTryLockTimeoutDurationRun_ThrowableInsideOnFailLockRunnable() {
 			Random random = new Random(getSeed(0).hashCode());
-			return getRandomThrowables(random).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testTryLockTimeoutDurationRun_ThrowableInsideOnFailLockRunnable(entry.getValue(), generateDuration(random, Duration.ZERO, Duration.ofMinutes(60))))).collect(Collectors.toList());
+			return getRandomThrowables(random).entrySet().stream().flatMap(entry -> {
+				Duration testDuration = generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
+				return Stream.of(
+								DynamicTest.dynamicTest("duration " + testDuration, () -> testTryLockTimeoutDurationRun_ThrowableInsideOnFailLockRunnable(entry.getValue(), convertFromDuration(testDuration), testDuration)),
+								DynamicTest.dynamicTest("time/unit " + testDuration, () -> testTryLockTimeoutDurationRun_ThrowableInsideOnFailLockRunnable(entry.getValue(), convertFromTimeUnit(testDuration), testDuration)));
+			}).collect(Collectors.toList());
 		}
 
-		default void testTryLockTimeoutDurationRun_ThrowableInsideOnFailLockRunnable(@NonNull Supplier<? extends Throwable> supplier, @NonNull Duration testDuration) {
+		default void testTryLockTimeoutDurationRun_ThrowableInsideOnFailLockRunnable(@NonNull Supplier<? extends Throwable> supplier, @NonNull TimeoutLessPerform perform, @NonNull Duration testDuration) {
 			try (StubbedLock lock = new StubbedLock()) {
 				AtomicInteger lockCount = new AtomicInteger();
 				Thread currentThread = Thread.currentThread();
@@ -2144,7 +2167,7 @@ class AutoLockTest {
 					return false;
 				});
 				AtomicReference<Object> throwableRef = new AtomicReference<>();
-				Throwable actualThrowable = assertThrows(Throwable.class, () -> performTryLockAndRunDuration(lock, testDuration, Assertions::fail, () -> {
+				Throwable actualThrowable = assertThrows(Throwable.class, () -> perform.performTryLockAndRun(lock, Assertions::fail, () -> {
 					try {
 						throw supplier.get();
 					} catch (Throwable throwable) {
