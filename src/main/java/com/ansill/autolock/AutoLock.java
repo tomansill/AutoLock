@@ -236,6 +236,15 @@ public final class AutoLock {
 		}
 	}
 
+	/* Mutable Reference */
+	private static class MutableReference<Type> {
+		private Type value;
+
+		private MutableReference(Type initialValue) {
+			this.value = initialValue;
+		}
+	}
+
 	@NonNull
 	public static LockedAutoLock lockInterruptibly(@NonNull Lock lock1, @NonNull Lock lock2, @NonNull Lock... locks) throws InterruptedException {
 
@@ -1293,9 +1302,9 @@ public final class AutoLock {
 			public <T1 extends Throwable, T2 extends Throwable> void run(@NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableRunnable<T2> onLockFail) throws T1, T2 {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
-				TryLockFailContext[] mutableRef = {null};
+				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
 				innerRun(0, onLockSuccess, mutableRef);
-				TryLockFailContext tryLockFailContext = mutableRef[0];
+				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					onLockFail.run();
 				}
@@ -1321,15 +1330,15 @@ public final class AutoLock {
 			public <T1 extends Throwable, T2 extends Throwable> void run(@NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableConsumer<TryLockFailContext, T2> onLockFail) throws T1, T2 {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
-				TryLockFailContext[] mutableRef = {null};
+				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
 				innerRun(0, onLockSuccess, mutableRef);
-				TryLockFailContext tryLockFailContext = mutableRef[0];
+				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					onLockFail.accept(tryLockFailContext);
 				}
 			}
 
-			private <T1 extends Throwable> void innerRun(int lockIndex, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull TryLockFailContext[] mutableRef) throws T1 {
+			private <T1 extends Throwable> void innerRun(int lockIndex, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1 {
 				Lock lock = fullLocks[lockIndex++];
 				if (lock.tryLock()) {
 					try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
@@ -1340,7 +1349,7 @@ public final class AutoLock {
 						}
 					}
 				} else {
-					mutableRef[0] = new TryLockFailContext(lockIndex, lock);
+					mutableRef.value = new TryLockFailContext(lockIndex, lock);
 				}
 			}
 
@@ -1350,9 +1359,9 @@ public final class AutoLock {
 			public <R, T1 extends Throwable, T2 extends Throwable> R get(@NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableSupplier<R, T2> onLockFail) throws T1, T2 {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
-				TryLockFailContext[] mutableRef = {null};
+				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
 				R original = innerGet(0, onLockSuccess, mutableRef);
-				TryLockFailContext tryLockFailContext = mutableRef[0];
+				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					return onLockFail.get();
 				} else {
@@ -1383,9 +1392,9 @@ public final class AutoLock {
 			public <R, T1 extends Throwable, T2 extends Throwable> R get(@NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableFunction<TryLockFailContext, R, T2> onLockFail) throws T1, T2 {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
-				TryLockFailContext[] mutableRef = {null};
+				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
 				R original = innerGet(0, onLockSuccess, mutableRef);
-				TryLockFailContext tryLockFailContext = mutableRef[0];
+				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					return onLockFail.apply(tryLockFailContext);
 				} else {
@@ -1393,7 +1402,7 @@ public final class AutoLock {
 				}
 			}
 
-			private <R, T1 extends Throwable> R innerGet(int lockIndex, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull TryLockFailContext[] mutableRef) throws T1 {
+			private <R, T1 extends Throwable> R innerGet(int lockIndex, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1 {
 				Lock lock = fullLocks[lockIndex++];
 				if (lock.tryLock()) {
 					try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
@@ -1404,7 +1413,7 @@ public final class AutoLock {
 						}
 					}
 				} else {
-					mutableRef[0] = new TryLockFailContext(lockIndex, lock);
+					mutableRef.value = new TryLockFailContext(lockIndex, lock);
 					return null;
 				}
 			}
