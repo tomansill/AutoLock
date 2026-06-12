@@ -278,13 +278,13 @@ interface MultiLockGetTest {
 		}
 	}
 
-	@DisplayName("lock-get: with Throwable thrown at lock() on 4th lock")
+	@DisplayName("multi-lock-get: with Throwable thrown at lock() on 4th lock")
 	@TestFactory
-	default Iterable<DynamicTest> testLockGet_ThrowableAtLockMethod4th() {
-		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtLockMethod4th(entry.getValue()))).collect(Collectors.toList());
+	default Iterable<DynamicTest> testMultiLockGet_ThrowableAtLockMethod4th() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiLockGet_ThrowableAtLockMethod4th(entry.getValue()))).collect(Collectors.toList());
 	}
 
-	default void testLockGet_ThrowableAtLockMethod4th(@NonNull Supplier<? extends Throwable> supplier) {
+	default void testMultiLockGet_ThrowableAtLockMethod4th(@NonNull Supplier<? extends Throwable> supplier) {
 		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
 			Thread currentThread = Thread.currentThread();
 			AtomicInteger lockCount1 = new AtomicInteger();
@@ -355,13 +355,13 @@ interface MultiLockGetTest {
 		}
 	}
 
-	@DisplayName("lock-get: with Throwable thrown at lock() on 3rd lock")
+	@DisplayName("multi-lock-get: with Throwable thrown at lock() on 3rd lock")
 	@TestFactory
-	default Iterable<DynamicTest> testLockGet_ThrowableAtLockMethod3rd() {
-		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtLockMethod3rd(entry.getValue()))).collect(Collectors.toList());
+	default Iterable<DynamicTest> testMultiLockGet_ThrowableAtLockMethod3rd() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiLockGet_ThrowableAtLockMethod3rd(entry.getValue()))).collect(Collectors.toList());
 	}
 
-	default void testLockGet_ThrowableAtLockMethod3rd(@NonNull Supplier<? extends Throwable> supplier) {
+	default void testMultiLockGet_ThrowableAtLockMethod3rd(@NonNull Supplier<? extends Throwable> supplier) {
 		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
 			Thread currentThread = Thread.currentThread();
 			AtomicInteger lockCount1 = new AtomicInteger();
@@ -418,13 +418,13 @@ interface MultiLockGetTest {
 		}
 	}
 
-	@DisplayName("lock-get: with Throwable thrown at lock() on 2nd lock")
+	@DisplayName("multi-lock-get: with Throwable thrown at lock() on 2nd lock")
 	@TestFactory
-	default Iterable<DynamicTest> testLockGet_ThrowableAtLockMethod2nd() {
-		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtLockMethod2nd(entry.getValue()))).collect(Collectors.toList());
+	default Iterable<DynamicTest> testMultiLockGet_ThrowableAtLockMethod2nd() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiLockGet_ThrowableAtLockMethod2nd(entry.getValue()))).collect(Collectors.toList());
 	}
 
-	default void testLockGet_ThrowableAtLockMethod2nd(@NonNull Supplier<? extends Throwable> supplier) {
+	default void testMultiLockGet_ThrowableAtLockMethod2nd(@NonNull Supplier<? extends Throwable> supplier) {
 		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
 			Thread currentThread = Thread.currentThread();
 			AtomicInteger lockCount1 = new AtomicInteger();
@@ -467,13 +467,13 @@ interface MultiLockGetTest {
 		}
 	}
 
-	@DisplayName("lock-get: with Throwable thrown at lock() on 1st lock")
+	@DisplayName("multi-lock-get: with Throwable thrown at lock() on 1st lock")
 	@TestFactory
-	default Iterable<DynamicTest> testLockGet_ThrowableAtLockMethod1st() {
-		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtLockMethod1st(entry.getValue()))).collect(Collectors.toList());
+	default Iterable<DynamicTest> testMultiLockGet_ThrowableAtLockMethod1st() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiLockGet_ThrowableAtLockMethod1st(entry.getValue()))).collect(Collectors.toList());
 	}
 
-	default void testLockGet_ThrowableAtLockMethod1st(@NonNull Supplier<? extends Throwable> supplier) {
+	default void testMultiLockGet_ThrowableAtLockMethod1st(@NonNull Supplier<? extends Throwable> supplier) {
 		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
 			Thread currentThread = Thread.currentThread();
 			AtomicInteger lockCount1 = new AtomicInteger();
@@ -502,31 +502,31 @@ interface MultiLockGetTest {
 		}
 	}
 
-	@DisplayName("lock-get: with Throwable thrown at unlock() on 4th lock")
+	@DisplayName("multi-lock-get: with Throwable thrown at unlock() on 4th lock")
 	@TestFactory
-	default Iterable<DynamicTest> testLockGet_ThrowableAtUnlockMethod4th() {
-		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtUnlockMethod(entry.getValue(), 3))).collect(Collectors.toList());
+	default Iterable<DynamicTest> testMultiLockGet_ThrowableAtUnlockMethod4th() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiLockGet_ThrowableAtUnlockMethod(entry.getValue(), 3))).collect(Collectors.toList());
 	}
 
-	@DisplayName("lock-get: with Throwable thrown at unlock() on 3rd lock")
+	@DisplayName("multi-lock-get: with Throwable thrown at unlock() on 3rd lock")
 	@TestFactory
-	default Iterable<DynamicTest> testLockGet_ThrowableAtUnlockMethod3rd() {
-		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtUnlockMethod(entry.getValue(), 2))).collect(Collectors.toList());
+	default Iterable<DynamicTest> testMultiLockGet_ThrowableAtUnlockMethod3rd() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiLockGet_ThrowableAtUnlockMethod(entry.getValue(), 2))).collect(Collectors.toList());
 	}
 
-	@DisplayName("lock-get: with Throwable thrown at unlock() on 2nd lock")
+	@DisplayName("multi-lock-get: with Throwable thrown at unlock() on 2nd lock")
 	@TestFactory
-	default Iterable<DynamicTest> testLockGet_ThrowableAtUnlockMethod2nd() {
-		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtUnlockMethod(entry.getValue(), 1))).collect(Collectors.toList());
+	default Iterable<DynamicTest> testMultiLockGet_ThrowableAtUnlockMethod2nd() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiLockGet_ThrowableAtUnlockMethod(entry.getValue(), 1))).collect(Collectors.toList());
 	}
 
-	@DisplayName("lock-get: with Throwable thrown at unlock() on 1st lock")
+	@DisplayName("multi-lock-get: with Throwable thrown at unlock() on 1st lock")
 	@TestFactory
-	default Iterable<DynamicTest> testLockGet_ThrowableAtUnlockMethod1st() {
-		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testLockGet_ThrowableAtUnlockMethod(entry.getValue(), 0))).collect(Collectors.toList());
+	default Iterable<DynamicTest> testMultiLockGet_ThrowableAtUnlockMethod1st() {
+		return getRandomUncheckeds(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiLockGet_ThrowableAtUnlockMethod(entry.getValue(), 0))).collect(Collectors.toList());
 	}
 
-	default void testLockGet_ThrowableAtUnlockMethod(@NonNull Supplier<? extends Throwable> supplier, int position) {
+	default void testMultiLockGet_ThrowableAtUnlockMethod(@NonNull Supplier<? extends Throwable> supplier, int position) {
 		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
 			Thread currentThread = Thread.currentThread();
 			AtomicReference<Object> throwableRef = new AtomicReference<>();

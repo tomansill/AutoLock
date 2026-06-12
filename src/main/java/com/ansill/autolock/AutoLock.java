@@ -262,13 +262,13 @@ public final class AutoLock {
 	private static LockedAutoLock multipleLockInterruptibly(@NonNull Lock[] locks) throws InterruptedException {
 
 		// Mutable boolean pointer so it can be mutated inside other function and changes be propagated back
-		boolean[] success = {false};
+		MutableBoolean success = new MutableBoolean(false);
 
 		// Attempt to lock the first one
 		locks[0].lockInterruptibly();
 		try {
 
-			// Do seocnd one
+			// Do the second one
 			locks[1].lockInterruptibly();
 			try {
 
@@ -276,7 +276,7 @@ public final class AutoLock {
 				if (locks.length == 2) {
 
 					// Only 2 locks, no need to do a recursive lock, just set up unlock for close(), then exit
-					success[0] = true;
+					success.value = true;
 					return new LockedAutoLock(() -> {
 						try {
 							locks[1].unlock();
@@ -304,17 +304,17 @@ public final class AutoLock {
 				});
 			} finally {
 				// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
-				if (!success[0]) locks[1].unlock();
+				if (!success.value) locks[1].unlock();
 			}
 		} finally {
 			// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
-			if (!success[0]) locks[0].unlock();
+			if (!success.value) locks[0].unlock();
 		}
 	}
 
 	@SuppressWarnings("resource")
 	@NonNull
-	private static LockedAutoLock recursiveMultipleLockInterruptibly(int index, @NonNull Lock[] locks, boolean @NonNull [] success) throws InterruptedException {
+	private static LockedAutoLock recursiveMultipleLockInterruptibly(int index, @NonNull Lock[] locks, @NonNull MutableBoolean success) throws InterruptedException {
 
 		// Grab the current lock and lock that one
 		Lock currentLock = locks[index++];
@@ -324,7 +324,7 @@ public final class AutoLock {
 
 			// If no more locks left to lock, mark as success and build close() for later unlock
 			if (index == locks.length) {
-				success[0] = true;
+				success.value = true;
 				return new LockedAutoLock(currentLock::unlock);
 			}
 
@@ -340,7 +340,7 @@ public final class AutoLock {
 
 		} finally {
 			// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
-			if (!success[0]) currentLock.unlock();
+			if (!success.value) currentLock.unlock();
 		}
 	}
 
