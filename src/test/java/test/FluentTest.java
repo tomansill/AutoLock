@@ -28,7 +28,10 @@ public class FluentTest implements
 				TryLockInstantGetTest,
 				TryLockTimeoutRunTest,
 				TryLockTimeoutGetTest,
-				MultiLockGetTest, MultiLockInterruptiblyGetTest {
+				MultiLockRunTest,
+				MultiLockGetTest,
+				MultiLockInterruptiblyRunTest,
+				MultiLockInterruptiblyGetTest {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
@@ -678,5 +681,21 @@ public class FluentTest implements
 		Lock lock2 = locks[1];
 		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
 		return AutoLock.with(lock1, lock2, rest).interruptibly().get(supplier);
+	}
+
+	@Override
+	public <T extends Throwable> void performLockAndRun(@NonNull Lock[] locks, @Nullable ThrowableRunnable<T> runnable) throws T {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		AutoLock.with(lock1, lock2, rest).run(runnable);
+	}
+
+	@Override
+	public <T extends Throwable> void performLockInterruptiblyAndRun(@NonNull Lock[] locks, @Nullable ThrowableRunnable<T> runnable) throws T, InterruptedException {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		AutoLock.with(lock1, lock2, rest).interruptibly().run(runnable);
 	}
 }

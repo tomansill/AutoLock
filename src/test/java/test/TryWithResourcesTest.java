@@ -16,7 +16,7 @@ import java.util.concurrent.locks.Lock;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("DataFlowIssue")
-class TryWithResourcesTest implements LockRunTest, LockInterruptiblyRunTest, MultiLockGetTest, MultiLockInterruptiblyGetTest {
+class TryWithResourcesTest implements LockRunTest, LockInterruptiblyRunTest, MultiLockRunTest, MultiLockGetTest, MultiLockInterruptiblyRunTest, MultiLockInterruptiblyGetTest {
 
 	@Test
 	@Disabled("Not applicable")
@@ -76,6 +76,26 @@ class TryWithResourcesTest implements LockRunTest, LockInterruptiblyRunTest, Mul
 		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
 		try (LockedAutoLock ignored = AutoLock.lockInterruptibly(lock1, lock2, rest)) {
 			return supplier.get();
+		}
+	}
+
+	@Override
+	public <T extends Throwable> void performLockAndRun(@NonNull Lock[] locks, @Nullable ThrowableRunnable<T> runnable) throws T {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		try (LockedAutoLock ignored = AutoLock.lock(lock1, lock2, rest)) {
+			runnable.run();
+		}
+	}
+
+	@Override
+	public <T extends Throwable> void performLockInterruptiblyAndRun(@NonNull Lock[] locks, @Nullable ThrowableRunnable<T> runnable) throws T, InterruptedException {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		try (LockedAutoLock ignored = AutoLock.lockInterruptibly(lock1, lock2, rest)) {
+			runnable.run();
 		}
 	}
 }
