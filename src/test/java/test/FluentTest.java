@@ -3,6 +3,7 @@ package test;
 import com.ansill.autolock.AutoLock;
 import com.ansill.autolock.ThrowableRunnable;
 import com.ansill.autolock.ThrowableSupplier;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +28,7 @@ public class FluentTest implements
 				TryLockInstantGetTest,
 				TryLockTimeoutRunTest,
 				TryLockTimeoutGetTest,
-				MultiLockGetTest {
+				MultiLockGetTest, MultiLockInterruptiblyGetTest {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
@@ -669,5 +670,13 @@ public class FluentTest implements
 		Lock lock2 = locks[1];
 		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
 		return AutoLock.with(lock1, lock2, rest).get(supplier);
+	}
+
+	@Override
+	public <Return, T extends Throwable> Return performLockInterruptiblyAndGet(@NonNull Lock[] locks, @Nullable ThrowableSupplier<Return, T> supplier) throws T, InterruptedException {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		return AutoLock.with(lock1, lock2, rest).interruptibly().get(supplier);
 	}
 }
