@@ -1,9 +1,6 @@
 package test;
 
-import com.ansill.autolock.AutoLock;
-import com.ansill.autolock.ThrowableFunction;
-import com.ansill.autolock.ThrowableRunnable;
-import com.ansill.autolock.ThrowableSupplier;
+import com.ansill.autolock.*;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
@@ -33,6 +30,7 @@ public class FluentTest implements
 				MultiLockGetTest,
 				MultiLockInterruptiblyRunTest,
 				MultiLockInterruptiblyGetTest,
+				MultiTryLockInstantRunTest,
 				MultiTryLockInstantGetTest {
 
 	@Override
@@ -715,5 +713,21 @@ public class FluentTest implements
 		Lock lock2 = locks[1];
 		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
 		return AutoLock.with(lock1, lock2, rest).tryAcquire().get(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunWithContext(@Nullable Lock[] locks, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableConsumer<AutoLock.MultipleLocks.TryLockFailContext, T2> onLockFail) throws T1, T2 {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		AutoLock.with(lock1, lock2, rest).tryAcquire().run(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunWithoutContext(@Nullable Lock[] locks, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws T1, T2 {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		AutoLock.with(lock1, lock2, rest).tryAcquire().run(onLockSuccess, onLockFail);
 	}
 }

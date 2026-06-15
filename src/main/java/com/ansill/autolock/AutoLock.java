@@ -1438,9 +1438,9 @@ public final class AutoLock {
 			public <T1 extends Throwable, T2 extends Throwable> void run(@NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableRunnable<T2> onLockFail) throws T1, T2, InterruptedException {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
-				TryLockFailContext[] mutableRef = {null};
+				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
 				innerRun(0, unit.toNanos(time), onLockSuccess, mutableRef);
-				TryLockFailContext tryLockFailContext = mutableRef[0];
+				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					onLockFail.run();
 				}
@@ -1449,15 +1449,15 @@ public final class AutoLock {
 			public <T1 extends Throwable, T2 extends Throwable> void run(@NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableConsumer<TryLockFailContext, T2> onLockFail) throws T1, T2, InterruptedException {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
-				TryLockFailContext[] mutableRef = {null};
+				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
 				innerRun(0, unit.toNanos(time), onLockSuccess, mutableRef);
-				TryLockFailContext tryLockFailContext = mutableRef[0];
+				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					onLockFail.accept(tryLockFailContext);
 				}
 			}
 
-			private <T1 extends Throwable> void innerRun(int lockIndex, long remainingTimeInNanoseconds, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull TryLockFailContext[] mutableRef) throws T1, InterruptedException {
+			private <T1 extends Throwable> void innerRun(int lockIndex, long remainingTimeInNanoseconds, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
 				Lock lock = fullLocks[lockIndex++];
 				long timestampNanos = System.nanoTime();
 				if (lock.tryLock(remainingTimeInNanoseconds, unit)) {
@@ -1470,7 +1470,7 @@ public final class AutoLock {
 						}
 					}
 				} else {
-					mutableRef[0] = new TryLockFailContext(lockIndex - 1, lock);
+					mutableRef.value = new TryLockFailContext(lockIndex - 1, lock);
 				}
 			}
 
@@ -1480,9 +1480,9 @@ public final class AutoLock {
 			public <R, T1 extends Throwable, T2 extends Throwable> R get(@NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableSupplier<R, T2> onLockFail) throws T1, T2, InterruptedException {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
-				TryLockFailContext[] mutableRef = {null};
+				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
 				R original = innerGet(0, unit.toNanos(time), onLockSuccess, mutableRef);
-				TryLockFailContext tryLockFailContext = mutableRef[0];
+				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					return onLockFail.get();
 				} else {
@@ -1493,9 +1493,9 @@ public final class AutoLock {
 			public <R, T1 extends Throwable, T2 extends Throwable> R get(@NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableFunction<TryLockFailContext, R, T2> onLockFail) throws T1, T2, InterruptedException {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
-				TryLockFailContext[] mutableRef = {null};
+				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
 				R original = innerGet(0, unit.toNanos(time), onLockSuccess, mutableRef);
-				TryLockFailContext tryLockFailContext = mutableRef[0];
+				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					return onLockFail.apply(tryLockFailContext);
 				} else {
@@ -1503,7 +1503,7 @@ public final class AutoLock {
 				}
 			}
 
-			private <R, T1 extends Throwable> R innerGet(int lockIndex, long remainingTime, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull TryLockFailContext[] mutableRef) throws T1, InterruptedException {
+			private <R, T1 extends Throwable> R innerGet(int lockIndex, long remainingTime, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
 				Lock lock = fullLocks[lockIndex++];
 				long timestampNanos = System.nanoTime();
 				if (lock.tryLock(remainingTime, unit)) {
@@ -1516,7 +1516,7 @@ public final class AutoLock {
 						}
 					}
 				} else {
-					mutableRef[0] = new TryLockFailContext(lockIndex - 1, lock);
+					mutableRef.value = new TryLockFailContext(lockIndex - 1, lock);
 					return null;
 				}
 			}
