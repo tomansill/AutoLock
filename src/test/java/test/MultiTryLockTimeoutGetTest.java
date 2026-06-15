@@ -372,6 +372,60 @@ interface MultiTryLockTimeoutGetTest {
 		}).collect(Collectors.toList());
 	}
 
+	@DisplayName("multi-tryLock-timeout-get-ctx: failed lock on 1st lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_Failed1stCtx() {
+		return testMultiTryLockTimeoutDurationGet_FailedCtx(0, false);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get-ctx: failed lock on 2nd lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_Failed2ndCtx() {
+		return testMultiTryLockTimeoutDurationGet_FailedCtx(1, false);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get-ctx: failed lock on 3rd lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_Failed3rdCtx() {
+		return testMultiTryLockTimeoutDurationGet_FailedCtx(2, false);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get-ctx: failed lock on 4th lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_Failed4thCtx() {
+		return testMultiTryLockTimeoutDurationGet_FailedCtx(3, false);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get-ctx: failed lock on 2nd lock due to no budget")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_Failed2ndBudgetCtx() {
+		return testMultiTryLockTimeoutDurationGet_FailedCtx(1, true);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get-ctx: failed lock on 3rd lock due to no budget")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_Failed3rdBudgetCtx() {
+		return testMultiTryLockTimeoutDurationGet_FailedCtx(2, true);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get-ctx: failed lock on 4th lock due to no budget")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_Failed4thBudgetCtx() {
+		return testMultiTryLockTimeoutDurationGet_FailedCtx(3, true);
+	}
+
+
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_FailedCtx(int lockFailPosition, boolean budgetRelated) {
+		Random random = new Random(getSeed(1).hashCode());
+		return getRandomObjects(random).entrySet().stream().flatMap(entry -> {
+			Duration testDuration = generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
+			return Stream.of(
+							DynamicTest.dynamicTest("duration " + testDuration, () -> testMultiTryLockTimeoutDurationGet_Failed(entry.getValue(), budgetRelated, lockFailPosition, null, convertFromDurationGetWithContext(this, testDuration), testDuration)),
+							DynamicTest.dynamicTest("time/unit " + testDuration, () -> testMultiTryLockTimeoutDurationGet_Failed(entry.getValue(), budgetRelated, lockFailPosition, null, convertFromTimeUnitGetWithContext(this, testDuration), testDuration)));
+
+		}).collect(Collectors.toList());
+	}
+
 	default void testMultiTryLockTimeoutDurationGet_Failed(
 					@NonNull Supplier<Object> objectSupplier,
 					boolean failDueToBudget,
