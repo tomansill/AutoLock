@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.function.LongSupplier;
@@ -595,7 +596,6 @@ interface MultiTryLockTimeoutGetTest {
 			assertTrue(instantOfOnLockFail.isAfter(actualList.get(actualList.size() - 1).timestamp));
 		}
 	}
-	/*
 
 	@DisplayName("multi-tryLock-timeout-get: exception thrown inside onSuccessLock supplier")
 	@TestFactory
@@ -604,31 +604,83 @@ interface MultiTryLockTimeoutGetTest {
 		return getRandomThrowables(new Random(getSeed(0).hashCode())).entrySet().stream().flatMap(entry -> {
 			Duration testDuration = generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
 			return Stream.of(
-							DynamicTest.dynamicTest("duration " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInsideOnSuccessLockSupplier(entry.getValue(), convertFromDurationGetWithoutContext(this, testDuration), testDuration)),
-							DynamicTest.dynamicTest("time/unit " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInsideOnSuccessLockSupplier(entry.getValue(), convertFromTimeUnitGetWithoutContext(this, testDuration), testDuration)));
+							DynamicTest.dynamicTest("duration " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInsideOnSuccessLockSupplier(entry.getValue(), convertFromDurationGetWithoutContext(this, testDuration), null, testDuration)),
+							DynamicTest.dynamicTest("time/unit " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInsideOnSuccessLockSupplier(entry.getValue(), convertFromTimeUnitGetWithoutContext(this, testDuration), null, testDuration)));
 
 		}).collect(Collectors.toList());
 	}
 
-	default void testMultiTryLockTimeoutDurationGet_ThrowableInsideOnSuccessLockSupplier(@NonNull Supplier<? extends Throwable> supplier, @NonNull MultiTryLockTimeoutGetTest.TimeoutLessPerformWithoutContext perform, @NonNull Duration testDuration) {
-		try (StubbedLock lock = new StubbedLock()) {
-			AtomicInteger lockCount = new AtomicInteger();
+	@DisplayName("multi-tryLock-timeout-get-ctx: exception thrown inside onSuccessLock supplier")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInsideOnSuccessLockSupplierCtx() {
+		Random random = new Random(getSeed(0).hashCode());
+		return getRandomThrowables(new Random(getSeed(0).hashCode())).entrySet().stream().flatMap(entry -> {
+			Duration testDuration = generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
+			return Stream.of(
+							DynamicTest.dynamicTest("duration " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInsideOnSuccessLockSupplier(entry.getValue(), null, convertFromDurationGetWithContext(this, testDuration), testDuration)),
+							DynamicTest.dynamicTest("time/unit " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInsideOnSuccessLockSupplier(entry.getValue(), null, convertFromTimeUnitGetWithContext(this, testDuration), testDuration)));
+
+		}).collect(Collectors.toList());
+	}
+
+	default void testMultiTryLockTimeoutDurationGet_ThrowableInsideOnSuccessLockSupplier(
+					@NonNull Supplier<? extends Throwable> supplier,
+					@Nullable TimeoutLessPerformWithoutContext noCtx,
+					TimeoutLessPerformWithContext withContext,
+					@NonNull Duration testDuration
+	) {
+		try (
+						StubbedTimeSource timeSource = new StubbedTimeSource();
+						StubbedLock lock1 = new StubbedLock();
+						StubbedLock lock2 = new StubbedLock();
+						StubbedLock lock3 = new StubbedLock();
+						StubbedLock lock4 = new StubbedLock()
+		) {
+			long epoch = 1L;
+			timeSource.insertTime(epoch); // Assume instanteous lock
+			timeSource.insertTime(epoch); // Assume instanteous lock
+			timeSource.insertTime(epoch); // Assume instanteous lock
+			timeSource.insertTime(epoch); // Assume instanteous lock
+			timeSource.insertTime(epoch); // Assume instanteous lock
 			AtomicInteger executionCount = new AtomicInteger();
-			AtomicInteger unlockCount = new AtomicInteger();
 			Thread currentThread = Thread.currentThread();
-			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
-				lockCount.incrementAndGet();
+			lock1.setOnTryLockTimeout((time, unit) -> {
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(NANOSECONDS, unit);
+				assertSame(currentThread, Thread.currentThread());
+				return true;
+			});
+			lock2.setOnTryLockTimeout((time, unit) -> {
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(NANOSECONDS, unit);
+				assertSame(currentThread, Thread.currentThread());
+				return true;
+			});
+			lock3.setOnTryLockTimeout((time, unit) -> {
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(NANOSECONDS, unit);
+				assertSame(currentThread, Thread.currentThread());
+				return true;
+			});
+			lock4.setOnTryLockTimeout((time, unit) -> {
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(NANOSECONDS, unit);
 				assertSame(currentThread, Thread.currentThread());
 				return true;
 			});
 			AtomicReference<Object> throwableRef = new AtomicReference<>();
-			Throwable actualThrowable = assertThrows(Throwable.class, () -> perform.performTryLockAndGet(lock, () -> {
+			Lock[] locks = new Lock[]{lock1, lock2, lock3, lock4};
+			ThrowableSupplier<Object, ?> onLockSuccess = () -> {
 				executionCount.incrementAndGet();
-				lock.setOnUnlock(() -> {
-					unlockCount.getAndIncrement();
+				lock4.setOnUnlock(() -> {
 					assertSame(currentThread, Thread.currentThread());
+					lock3.setOnUnlock(() -> {
+						assertSame(currentThread, Thread.currentThread());
+						lock2.setOnUnlock(() -> {
+							assertSame(currentThread, Thread.currentThread());
+							lock1.setOnUnlock(() -> assertSame(currentThread, Thread.currentThread()));
+						});
+					});
 				});
 				try {
 					throw supplier.get();
@@ -636,21 +688,38 @@ interface MultiTryLockTimeoutGetTest {
 					throwableRef.set(throwable);
 					throw throwable;
 				}
-			}, Assertions::fail));
+			};
+			Throwable actualThrowable = assertThrows(Throwable.class, () -> {
+				if (noCtx != null) {
+					noCtx.performTryLockAndGet(locks, () -> timeSource, onLockSuccess, Assertions::fail);
+				} else {
+					withContext.performTryLockAndGet(locks, () -> timeSource, onLockSuccess, ctx -> Assertions.fail());
+				}
+			});
 			assertSame(throwableRef.get(), actualThrowable);
-			assertEquals(1, lockCount.get());
 			assertEquals(1, executionCount.get());
-			assertEquals(1, unlockCount.get());
+			List<StubbedLock.CallEvent> actualList = new ArrayList<>(lock1.getActualEvents());
+			actualList.addAll(lock2.getActualEvents());
+			actualList.addAll(lock3.getActualEvents());
+			actualList.addAll(lock4.getActualEvents());
+			actualList.sort(Comparator.comparing(one -> one.timestamp));
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
-											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
+											new StubbedLock.CallEvent(lock1, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), NANOSECONDS),
+											new StubbedLock.CallEvent(lock2, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), NANOSECONDS),
+											new StubbedLock.CallEvent(lock3, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), NANOSECONDS),
+											new StubbedLock.CallEvent(lock4, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), NANOSECONDS),
+											new StubbedLock.CallEvent(lock4, 1, currentThread, StubbedLock.Event.UNLOCK),
+											new StubbedLock.CallEvent(lock3, 1, currentThread, StubbedLock.Event.UNLOCK),
+											new StubbedLock.CallEvent(lock2, 1, currentThread, StubbedLock.Event.UNLOCK),
+											new StubbedLock.CallEvent(lock1, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
-							lock.getActualEvents()
+							actualList
 			);
 		}
 	}
 
+	/*
 	@DisplayName("multi-tryLock-timeout-get: with Throwable thrown at tryLock()")
 	@TestFactory
 	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableAtTryLockMethod() {
@@ -850,24 +919,24 @@ interface MultiTryLockTimeoutGetTest {
 		}
 	}*/
 
-	<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetLongAndTimeUnitWithoutContext(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, long time, @Nullable TimeUnit unit, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2;
+	<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetLongAndTimeUnitWithoutContext(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, long time, @Nullable TimeUnit unit, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2;
 
-	<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetDurationWithoutContext(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, @Nullable Duration duration, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2;
+	<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetDurationWithoutContext(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, @Nullable Duration duration, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2;
 
-	<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetLongAndTimeUnitWithContext(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, long time, @Nullable TimeUnit unit, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2;
+	<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetLongAndTimeUnitWithContext(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, long time, @Nullable TimeUnit unit, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2;
 
-	<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetDurationWithContext(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, @Nullable Duration duration, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2;
+	<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetDurationWithContext(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, @Nullable Duration duration, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2;
 
 	/* Attempt to reduce boilerplate by reusing test code across Duration and Long+TimeUnit */
 	@FunctionalInterface
 	interface TimeoutLessPerformWithoutContext {
-		<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2;
+		<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2;
 	}
 
 	/* Attempt to reduce boilerplate by reusing test code across Duration and Long+TimeUnit */
 	@FunctionalInterface
 	interface TimeoutLessPerformWithContext {
-		<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2;
+		<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2;
 	}
 
 }
