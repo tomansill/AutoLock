@@ -1349,7 +1349,7 @@ public final class AutoLock {
 						}
 					}
 				} else {
-					mutableRef.value = new TryLockFailContext(lockIndex, lock);
+					mutableRef.value = new TryLockFailContext(lockIndex - 1, lock);
 				}
 			}
 
@@ -1413,7 +1413,7 @@ public final class AutoLock {
 						}
 					}
 				} else {
-					mutableRef.value = new TryLockFailContext(lockIndex, lock);
+					mutableRef.value = new TryLockFailContext(lockIndex - 1, lock);
 					return null;
 				}
 			}
@@ -1470,7 +1470,7 @@ public final class AutoLock {
 						}
 					}
 				} else {
-					mutableRef[0] = new TryLockFailContext(lockIndex, lock);
+					mutableRef[0] = new TryLockFailContext(lockIndex - 1, lock);
 				}
 			}
 
@@ -1516,7 +1516,7 @@ public final class AutoLock {
 						}
 					}
 				} else {
-					mutableRef[0] = new TryLockFailContext(lockIndex, lock);
+					mutableRef[0] = new TryLockFailContext(lockIndex - 1, lock);
 					return null;
 				}
 			}

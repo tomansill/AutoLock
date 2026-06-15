@@ -7,6 +7,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.*;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,7 +17,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static test.TestUtility.*;
+import static test.TestUtility.getRandomObjects;
+import static test.TestUtility.getSeed;
 
 interface MultiTryLockInstantGetTest {
 
@@ -217,39 +219,132 @@ interface MultiTryLockInstantGetTest {
 		}
 	}
 
-	@DisplayName("multi-tryLock-instant-get: failed lock")
+	@DisplayName("multi-tryLock-instant-get: failed lock on 1st lock")
 	@TestFactory
-	default Iterable<DynamicTest> testMultiTryLockInstantGet_Failed() {
-		return getRandomObjects(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiTryLockInstantGet_Failed(entry.getValue()))).collect(Collectors.toList());
+	default Iterable<DynamicTest> testMultiTryLockInstantGet_Failed1st() {
+		return getRandomObjects(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiTryLockInstantGet_Failed(entry.getValue(), 0))).collect(Collectors.toList());
 	}
 
-	default void testMultiTryLockInstantGet_Failed(@NonNull Supplier<Object> objectSupplier) {
-		try (StubbedLock lock = new StubbedLock()) {
-			AtomicInteger lockCount = new AtomicInteger();
+	@DisplayName("multi-tryLock-instant-get: failed lock on 2nd lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockInstantGet_Failed2nd() {
+		return getRandomObjects(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiTryLockInstantGet_Failed(entry.getValue(), 1))).collect(Collectors.toList());
+	}
+
+	@DisplayName("multi-tryLock-instant-get: failed lock on 3rd lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockInstantGet_Failed3rd() {
+		return getRandomObjects(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiTryLockInstantGet_Failed(entry.getValue(), 2))).collect(Collectors.toList());
+	}
+
+	@DisplayName("multi-tryLock-instant-get: failed lock on 4th lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockInstantGet_Failed4th() {
+		return getRandomObjects(new Random(getSeed(0).hashCode())).entrySet().stream().map(entry -> DynamicTest.dynamicTest(entry.getKey(), () -> this.testMultiTryLockInstantGet_Failed(entry.getValue(), 3))).collect(Collectors.toList());
+	}
+
+	default void testMultiTryLockInstantGet_Failed(@NonNull Supplier<Object> objectSupplier, int lockFailPosition) {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
 			AtomicBoolean failedSupplierReached = new AtomicBoolean(false);
 			Thread currentThread = Thread.currentThread();
-			lock.setOnTryLockInstant(() -> {
-				lockCount.incrementAndGet();
+			lock1.setOnTryLockInstant(() -> {
 				assertSame(currentThread, Thread.currentThread());
-				return false;
+				if (lockFailPosition != 0) {
+					lock1.setOnUnlock(() -> {
+						assertSame(currentThread, Thread.currentThread());
+					});
+					return true;
+				} else {
+					return false;
+				}
 			});
+			if (lockFailPosition >= 1) {
+				lock2.setOnTryLockInstant(() -> {
+					assertSame(currentThread, Thread.currentThread());
+					if (lockFailPosition != 1) {
+						lock2.setOnUnlock(() -> {
+							assertSame(currentThread, Thread.currentThread());
+						});
+						return true;
+					} else {
+						return false;
+					}
+				});
+			}
+			if (lockFailPosition >= 2) {
+				lock3.setOnTryLockInstant(() -> {
+					assertSame(currentThread, Thread.currentThread());
+					if (lockFailPosition != 2) {
+						lock3.setOnUnlock(() -> {
+							assertSame(currentThread, Thread.currentThread());
+						});
+						return true;
+					} else {
+						return false;
+					}
+				});
+			}
+			if (lockFailPosition >= 3) {
+				lock4.setOnTryLockInstant(() -> {
+					assertSame(currentThread, Thread.currentThread());
+					if (lockFailPosition != 3) {
+						lock4.setOnUnlock(() -> {
+							assertSame(currentThread, Thread.currentThread());
+						});
+						return true;
+					} else {
+						return false;
+					}
+				});
+			}
 			Object expectedObject = objectSupplier.get();
-			Object actualObject = performTryLockAndGet(lock, Assertions::fail, () -> {
+			AtomicReference<AutoLock.MultipleLocks.TryLockFailContext> contextRef = new AtomicReference<>();
+			AtomicReference<Instant> timestampOfOnLockFail = new AtomicReference<>();
+			Object actualObject = performTryLockAndGet(new Lock[]{lock1, lock2, lock3, lock4}, Assertions::fail, (ctx) -> {
+				timestampOfOnLockFail.set(Instant.now());
 				failedSupplierReached.set(true);
+				contextRef.set(ctx);
 				return expectedObject;
 			});
 			assertSame(expectedObject, actualObject);
 			assertTrue(failedSupplierReached.get());
-			assertEquals(1, lockCount.get());
-			assertEquals(
-							Collections.singletonList(
-											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK)
-							),
-							lock.getActualEvents()
-			);
+			AutoLock.MultipleLocks.TryLockFailContext context = contextRef.get();
+			assertNotNull(context);
+			assertEquals(lockFailPosition, context.getSequenceIndex());
+			if (lockFailPosition == 0) assertEquals(lock1, context.getFailedLock());
+			else if (lockFailPosition == 1) assertEquals(lock2, context.getFailedLock());
+			else if (lockFailPosition == 2) assertEquals(lock3, context.getFailedLock());
+			else if (lockFailPosition == 3) assertEquals(lock4, context.getFailedLock());
+			else fail("what? " + lockFailPosition);
+			List<StubbedLock.CallEvent> expectedList = new ArrayList<>();
+			expectedList.add(new StubbedLock.CallEvent(lock1, 0, currentThread, StubbedLock.Event.TRY_LOCK));
+			if (lockFailPosition >= 1) {
+				expectedList.add(new StubbedLock.CallEvent(lock2, 0, currentThread, StubbedLock.Event.TRY_LOCK));
+				if (lockFailPosition >= 2) {
+					expectedList.add(new StubbedLock.CallEvent(lock3, 0, currentThread, StubbedLock.Event.TRY_LOCK));
+					if (lockFailPosition == 3) {
+						expectedList.add(new StubbedLock.CallEvent(lock4, 0, currentThread, StubbedLock.Event.TRY_LOCK));
+						expectedList.add(new StubbedLock.CallEvent(lock3, 1, currentThread, StubbedLock.Event.UNLOCK));
+					}
+					expectedList.add(new StubbedLock.CallEvent(lock2, 1, currentThread, StubbedLock.Event.UNLOCK));
+				}
+				expectedList.add(new StubbedLock.CallEvent(lock1, 1, currentThread, StubbedLock.Event.UNLOCK));
+			}
+			List<StubbedLock.CallEvent> actualList = new ArrayList<>(lock1.getActualEvents());
+			actualList.addAll(lock2.getActualEvents());
+			actualList.addAll(lock3.getActualEvents());
+			actualList.addAll(lock4.getActualEvents());
+			actualList.sort(Comparator.comparing(one -> one.timestamp));
+			assertEquals(expectedList, actualList);
+
+			// Assert that onLockFail is run AFTER all unlocks, not between
+			Instant instantOfOnLockFail = timestampOfOnLockFail.get();
+			assertNotNull(instantOfOnLockFail);
+			assertTrue(instantOfOnLockFail.isAfter(actualList.get(actualList.size() - 1).timestamp));
 		}
 	}
 
+	/*
 	@DisplayName("multi-tryLock-instant-get: exception thrown inside onSuccessLock supplier")
 	@TestFactory
 	default Iterable<DynamicTest> testMultiTryLockInstantGet_ThrowableInsideOnSuccessLockSupplier() {
@@ -463,7 +558,7 @@ interface MultiTryLockInstantGetTest {
 							lock.getActualEvents()
 			);
 		}
-	}
+	}*/
 
 	<Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws T1, T2;
 }

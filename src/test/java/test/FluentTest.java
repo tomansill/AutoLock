@@ -1,6 +1,7 @@
 package test;
 
 import com.ansill.autolock.AutoLock;
+import com.ansill.autolock.ThrowableFunction;
 import com.ansill.autolock.ThrowableRunnable;
 import com.ansill.autolock.ThrowableSupplier;
 import org.jspecify.annotations.NonNull;
@@ -31,7 +32,8 @@ public class FluentTest implements
 				MultiLockRunTest,
 				MultiLockGetTest,
 				MultiLockInterruptiblyRunTest,
-				MultiLockInterruptiblyGetTest {
+				MultiLockInterruptiblyGetTest,
+				MultiTryLockInstantGetTest {
 
 	@Override
 	public <T extends Throwable> void performLockAndRun(@Nullable Lock lock, @Nullable ThrowableRunnable<T> runnable) throws T {
@@ -697,5 +699,13 @@ public class FluentTest implements
 		Lock lock2 = locks[1];
 		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
 		AutoLock.with(lock1, lock2, rest).interruptibly().run(runnable);
+	}
+
+	@Override
+	public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws T1, T2 {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		return AutoLock.with(lock1, lock2, rest).tryAcquire().get(onLockSuccess, onLockFail);
 	}
 }
