@@ -702,7 +702,15 @@ public class FluentTest implements
 	}
 
 	@Override
-	public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws T1, T2 {
+	public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetWithContext(@Nullable Lock[] locks, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws T1, T2 {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		return AutoLock.with(lock1, lock2, rest).tryAcquire().get(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGetWithoutContext(@Nullable Lock[] locks, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws T1, T2 {
 		Lock lock1 = locks[0];
 		Lock lock2 = locks[1];
 		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
