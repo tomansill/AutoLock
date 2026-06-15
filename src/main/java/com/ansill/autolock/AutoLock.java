@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.function.LongSupplier;
 
 /**
  * Utility class for working with {@link Lock} instances using try-with-resources semantics.
@@ -804,11 +805,7 @@ public final class AutoLock {
 		 * @param timeout maximum time to wait for lock acquisition
 		 * @return timed try-lock execution strategy
 		 */
-		default @NonNull TryWithTimeout tryAcquire(@NonNull Duration timeout) {
-			Objects.requireNonNull(timeout, "timeout must not be null");
-			if (timeout.isNegative()) throw new IllegalArgumentException("timeout must be non-negative");
-			return tryAcquire(timeout.toMillis(), TimeUnit.MILLISECONDS);
-		}
+		@NonNull TryWithTimeout tryAcquire(@NonNull Duration timeout);
 
 
 		@NonNull TryWithTimeout tryAcquire(long time, @NonNull TimeUnit unit);
@@ -1005,6 +1002,16 @@ public final class AutoLock {
 		/**
 		 * {@inheritDoc}
 		 */
+		@Override
+		public WithLock.@NonNull TryWithTimeout tryAcquire(@NonNull Duration timeout) {
+			Objects.requireNonNull(timeout, "timeout must not be null");
+			if (timeout.isNegative()) throw new IllegalArgumentException("timeout must be non-negative");
+			return tryAcquire(timeout.toMillis(), TimeUnit.MILLISECONDS);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
 		@NonNull
 		public TryWithTimeout tryAcquire(long time, @NonNull TimeUnit unit) {
 			if (time < 0) throw new IllegalArgumentException("time must be non-negative");
@@ -1179,8 +1186,7 @@ public final class AutoLock {
 		/**
 		 * {@inheritDoc}
 		 */
-		@NonNull
-		public Interruptibly interruptibly() {
+		public WithLock.@NonNull Interruptibly interruptibly() {
 			return new Interruptibly();
 		}
 
@@ -1195,11 +1201,23 @@ public final class AutoLock {
 		/**
 		 * {@inheritDoc}
 		 */
+		@Override
 		@NonNull
 		public TryWithTimeout tryAcquire(long time, @NonNull TimeUnit unit) {
 			if (time < 0) throw new IllegalArgumentException("time must be non-negative");
 			Objects.requireNonNull(unit, "unit must not be null");
 			return new TryWithTimeout(time, unit);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		@NonNull
+		public TryWithTimeout tryAcquire(@NonNull Duration timeout) {
+			Objects.requireNonNull(timeout, "timeout must not be null");
+			if (timeout.isNegative()) throw new IllegalArgumentException("timeout must be non-negative");
+			return tryAcquire(timeout.toMillis(), TimeUnit.MILLISECONDS);
 		}
 
 		/**
@@ -1427,6 +1445,10 @@ public final class AutoLock {
 			@NonNull
 			private final TimeUnit unit;
 
+			// mutable field used to stub for unit testing - generally should not be tweaked in production
+			// Default to nanoTime as the actual behavior
+			LongSupplier stubGetNanos = System::nanoTime;
+
 			private TryWithTimeout(long time, @NonNull TimeUnit unit) {
 				this.time = time;
 				this.unit = unit;
@@ -1439,7 +1461,7 @@ public final class AutoLock {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
-				innerRun(0, unit.toNanos(time), onLockSuccess, mutableRef);
+				innerRun(0, stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
 				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					onLockFail.run();
@@ -1450,23 +1472,22 @@ public final class AutoLock {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
-				innerRun(0, unit.toNanos(time), onLockSuccess, mutableRef);
+				innerRun(0, stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
 				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					onLockFail.accept(tryLockFailContext);
 				}
 			}
 
-			private <T1 extends Throwable> void innerRun(int lockIndex, long remainingTimeInNanoseconds, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
+			private <T1 extends Throwable> void innerRun(int lockIndex, final long epochInNanos, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
 				Lock lock = fullLocks[lockIndex++];
-				long timestampNanos = System.nanoTime();
-				if (lock.tryLock(remainingTimeInNanoseconds, unit)) {
-					remainingTimeInNanoseconds -= unit.convert((System.nanoTime() - timestampNanos), TimeUnit.NANOSECONDS);
+				long budget = unit.toNanos(time) - (stubGetNanos.getAsLong() - epochInNanos);
+				if (budget > -1 && lock.tryLock(budget, TimeUnit.NANOSECONDS)) {
 					try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 						if (lockIndex == fullLocks.length) {
 							onLockSuccess.run();
 						} else {
-							innerRun(lockIndex, remainingTimeInNanoseconds, onLockSuccess, mutableRef);
+							innerRun(lockIndex, epochInNanos, onLockSuccess, mutableRef);
 						}
 					}
 				} else {
@@ -1481,7 +1502,7 @@ public final class AutoLock {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
-				R original = innerGet(0, unit.toNanos(time), onLockSuccess, mutableRef);
+				R original = innerGet(0, stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
 				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					return onLockFail.get();
@@ -1494,7 +1515,7 @@ public final class AutoLock {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
-				R original = innerGet(0, unit.toNanos(time), onLockSuccess, mutableRef);
+				R original = innerGet(0, stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
 				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					return onLockFail.apply(tryLockFailContext);
@@ -1503,16 +1524,15 @@ public final class AutoLock {
 				}
 			}
 
-			private <R, T1 extends Throwable> R innerGet(int lockIndex, long remainingTime, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
+			private <R, T1 extends Throwable> R innerGet(int lockIndex, final long epochInNanos, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
 				Lock lock = fullLocks[lockIndex++];
-				long timestampNanos = System.nanoTime();
-				if (lock.tryLock(remainingTime, unit)) {
-					remainingTime -= unit.convert((System.nanoTime() - timestampNanos), TimeUnit.NANOSECONDS);
+				long budget = unit.toNanos(time) - (stubGetNanos.getAsLong() - epochInNanos);
+				if (budget > -1 && lock.tryLock(budget, TimeUnit.NANOSECONDS)) {
 					try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 						if (lockIndex == fullLocks.length) {
 							return onLockSuccess.get();
 						} else {
-							return innerGet(lockIndex, remainingTime, onLockSuccess, mutableRef);
+							return innerGet(lockIndex, epochInNanos, onLockSuccess, mutableRef);
 						}
 					}
 				} else {

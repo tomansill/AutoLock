@@ -25,7 +25,7 @@ public class TestUtility {
 
 	public static String getSeed(int offset) {
 		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-		StackTraceElement callingSTE = stackTraceElements[stackTraceElements.length - 1 - offset];
+		StackTraceElement callingSTE = stackTraceElements[offset];
 		return SEED + callingSTE.getClassName() + callingSTE.getMethodName();
 	}
 

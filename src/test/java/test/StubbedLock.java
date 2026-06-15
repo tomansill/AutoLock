@@ -19,11 +19,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class StubbedLock implements Lock, AutoCloseable {
 
-
-	@Override
-	public void close() {
-		confirmNoMoreExpectedCalls();
-	}
+	private static final AtomicInteger LOCK_COUNT = new AtomicInteger(1);
 
 	@NonNull
 	private final AtomicReference<ESupplier<Boolean>> onTryLockInstantRunnable = new AtomicReference<>();
@@ -33,6 +29,17 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	@NonNull
 	private final AtomicInteger callIndex = new AtomicInteger(0);
+
+	@NonNull
+	private final AtomicReference<TryLockWithTimeoutFunction> onTryLockTimeoutRunnable = new AtomicReference<>();
+
+	private final List<CallEvent> actualEvents = new CopyOnWriteArrayList<>();
+
+	private final int number;
+
+	public StubbedLock() {
+		this.number = LOCK_COUNT.getAndIncrement();
+	}
 
 	void setOnLock(@NonNull ERunnable onLock) {
 		this.onLockRunnable.set(onLock);
@@ -49,25 +56,34 @@ public class StubbedLock implements Lock, AutoCloseable {
 
 	public void confirmNoMoreExpectedCalls() {
 		if (onLockRunnable.get() != null) {
-			fail("lock() waiting to be called");
+			fail("#" + number + " lock() waiting to be called");
 		}
 		if (onUnlockRunnable.get() != null) {
-			fail("unlock() waiting to be called");
+			fail("#" + number + " unlock() waiting to be called");
 		}
 		if (onLockInterruptiblyRunnable.get() != null) {
-			fail("lockInterruptibly() waiting to be called");
+			fail("#" + number + " lockInterruptibly() waiting to be called");
 		}
 		if (onTryLockInstantRunnable.get() != null) {
-			fail("tryLock() waiting to be called");
+			fail("#" + number + " tryLock() waiting to be called");
 		}
 		if (onTryLockTimeoutRunnable.get() != null) {
-			fail("tryLock(long,TimeUnit) waiting to be called");
+			fail("#" + number + " tryLock(long,TimeUnit) waiting to be called");
 		}
 	}
-	@NonNull
-	private final AtomicReference<TryLockWithTimeoutFunction> onTryLockTimeoutRunnable = new AtomicReference<>();
 
-	private final List<CallEvent> actualEvents = new CopyOnWriteArrayList<>();
+	@Override
+	public String toString() {
+		return "StubbedLock{" +
+						"number=" + number +
+						'}';
+	}
+
+	@Override
+	public void close() {
+		LOCK_COUNT.decrementAndGet();
+		confirmNoMoreExpectedCalls();
+	}
 
 	@NonNull List<CallEvent> getActualEvents() {
 		return Collections.unmodifiableList(actualEvents);
@@ -77,7 +93,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 	public void lock() {
 		actualEvents.add(new CallEvent(this, callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK));
 		ERunnable runnable = onLockRunnable.getAndSet(null);
-		if (runnable == null) fail("unstubbed");
+		if (runnable == null) fail("#" + number + " unstubbed");
 		try {
 			runnable.run();
 		} catch (Throwable e) {
@@ -106,7 +122,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 	public void unlock() {
 		actualEvents.add(new CallEvent(this, callIndex.getAndIncrement(), Thread.currentThread(), Event.UNLOCK));
 		ERunnable runnable = onUnlockRunnable.getAndSet(null);
-		if (runnable == null) fail("unstubbed");
+		if (runnable == null) fail("#" + number + " unstubbed");
 		try {
 			runnable.run();
 		} catch (Throwable e) {
@@ -118,7 +134,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 	public void lockInterruptibly() throws InterruptedException {
 		actualEvents.add(new CallEvent(this, callIndex.getAndIncrement(), Thread.currentThread(), Event.LOCK_INTERRUPTIBLY));
 		ERunnable runnable = onLockInterruptiblyRunnable.getAndSet(null);
-		if (runnable == null) fail("unstubbed");
+		if (runnable == null) fail("#" + number + " unstubbed");
 		try {
 			runnable.run();
 		} catch (InterruptedException e) {
@@ -132,7 +148,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 	public boolean tryLock() {
 		actualEvents.add(new CallEvent(this, callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK));
 		ESupplier<Boolean> function = onTryLockInstantRunnable.getAndSet(null);
-		if (function == null) fail("unstubbed");
+		if (function == null) fail("#" + number + " unstubbed");
 		try {
 			return function.get();
 		} catch (Throwable e) {
@@ -145,7 +161,7 @@ public class StubbedLock implements Lock, AutoCloseable {
 	public boolean tryLock(long time, @NonNull TimeUnit unit) throws InterruptedException {
 		actualEvents.add(new CallEvent(this, callIndex.getAndIncrement(), Thread.currentThread(), Event.TRY_LOCK_TIMEOUT, time, unit));
 		TryLockWithTimeoutFunction function = onTryLockTimeoutRunnable.getAndSet(null);
-		if (function == null) fail("unstubbed");
+		if (function == null) fail("#" + number + " unstubbed");
 		try {
 			return function.apply(time, unit);
 		} catch (InterruptedException e) {
@@ -228,7 +244,6 @@ public class StubbedLock implements Lock, AutoCloseable {
 							", event=" + event +
 							", time=" + time +
 							", unit=" + unit +
-							", timestamp=" + timestamp +
 							", lock=" + lock +
 							'}';
 		}
