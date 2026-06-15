@@ -581,7 +581,7 @@ public final class AutoLock {
 		Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 
 		// Lock it
-		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+		if (lock.tryLock(timeout.toNanos(), TimeUnit.NANOSECONDS)) {
 			try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 				onLockSuccess.run();
 			}
@@ -625,7 +625,7 @@ public final class AutoLock {
 		Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 
 		// Lock it
-		if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+		if (lock.tryLock(timeout.toNanos(), TimeUnit.NANOSECONDS)) {
 			try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 				return onLockSuccess.get();
 			}
@@ -1006,7 +1006,7 @@ public final class AutoLock {
 		public WithLock.@NonNull TryWithTimeout tryAcquire(@NonNull Duration timeout) {
 			Objects.requireNonNull(timeout, "timeout must not be null");
 			if (timeout.isNegative()) throw new IllegalArgumentException("timeout must be non-negative");
-			return tryAcquire(timeout.toMillis(), TimeUnit.MILLISECONDS);
+			return tryAcquire(timeout.toNanos(), TimeUnit.NANOSECONDS);
 		}
 
 		/**
@@ -1217,7 +1217,7 @@ public final class AutoLock {
 		public TryWithTimeout tryAcquire(@NonNull Duration timeout) {
 			Objects.requireNonNull(timeout, "timeout must not be null");
 			if (timeout.isNegative()) throw new IllegalArgumentException("timeout must be non-negative");
-			return tryAcquire(timeout.toMillis(), TimeUnit.MILLISECONDS);
+			return tryAcquire(timeout.toNanos(), TimeUnit.NANOSECONDS);
 		}
 
 		/**

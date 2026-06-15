@@ -116,7 +116,7 @@ public class FluentTest implements
 	@Test
 	void testNoOpOnIncompleteTryAcquireLongTimeUnit() {
 		try (StubbedLock lock = new StubbedLock()) {
-			AutoLock.with(lock).tryAcquire(1, TimeUnit.MILLISECONDS);
+			AutoLock.with(lock).tryAcquire(1, TimeUnit.NANOSECONDS);
 			assertEquals(Collections.emptyList(), lock.getActualEvents());
 		}
 	}
@@ -416,8 +416,8 @@ public class FluentTest implements
 			AtomicInteger unlocked = new AtomicInteger(0);
 			final Thread currentThread = Thread.currentThread();
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				assertEquals(0, locked.getAndIncrement());
 				assertSame(currentThread, Thread.currentThread());
 				lock.setOnUnlock(() -> {
@@ -428,8 +428,8 @@ public class FluentTest implements
 			});
 			withLock.run(() -> assertEquals(0, execution.getAndIncrement()), Assertions::fail);
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				assertEquals(1, locked.getAndIncrement());
 				assertSame(currentThread, Thread.currentThread());
 				lock.setOnUnlock(() -> {
@@ -443,9 +443,9 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
 							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
 							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
@@ -468,8 +468,8 @@ public class FluentTest implements
 			AtomicInteger unlocked = new AtomicInteger(0);
 			final Thread currentThread = Thread.currentThread();
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				assertEquals(0, locked.getAndIncrement());
 				assertSame(currentThread, Thread.currentThread());
 				lock.setOnUnlock(() -> {
@@ -483,8 +483,8 @@ public class FluentTest implements
 				return testObj1;
 			}, Assertions::fail));
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				assertEquals(1, locked.getAndIncrement());
 				assertSame(currentThread, Thread.currentThread());
 				lock.setOnUnlock(() -> {
@@ -501,9 +501,9 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
 							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
 							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
@@ -515,14 +515,14 @@ public class FluentTest implements
 		Random random = new Random(TestUtility.getSeed(0).hashCode());
 		Duration testDuration = TestUtility.generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
 		try (StubbedLock lock = new StubbedLock()) {
-			final AutoLock.WithLock.TryWithTimeout withLock = AutoLock.with(lock).tryAcquire(testDuration.toMillis(), TimeUnit.MILLISECONDS);
+			final AutoLock.WithLock.TryWithTimeout withLock = AutoLock.with(lock).tryAcquire(testDuration.toNanos(), TimeUnit.NANOSECONDS);
 			AtomicInteger locked = new AtomicInteger(0);
 			AtomicInteger execution = new AtomicInteger(0);
 			AtomicInteger unlocked = new AtomicInteger(0);
 			final Thread currentThread = Thread.currentThread();
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				assertEquals(0, locked.getAndIncrement());
 				assertSame(currentThread, Thread.currentThread());
 				lock.setOnUnlock(() -> {
@@ -533,8 +533,8 @@ public class FluentTest implements
 			});
 			withLock.run(() -> assertEquals(0, execution.getAndIncrement()), Assertions::fail);
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				assertEquals(1, locked.getAndIncrement());
 				assertSame(currentThread, Thread.currentThread());
 				lock.setOnUnlock(() -> {
@@ -548,9 +548,9 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
 							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
 							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
@@ -567,14 +567,14 @@ public class FluentTest implements
 		final Object testObj2 = objs.get(1).get();
 		assertNotEquals(testObj1, testObj2);
 		try (StubbedLock lock = new StubbedLock()) {
-			final AutoLock.WithLock.TryWithTimeout withLock = AutoLock.with(lock).tryAcquire(testDuration.toMillis(), TimeUnit.MILLISECONDS);
+			final AutoLock.WithLock.TryWithTimeout withLock = AutoLock.with(lock).tryAcquire(testDuration.toNanos(), TimeUnit.NANOSECONDS);
 			AtomicInteger locked = new AtomicInteger(0);
 			AtomicInteger execution = new AtomicInteger(0);
 			AtomicInteger unlocked = new AtomicInteger(0);
 			final Thread currentThread = Thread.currentThread();
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				assertEquals(0, locked.getAndIncrement());
 				assertSame(currentThread, Thread.currentThread());
 				lock.setOnUnlock(() -> {
@@ -588,8 +588,8 @@ public class FluentTest implements
 				return testObj1;
 			}, Assertions::fail));
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				assertEquals(1, locked.getAndIncrement());
 				assertSame(currentThread, Thread.currentThread());
 				lock.setOnUnlock(() -> {
@@ -606,9 +606,9 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
 							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
-							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
 							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)
 			), lock.getActualEvents());
 		}
@@ -631,8 +631,8 @@ public class FluentTest implements
 			AtomicInteger unlocked = new AtomicInteger(0);
 			final Thread currentThread = Thread.currentThread();
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration1.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration1.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				assertEquals(0, locked.getAndIncrement());
 				assertSame(currentThread, Thread.currentThread());
 				lock.setOnUnlock(() -> {
@@ -641,7 +641,7 @@ public class FluentTest implements
 				});
 				return true;
 			});
-			assertEquals(testObj1, withLock.tryAcquire(testDuration1.toMillis(), TimeUnit.MILLISECONDS).get(() -> {
+			assertEquals(testObj1, withLock.tryAcquire(testDuration1.toNanos(), TimeUnit.NANOSECONDS).get(() -> {
 				assertEquals(0, execution.getAndIncrement());
 				return testObj1;
 			}, Assertions::fail));
@@ -661,7 +661,7 @@ public class FluentTest implements
 			assertEquals(2, unlocked.get());
 			assertEquals(2, execution.get());
 			assertEquals(Arrays.asList(
-							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration1.toMillis(), TimeUnit.MILLISECONDS),
+							new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration1.toNanos(), TimeUnit.NANOSECONDS),
 							new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK),
 							new StubbedLock.CallEvent(lock, 2, currentThread, StubbedLock.Event.LOCK_INTERRUPTIBLY),
 							new StubbedLock.CallEvent(lock, 3, currentThread, StubbedLock.Event.UNLOCK)

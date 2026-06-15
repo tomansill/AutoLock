@@ -42,7 +42,7 @@ interface MultiTryLockTimeoutGetTest {
 		return new TimeoutLessPerformWithoutContext() {
 			@Override
 			public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2 {
-				return tryLockTimeoutGetTest.performTryLockAndGetLongAndTimeUnitWithoutContext(locks, timeSourceStubber, duration.toMillis(), TimeUnit.MILLISECONDS, onLockSuccess, onLockFail);
+				return tryLockTimeoutGetTest.performTryLockAndGetLongAndTimeUnitWithoutContext(locks, timeSourceStubber, duration.toNanos(), TimeUnit.NANOSECONDS, onLockSuccess, onLockFail);
 			}
 		};
 	}
@@ -60,7 +60,7 @@ interface MultiTryLockTimeoutGetTest {
 		return new TimeoutLessPerformWithContext() {
 			@Override
 			public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2 {
-				return tryLockTimeoutGetTest.performTryLockAndGetLongAndTimeUnitWithContext(locks, timeSourceStubber, duration.toMillis(), TimeUnit.MILLISECONDS, onLockSuccess, onLockFail);
+				return tryLockTimeoutGetTest.performTryLockAndGetLongAndTimeUnitWithContext(locks, timeSourceStubber, duration.toNanos(), TimeUnit.NANOSECONDS, onLockSuccess, onLockFail);
 			}
 		};
 	}
@@ -113,7 +113,7 @@ interface MultiTryLockTimeoutGetTest {
 	@DisplayName("multi-tryLock-timeout-long/unit-get: with null lock")
 	@Test
 	default void testMultiTryLockTimeoutLongUnitGet_NullLock() {
-		NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(null, 0, TimeUnit.MILLISECONDS, Assertions::fail, Assertions::fail));
+		NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(null, 0, TimeUnit.NANOSECONDS, Assertions::fail, Assertions::fail));
 		assertEquals("lock must not be null", exception.getMessage());
 	}
 
@@ -130,7 +130,7 @@ interface MultiTryLockTimeoutGetTest {
 	@Test
 	default void testMultiTryLockTimeoutLongUnitGet_NegativeTime() {
 		try (StubbedLock lock = new StubbedLock()) {
-			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(lock, -1, TimeUnit.MILLISECONDS, Assertions::fail, Assertions::fail));
+			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(lock, -1, TimeUnit.NANOSECONDS, Assertions::fail, Assertions::fail));
 			assertEquals("time must be non-negative", exception.getMessage());
 		}
 	}
@@ -139,7 +139,7 @@ interface MultiTryLockTimeoutGetTest {
 	@Test
 	default void testMultiTryLockTimeoutLongUnitGet_NullOnLockSuccessSupplier() {
 		try (StubbedLock lock = new StubbedLock()) {
-			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(lock, 0, TimeUnit.MILLISECONDS, null, Assertions::fail));
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(lock, 0, TimeUnit.NANOSECONDS, null, Assertions::fail));
 			assertEquals("onLockSuccess must not be null", exception.getMessage());
 			assertEquals(Collections.emptyList(), lock.getActualEvents());
 		}
@@ -149,7 +149,7 @@ interface MultiTryLockTimeoutGetTest {
 	@Test
 	default void testMultiTryLockTimeoutLongUnitGet_NullOnLockFailSupplier() {
 		try (StubbedLock lock = new StubbedLock()) {
-			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(lock, 0, TimeUnit.MILLISECONDS, Assertions::fail, null));
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(lock, 0, TimeUnit.NANOSECONDS, Assertions::fail, null));
 			assertEquals("onLockFail must not be null", exception.getMessage());
 			assertEquals(Collections.emptyList(), lock.getActualEvents());
 		}
@@ -738,8 +738,8 @@ interface MultiTryLockTimeoutGetTest {
 			Thread currentThread = Thread.currentThread();
 			AtomicReference<Object> throwableRef = new AtomicReference<>();
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				lockCount.incrementAndGet();
 				assertSame(currentThread, Thread.currentThread());
 				try {
@@ -754,7 +754,7 @@ interface MultiTryLockTimeoutGetTest {
 			assertEquals(1, lockCount.get());
 			assertEquals(
 							Collections.singletonList(
-											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS)
 							),
 							lock.getActualEvents()
 			);
@@ -780,8 +780,8 @@ interface MultiTryLockTimeoutGetTest {
 			Thread currentThread = Thread.currentThread();
 			AtomicReference<Object> throwableRef = new AtomicReference<>();
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				lockCount.incrementAndGet();
 				assertSame(currentThread, Thread.currentThread());
 				return true;
@@ -803,7 +803,7 @@ interface MultiTryLockTimeoutGetTest {
 			assertEquals(1, unlockCount.get());
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
 											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
 							lock.getActualEvents()
@@ -836,8 +836,8 @@ interface MultiTryLockTimeoutGetTest {
 			AtomicReference<Object> mainThrowableRef = new AtomicReference<>();
 			AtomicReference<Object> unlockThrowableRef = new AtomicReference<>();
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				lockCount.incrementAndGet();
 				assertSame(currentThread, Thread.currentThread());
 				return true;
@@ -868,7 +868,7 @@ interface MultiTryLockTimeoutGetTest {
 			assertEquals(1, unlockCount.get());
 			assertEquals(
 							Arrays.asList(
-											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS),
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
 											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
 							),
 							lock.getActualEvents()
@@ -893,8 +893,8 @@ interface MultiTryLockTimeoutGetTest {
 			AtomicInteger lockCount = new AtomicInteger();
 			Thread currentThread = Thread.currentThread();
 			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toMillis(), time);
-				assertEquals(TimeUnit.MILLISECONDS, unit);
+				assertEquals(testDuration.toNanos(), time);
+				assertEquals(TimeUnit.NANOSECONDS, unit);
 				lockCount.incrementAndGet();
 				assertSame(currentThread, Thread.currentThread());
 				return false;
@@ -912,7 +912,7 @@ interface MultiTryLockTimeoutGetTest {
 			assertEquals(1, lockCount.get());
 			assertEquals(
 							Collections.singletonList(
-											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toMillis(), TimeUnit.MILLISECONDS)
+											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS)
 							),
 							lock.getActualEvents()
 			);
