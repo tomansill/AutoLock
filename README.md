@@ -168,19 +168,14 @@ exception as-is.
 #### Non-blocking
 
 - `<T1 extends Throwable,T2 extends Throwable> void tryLockAndRun(Lock,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
--
-`<R,T1 extends Throwable,T2 extends Throwable> R tryLockAndGet(Lock,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
+- `<R,T1 extends Throwable,T2 extends Throwable> R tryLockAndGet(Lock,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
 
 #### Timed
 
--
-`<T1 extends Throwable,T2 extends Throwable> void tryLockAndRun(Lock,long,TimeUnit,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
--
-`<R,T1 extends Throwable,T2 extends Throwable> R tryLockAndGet(Lock,long,TimeUnit,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
--
-`<T1 extends Throwable,T2 extends Throwable> void tryLockAndRun(Lock,Duration,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
--
-`<R,T1 extends Throwable,T2 extends Throwable> R tryLockAndGet(Lock,Duration,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
+- `<T1 extends Throwable,T2 extends Throwable> void tryLockAndRun(Lock,long,TimeUnit,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
+- `<R,T1 extends Throwable,T2 extends Throwable> R tryLockAndGet(Lock,long,TimeUnit,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
+- `<T1 extends Throwable,T2 extends Throwable> void tryLockAndRun(Lock,Duration,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
+- `<R,T1 extends Throwable,T2 extends Throwable> R tryLockAndGet(Lock,Duration,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
 
 ### Fluent API methods
 
@@ -194,13 +189,9 @@ once the lock is acquired.
 Lock lock = new ReentrantLock();
 
 // Will lock, run, then unlock when this method exits
-AutoLock.
-
-with(lock).
-
-run(() ->{
-				// Do stuff here
-				});
+AutoLock.with(lock).run(() ->{
+	// Do stuff here
+});
 ```
 
 The Fluent API separates lock acquisition from execution, allowing additional behaviors to be composed in a readable
@@ -225,11 +216,5 @@ String state = tryInstantDemo.get(() -> {
 }, () -> "failure");
 
 // Calling .run on TryTimeout *will* actually tryLock, if success, then success lambda is invoked, then unlock, otherwise runs failure lambda
-tryTimeoutDemo.
-
-run(() ->
-
-handleSuccessLock(), ()->
-
-handleFailedLock());
+tryTimeoutDemo.run(() -> handleSuccessLock(), () -> handleFailedLock());
 ```
