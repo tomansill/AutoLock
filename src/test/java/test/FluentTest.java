@@ -33,6 +33,7 @@ public class FluentTest implements
 				MultiLockInterruptiblyGetTest,
 				MultiTryLockInstantRunTest,
 				MultiTryLockInstantGetTest,
+				MultiTryLockTimeoutRunTest,
 				MultiTryLockTimeoutGetTest {
 
 	@Override
@@ -771,5 +772,45 @@ public class FluentTest implements
 		AutoLock.MultipleLocks.TryWithTimeout ctx = AutoLock.with(lock1, lock2, rest).tryAcquire(duration);
 		if (timeSourceStubber != null) Bypass.injectTimeSupplier(ctx, timeSourceStubber.get());
 		return ctx.get(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunLongAndTimeUnitWithoutContext(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, long time, @Nullable TimeUnit unit, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		AutoLock.MultipleLocks.TryWithTimeout ctx = AutoLock.with(lock1, lock2, rest).tryAcquire(time, unit);
+		if (timeSourceStubber != null) Bypass.injectTimeSupplier(ctx, timeSourceStubber.get());
+		ctx.run(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndRunDurationWithoutContext(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, @Nullable Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableRunnable<T2> onLockFail) throws InterruptedException, T1, T2 {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		AutoLock.MultipleLocks.TryWithTimeout ctx = AutoLock.with(lock1, lock2, rest).tryAcquire(duration);
+		if (timeSourceStubber != null) Bypass.injectTimeSupplier(ctx, timeSourceStubber.get());
+		ctx.run(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndGetLongAndTimeUnitWithContext(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, long time, @Nullable TimeUnit unit, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableConsumer<AutoLock.MultipleLocks.TryLockFailContext, T2> onLockFail) throws InterruptedException, T1, T2 {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		AutoLock.MultipleLocks.TryWithTimeout ctx = AutoLock.with(lock1, lock2, rest).tryAcquire(time, unit);
+		if (timeSourceStubber != null) Bypass.injectTimeSupplier(ctx, timeSourceStubber.get());
+		ctx.run(onLockSuccess, onLockFail);
+	}
+
+	@Override
+	public <T1 extends Throwable, T2 extends Throwable> void performTryLockAndGetDurationWithContext(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, @Nullable Duration duration, @Nullable ThrowableRunnable<T1> onLockSuccess, @Nullable ThrowableConsumer<AutoLock.MultipleLocks.TryLockFailContext, T2> onLockFail) throws InterruptedException, T1, T2 {
+		Lock lock1 = locks[0];
+		Lock lock2 = locks[1];
+		Lock[] rest = locks.length == 2 ? new Lock[0] : Arrays.copyOfRange(locks, 2, locks.length);
+		AutoLock.MultipleLocks.TryWithTimeout ctx = AutoLock.with(lock1, lock2, rest).tryAcquire(duration);
+		if (timeSourceStubber != null) Bypass.injectTimeSupplier(ctx, timeSourceStubber.get());
+		ctx.run(onLockSuccess, onLockFail);
 	}
 }

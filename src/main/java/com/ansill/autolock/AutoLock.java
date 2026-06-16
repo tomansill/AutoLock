@@ -66,15 +66,11 @@ public final class AutoLock {
 				});
 			} finally {
 				// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
-				if (!success.value) {
-					locks[1].unlock();
-				}
+				if (!success.value) locks[1].unlock();
 			}
 		} finally {
 			// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
-			if (!success.value) {
-				locks[0].unlock();
-			}
+			if (!success.value) locks[0].unlock();
 		}
 	}
 
@@ -222,9 +218,7 @@ public final class AutoLock {
 
 		} finally {
 			// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
-			if (!success.value) {
-				currentLock.unlock();
-			}
+			if (!success.value) currentLock.unlock();
 		}
 	}
 
