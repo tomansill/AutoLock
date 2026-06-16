@@ -1080,11 +1080,32 @@ interface MultiTryLockTimeoutGetTest {
 			), actualList);
 		}
 	}
-	/*
 
-	@DisplayName("multi-tryLock-timeout-get: with Throwable thrown in onLockSuccess supplier AND Throwable thrown in unlock()")
+	@DisplayName("multi-tryLock-timeout-get: with Throwable thrown in onLockSuccess supplier AND Throwable thrown in unlock() at 1st lock")
 	@TestFactory
-	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod() {
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod1st() {
+		return testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(0);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get: with Throwable thrown in onLockSuccess supplier AND Throwable thrown in unlock() at 2nd lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod2nd() {
+		return testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(1);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get: with Throwable thrown in onLockSuccess supplier AND Throwable thrown in unlock() at 3rd lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod3rd() {
+		return testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(2);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get: with Throwable thrown in onLockSuccess supplier AND Throwable thrown in unlock() at 4th lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod4th() {
+		return testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(3);
+	}
+
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(int lockFailPosition) {
 		Random random = new Random(getSeed(0).hashCode());
 		Map<String, Supplier<? extends Throwable>> throwableMap = getRandomUncheckeds(random);
 		return throwableMap.entrySet().stream().flatMap(entry -> {
@@ -1094,58 +1115,165 @@ interface MultiTryLockTimeoutGetTest {
 			Supplier<? extends Throwable> mainThrowable = innerRandomMap.get(keys.iterator().next());
 			Duration testDuration = generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
 			return Stream.of(
-							DynamicTest.dynamicTest("duration " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(mainThrowable, entry.getValue(), convertFromDurationGetWithoutContext(this, testDuration), testDuration)),
-							DynamicTest.dynamicTest("time/unit " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(mainThrowable, entry.getValue(), convertFromTimeUnitGetWithoutContext(this, testDuration), testDuration)));
+							DynamicTest.dynamicTest("duration " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(mainThrowable, entry.getValue(), lockFailPosition, convertFromDurationGetWithoutContext(this, testDuration), null)),
+							DynamicTest.dynamicTest("time/unit " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(mainThrowable, entry.getValue(), lockFailPosition, convertFromTimeUnitGetWithoutContext(this, testDuration), null)));
 		}).collect(Collectors.toList());
 	}
 
-	default void testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(@NonNull Supplier<? extends Throwable> mainExceptionSupplier, @NonNull Supplier<? extends Throwable> supplier, @NonNull MultiTryLockTimeoutGetTest.TimeoutLessPerformWithoutContext perform, @NonNull Duration testDuration) {
-		try (StubbedLock lock = new StubbedLock()) {
-			AtomicInteger lockCount = new AtomicInteger();
-			AtomicInteger unlockCount = new AtomicInteger();
+	@DisplayName("multi-tryLock-timeout-get-ctx: with Throwable thrown in onLockSuccess supplier AND Throwable thrown in unlock() at 1st lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod1stCtx() {
+		return testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethodCtx(0);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get-ctx: with Throwable thrown in onLockSuccess supplier AND Throwable thrown in unlock() at 2nd lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod2ndCtx() {
+		return testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethodCtx(1);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get-ctx: with Throwable thrown in onLockSuccess supplier AND Throwable thrown in unlock() at 3rd lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod3rdCtx() {
+		return testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethodCtx(2);
+	}
+
+	@DisplayName("multi-tryLock-timeout-get-ctx: with Throwable thrown in onLockSuccess supplier AND Throwable thrown in unlock() at 4th lock")
+	@TestFactory
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod4thCtx() {
+		return testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethodCtx(3);
+	}
+
+	default Iterable<DynamicTest> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethodCtx(int lockFailPosition) {
+		Random random = new Random(getSeed(0).hashCode());
+		Map<String, Supplier<? extends Throwable>> throwableMap = getRandomUncheckeds(random);
+		return throwableMap.entrySet().stream().flatMap(entry -> {
+			Map<String, Supplier<? extends Throwable>> innerRandomMap = getRandomThrowables(random);
+			List<String> keys = new ArrayList<>(innerRandomMap.keySet());
+			Collections.shuffle(keys, random);
+			Supplier<? extends Throwable> mainThrowable = innerRandomMap.get(keys.iterator().next());
+			Duration testDuration = generateDuration(random, Duration.ZERO, Duration.ofMinutes(60));
+			return Stream.of(
+							DynamicTest.dynamicTest("duration " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(mainThrowable, entry.getValue(), lockFailPosition, null, convertFromDurationGetWithContext(this, testDuration))),
+							DynamicTest.dynamicTest("time/unit " + testDuration, () -> testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(mainThrowable, entry.getValue(), lockFailPosition, null, convertFromTimeUnitGetWithContext(this, testDuration))));
+		}).collect(Collectors.toList());
+	}
+
+	default void testMultiTryLockTimeoutDurationGet_ThrowableInOnLockSuccessSupplierAndThrowableInUnlockMethod(
+					@NonNull Supplier<? extends Throwable> mainExceptionSupplier,
+					@NonNull Supplier<? extends Throwable> supplier,
+					int lockFailPosition,
+					MultiTryLockTimeoutGetTest.@Nullable TimeoutLessPerformWithoutContext noCtx,
+					MultiTryLockTimeoutGetTest.TimeoutLessPerformWithContext withCtx
+	) {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
 			Thread currentThread = Thread.currentThread();
 			AtomicReference<Object> mainThrowableRef = new AtomicReference<>();
 			AtomicReference<Object> unlockThrowableRef = new AtomicReference<>();
-			lock.setOnTryLockTimeout((time, unit) -> {
-				assertEquals(testDuration.toNanos(), time);
-				assertEquals(TimeUnit.NANOSECONDS, unit);
-				lockCount.incrementAndGet();
+			AtomicLong lock1Time = new AtomicLong();
+			AtomicLong lock2Time = new AtomicLong();
+			AtomicLong lock3Time = new AtomicLong();
+			AtomicLong lock4Time = new AtomicLong();
+			lock1.setOnTryLockTimeout((time, unit) -> {
+				// Skip assertions on time/unit
+				lock1Time.set(time);
 				assertSame(currentThread, Thread.currentThread());
 				return true;
 			});
+			lock2.setOnTryLockTimeout((time, unit) -> {
+				// Skip assertions on time/unit
+				lock2Time.set(time);
+				assertSame(currentThread, Thread.currentThread());
+				return true;
+			});
+			lock3.setOnTryLockTimeout((time, unit) -> {
+				// Skip assertions on time/unit
+				lock3Time.set(time);
+				assertSame(currentThread, Thread.currentThread());
+				return true;
+			});
+			lock4.setOnTryLockTimeout((time, unit) -> {
+				// Skip assertions on time/unit
+				lock4Time.set(time);
+				assertSame(currentThread, Thread.currentThread());
+				return true;
+			});
+			Lock[] locks = new Lock[]{lock1, lock2, lock3, lock4};
+			ThrowableSupplier<Object, ?> onLockSuccess = () -> {
+				lock1.setOnUnlock(() -> {
+					if (lockFailPosition == 0) {
+						try {
+							throw supplier.get();
+						} catch (Throwable throwable) {
+							unlockThrowableRef.set(throwable);
+							throw throwable;
+						}
+					}
+				});
+				lock2.setOnUnlock(() -> {
+					if (lockFailPosition == 1) {
+						try {
+							throw supplier.get();
+						} catch (Throwable throwable) {
+							unlockThrowableRef.set(throwable);
+							throw throwable;
+						}
+					}
+				});
+				lock3.setOnUnlock(() -> {
+					if (lockFailPosition == 2) {
+						try {
+							throw supplier.get();
+						} catch (Throwable throwable) {
+							unlockThrowableRef.set(throwable);
+							throw throwable;
+						}
+					}
+				});
+				lock4.setOnUnlock(() -> {
+					if (lockFailPosition == 3) {
+						try {
+							throw supplier.get();
+						} catch (Throwable throwable) {
+							unlockThrowableRef.set(throwable);
+							throw throwable;
+						}
+					}
+				});
+				try {
+					throw mainExceptionSupplier.get();
+				} catch (Throwable throwable) {
+					mainThrowableRef.set(throwable);
+					throw throwable;
+				}
+			};
 			Throwable actualThrowable = assertThrows(
 							Throwable.class,
-							() -> perform.performTryLockAndGet(lock, () -> {
-								lock.setOnUnlock(() -> {
-									unlockCount.getAndIncrement();
-									try {
-										throw supplier.get();
-									} catch (Throwable throwable) {
-										unlockThrowableRef.set(throwable);
-										throw throwable;
-									}
-								});
-								try {
-									throw mainExceptionSupplier.get();
-								} catch (Throwable throwable) {
-									mainThrowableRef.set(throwable);
-									throw throwable;
-								}
-							}, Assertions::fail));
+							() -> {
+								if (noCtx == null) withCtx.performTryLockAndGet(locks, null, onLockSuccess, ctx -> Assertions.fail());
+								else noCtx.performTryLockAndGet(locks, null, onLockSuccess, Assertions::fail);
+							});
 			assertSame(mainThrowableRef.get(), actualThrowable);
 			assertEquals(1, actualThrowable.getSuppressed().length);
 			assertSame(unlockThrowableRef.get(), actualThrowable.getSuppressed()[0]);
-			assertEquals(1, lockCount.get());
-			assertEquals(1, unlockCount.get());
-			assertEquals(
-							Arrays.asList(
-											new StubbedLock.CallEvent(lock, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, testDuration.toNanos(), TimeUnit.NANOSECONDS),
-											new StubbedLock.CallEvent(lock, 1, currentThread, StubbedLock.Event.UNLOCK)
-							),
-							lock.getActualEvents()
-			);
+			List<StubbedLock.CallEvent> actualList = new ArrayList<>(lock1.getActualEvents());
+			actualList.addAll(lock2.getActualEvents());
+			actualList.addAll(lock3.getActualEvents());
+			actualList.addAll(lock4.getActualEvents());
+			actualList.sort(Comparator.comparing(one -> one.timestamp));
+			assertEquals(Arrays.asList(
+							new StubbedLock.CallEvent(lock1, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, lock1Time.get(), NANOSECONDS),
+							new StubbedLock.CallEvent(lock2, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, lock2Time.get(), NANOSECONDS),
+							new StubbedLock.CallEvent(lock3, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, lock3Time.get(), NANOSECONDS),
+							new StubbedLock.CallEvent(lock4, 0, currentThread, StubbedLock.Event.TRY_LOCK_TIMEOUT, lock4Time.get(), NANOSECONDS),
+							new StubbedLock.CallEvent(lock4, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock3, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock2, 1, currentThread, StubbedLock.Event.UNLOCK),
+							new StubbedLock.CallEvent(lock1, 1, currentThread, StubbedLock.Event.UNLOCK)
+			), actualList);
 		}
 	}
+	/*
 
 	@DisplayName("multi-tryLock-timeout-get: exception thrown inside onLockFail supplier")
 	@TestFactory
