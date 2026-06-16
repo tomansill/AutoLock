@@ -1455,7 +1455,7 @@ public final class AutoLock {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
-				innerRun(0, stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
+				innerRun(0, unit.toNanos(time), stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
 				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					onLockFail.run();
@@ -1466,22 +1466,22 @@ public final class AutoLock {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
-				innerRun(0, stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
+				innerRun(0, unit.toNanos(time), stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
 				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					onLockFail.accept(tryLockFailContext);
 				}
 			}
 
-			private <T1 extends Throwable> void innerRun(int lockIndex, final long epochInNanos, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
+			private <T1 extends Throwable> void innerRun(int lockIndex, final long timeoutNanos, final long epochInNanos, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
 				Lock lock = fullLocks[lockIndex++];
-				long budget = unit.toNanos(time) - (stubGetNanos.getAsLong() - epochInNanos);
+				long budget = timeoutNanos - (stubGetNanos.getAsLong() - epochInNanos);
 				if (budget > -1 && lock.tryLock(budget, TimeUnit.NANOSECONDS)) {
 					try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 						if (lockIndex == fullLocks.length) {
 							onLockSuccess.run();
 						} else {
-							innerRun(lockIndex, epochInNanos, onLockSuccess, mutableRef);
+							innerRun(lockIndex, timeoutNanos, epochInNanos, onLockSuccess, mutableRef);
 						}
 					}
 				} else {
@@ -1496,7 +1496,7 @@ public final class AutoLock {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
-				R original = innerGet(0, stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
+				R original = innerGet(0, unit.toNanos(time), stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
 				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					return onLockFail.get();
@@ -1509,7 +1509,7 @@ public final class AutoLock {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
 				MutableReference<TryLockFailContext> mutableRef = new MutableReference<>(null);
-				R original = innerGet(0, stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
+				R original = innerGet(0, unit.toNanos(time), stubGetNanos.getAsLong(), onLockSuccess, mutableRef);
 				TryLockFailContext tryLockFailContext = mutableRef.value;
 				if (tryLockFailContext != null) {
 					return onLockFail.apply(tryLockFailContext);
@@ -1518,15 +1518,15 @@ public final class AutoLock {
 				}
 			}
 
-			private <R, T1 extends Throwable> R innerGet(int lockIndex, final long epochInNanos, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
+			private <R, T1 extends Throwable> R innerGet(int lockIndex, final long timeoutNanos, final long epochInNanos, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
 				Lock lock = fullLocks[lockIndex++];
-				long budget = unit.toNanos(time) - (stubGetNanos.getAsLong() - epochInNanos);
+				long budget = timeoutNanos - (stubGetNanos.getAsLong() - epochInNanos);
 				if (budget > -1 && lock.tryLock(budget, TimeUnit.NANOSECONDS)) {
 					try (LockedAutoLock ignored = new LockedAutoLock(lock::unlock)) {
 						if (lockIndex == fullLocks.length) {
 							return onLockSuccess.get();
 						} else {
-							return innerGet(lockIndex, epochInNanos, onLockSuccess, mutableRef);
+							return innerGet(lockIndex, timeoutNanos, epochInNanos, onLockSuccess, mutableRef);
 						}
 					}
 				} else {
