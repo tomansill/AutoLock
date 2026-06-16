@@ -5,10 +5,7 @@ import com.ansill.autolock.ThrowableFunction;
 import com.ansill.autolock.ThrowableSupplier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -24,6 +21,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.jupiter.api.Assertions.*;
 import static test.TestUtility.*;
@@ -65,31 +63,205 @@ interface MultiTryLockTimeoutGetTest {
 			}
 		};
 	}
-/*
-	@DisplayName("multi-tryLock-timeout-duration-get: with null lock")
+
+	@DisplayName("multi-tryLock-timeout-duration-get: with 1st null lock")
 	@Test
-	default void testMultiTryLockTimeoutDurationGet_NullLock() {
-		NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(null, Duration.ZERO, Assertions::fail, Assertions::fail));
-		assertEquals("lock must not be null", exception.getMessage());
+	default void testMultiTryLockTimeoutDurationGet_NullLock1() {
+		try (StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(new Lock[]{null, lock2, lock3, lock4}, null, Duration.ZERO, Assertions::fail, Assertions::fail));
+			assertEquals("lock1 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-duration-get: with 2nd null lock")
+	@Test
+	default void testMultiTryLockTimeoutDurationGet_NullLock2() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(new Lock[]{lock1, null, lock3, lock4}, null, Duration.ZERO, Assertions::fail, Assertions::fail));
+			assertEquals("lock2 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-duration-get: with 3rd null lock")
+	@Test
+	default void testMultiTryLockTimeoutDurationGet_NullLock3() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(new Lock[]{lock1, lock2, null, lock4}, null, Duration.ZERO, Assertions::fail, Assertions::fail));
+			assertEquals("lock3 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-duration-get: with 4th null lock")
+	@Test
+	default void testMultiTryLockTimeoutDurationGet_NullLock4() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(new Lock[]{lock1, lock2, lock3, null}, null, Duration.ZERO, Assertions::fail, Assertions::fail));
+			assertEquals("lock4 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-duration-get-ctx: with 1st null lock")
+	@Test
+	default void testMultiTryLockTimeoutDurationGet_NullLock1Ctx() {
+		try (StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithContext(new Lock[]{null, lock2, lock3, lock4}, null, Duration.ZERO, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("lock1 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-duration-get-ctx: with 2nd null lock")
+	@Test
+	default void testMultiTryLockTimeoutDurationGet_NullLock2Ctx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithContext(new Lock[]{lock1, null, lock3, lock4}, null, Duration.ZERO, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("lock2 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-duration-get-ctx: with 3rd null lock")
+	@Test
+	default void testMultiTryLockTimeoutDurationGet_NullLock3Ctx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithContext(new Lock[]{lock1, lock2, null, lock4}, null, Duration.ZERO, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("lock3 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-duration-get-ctx: with 4th null lock")
+	@Test
+	default void testMultiTryLockTimeoutDurationGet_NullLock4Ctx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithContext(new Lock[]{lock1, lock2, lock3, null}, null, Duration.ZERO, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("lock4 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get: with 1st null lock")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullLock1() {
+		try (StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(new Lock[]{null, lock2, lock3, lock4}, null, 0, MINUTES, Assertions::fail, Assertions::fail));
+			assertEquals("lock1 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get: with 2nd null lock")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullLock2() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(new Lock[]{lock1, null, lock3, lock4}, null, 0, MINUTES, Assertions::fail, Assertions::fail));
+			assertEquals("lock2 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get: with 3rd null lock")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullLock3() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(new Lock[]{lock1, lock2, null, lock4}, null, 0, MINUTES, Assertions::fail, Assertions::fail));
+			assertEquals("lock3 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get: with 4th null lock")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullLock4() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(new Lock[]{lock1, lock2, lock3, null}, null, 0, MINUTES, Assertions::fail, Assertions::fail));
+			assertEquals("lock4 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get-ctx: with 1st null lock")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullLock1Ctx() {
+		try (StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithContext(new Lock[]{null, lock2, lock3, lock4}, null, 0, MINUTES, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("lock1 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get-ctx: with 2nd null lock")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullLock2Ctx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithContext(new Lock[]{lock1, null, lock3, lock4}, null, 0, MINUTES, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("lock2 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get-ctx: with 3rd null lock")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullLock3Ctx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithContext(new Lock[]{lock1, lock2, null, lock4}, null, 0, MINUTES, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("lock3 must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get-ctx: with 4th null lock")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullLock4Ctx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithContext(new Lock[]{lock1, lock2, lock3, null}, null, 0, MINUTES, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("lock4 must not be null", exception.getMessage());
+		}
 	}
 
 	@DisplayName("multi-tryLock-timeout-duration-get: with null duration")
 	@Test
 	default void testMultiTryLockTimeoutDurationGet_NullDuration() {
-		try (StubbedLock lock = new StubbedLock()) {
-			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(lock, null, Assertions::fail, Assertions::fail));
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(new Lock[]{lock1, lock2, lock3, lock4}, null, null, Assertions::fail, Assertions::fail));
 			assertEquals("timeout must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-duration-get-ctx: with null duration")
+	@Test
+	default void testMultiTryLockTimeoutDurationGet_NullDurationCtx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithContext(new Lock[]{lock1, lock2, lock3, lock4}, null, null, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("timeout must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get: with null unit")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullUnit() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(new Lock[]{lock1, lock2, lock3, lock4}, null, 0, null, Assertions::fail, Assertions::fail));
+			assertEquals("unit must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get-ctx: with null unit")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullUnitCtx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithContext(new Lock[]{lock1, lock2, lock3, lock4}, null, 0, null, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("unit must not be null", exception.getMessage());
 		}
 	}
 
 	@DisplayName("multi-tryLock-timeout-duration-get: with negative duration")
 	@Test
 	default void testMultiTryLockTimeoutDurationGet_NegativeDuration() {
-		try (StubbedLock lock = new StubbedLock()) {
-			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> performTryLockAndGetDurationWithoutContext(lock, Duration.ofSeconds(-1), Assertions::fail, Assertions::fail));
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> performTryLockAndGetDurationWithoutContext(new Lock[]{lock1, lock2, lock3, lock4}, null, Duration.ofSeconds(-1), Assertions::fail, Assertions::fail));
 			assertEquals("timeout must be non-negative", exception.getMessage());
 		}
 	}
+
+	@DisplayName("multi-tryLock-timeout-duration-get-ctx: with negative duration")
+	@Test
+	default void testMultiTryLockTimeoutDurationGet_NegativeDurationCtx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> performTryLockAndGetDurationWithContext(new Lock[]{lock1, lock2, lock3, lock4}, null, Duration.ofSeconds(-1), Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("timeout must be non-negative", exception.getMessage());
+		}
+	}
+/*
 
 	@DisplayName("multi-tryLock-timeout-duration-get: with null onLockSuccess supplier")
 	@Test
