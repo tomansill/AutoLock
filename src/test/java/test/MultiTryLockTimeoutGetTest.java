@@ -31,7 +31,7 @@ interface MultiTryLockTimeoutGetTest {
 	static TimeoutLessPerformWithoutContext convertFromDurationGetWithoutContext(final MultiTryLockTimeoutGetTest tryLockTimeoutGetTest, @NonNull Duration duration) {
 		return new TimeoutLessPerformWithoutContext() {
 			@Override
-			public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2 {
+			public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2 {
 				return tryLockTimeoutGetTest.performTryLockAndGetDurationWithoutContext(locks, timeSourceStubber, duration, onLockSuccess, onLockFail);
 			}
 		};
@@ -40,7 +40,7 @@ interface MultiTryLockTimeoutGetTest {
 	static TimeoutLessPerformWithoutContext convertFromTimeUnitGetWithoutContext(final MultiTryLockTimeoutGetTest tryLockTimeoutGetTest, @NonNull Duration duration) {
 		return new TimeoutLessPerformWithoutContext() {
 			@Override
-			public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2 {
+			public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableSupplier<Return, T2> onLockFail) throws InterruptedException, T1, T2 {
 				return tryLockTimeoutGetTest.performTryLockAndGetLongAndTimeUnitWithoutContext(locks, timeSourceStubber, duration.toNanos(), TimeUnit.NANOSECONDS, onLockSuccess, onLockFail);
 			}
 		};
@@ -49,7 +49,7 @@ interface MultiTryLockTimeoutGetTest {
 	static TimeoutLessPerformWithContext convertFromDurationGetWithContext(final MultiTryLockTimeoutGetTest tryLockTimeoutGetTest, @NonNull Duration duration) {
 		return new TimeoutLessPerformWithContext() {
 			@Override
-			public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2 {
+			public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2 {
 				return tryLockTimeoutGetTest.performTryLockAndGetDurationWithContext(locks, timeSourceStubber, duration, onLockSuccess, onLockFail);
 			}
 		};
@@ -58,7 +58,7 @@ interface MultiTryLockTimeoutGetTest {
 	static TimeoutLessPerformWithContext convertFromTimeUnitGetWithContext(final MultiTryLockTimeoutGetTest tryLockTimeoutGetTest, @NonNull Duration duration) {
 		return new TimeoutLessPerformWithContext() {
 			@Override
-			public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @NonNull Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2 {
+			public <Return, T1 extends Throwable, T2 extends Throwable> Return performTryLockAndGet(@Nullable Lock[] locks, @Nullable Supplier<LongSupplier> timeSourceStubber, @Nullable ThrowableSupplier<Return, T1> onLockSuccess, @Nullable ThrowableFunction<AutoLock.MultipleLocks.TryLockFailContext, Return, T2> onLockFail) throws InterruptedException, T1, T2 {
 				return tryLockTimeoutGetTest.performTryLockAndGetLongAndTimeUnitWithContext(locks, timeSourceStubber, duration.toNanos(), TimeUnit.NANOSECONDS, onLockSuccess, onLockFail);
 			}
 		};
@@ -261,72 +261,96 @@ interface MultiTryLockTimeoutGetTest {
 			assertEquals("timeout must be non-negative", exception.getMessage());
 		}
 	}
-/*
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get: with negative time")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NegativeTime() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(new Lock[]{lock1, lock2, lock3, lock4}, null, -1, MINUTES, Assertions::fail, Assertions::fail));
+			assertEquals("time must be non-negative", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get-ctx: with negative time")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NegativeTimeCtx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> performTryLockAndGetLongAndTimeUnitWithContext(new Lock[]{lock1, lock2, lock3, lock4}, null, -1, MINUTES, Assertions::fail, ctx -> Assertions.fail()));
+			assertEquals("time must be non-negative", exception.getMessage());
+		}
+	}
 
 	@DisplayName("multi-tryLock-timeout-duration-get: with null onLockSuccess supplier")
 	@Test
 	default void testMultiTryLockTimeoutDurationGet_NullOnLockSuccessSupplier() {
-		try (StubbedLock lock = new StubbedLock()) {
-			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(lock, Duration.ZERO, null, Assertions::fail));
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(new Lock[]{lock1, lock2, lock3, lock4}, null, Duration.ZERO, null, Assertions::fail));
 			assertEquals("onLockSuccess must not be null", exception.getMessage());
-			assertEquals(Collections.emptyList(), lock.getActualEvents());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-duration-get-ctx: with null onLockSuccess supplier")
+	@Test
+	default void testMultiTryLockTimeoutDurationGet_NullOnLockSuccessSupplierCtx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithContext(new Lock[]{lock1, lock2, lock3, lock4}, null, Duration.ZERO, null, ctx -> Assertions.fail()));
+			assertEquals("onLockSuccess must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get: with null onLockSuccess supplier")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullOnLockSuccessSupplier() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(new Lock[]{lock1, lock2, lock3, lock4}, null, 0, MINUTES, null, Assertions::fail));
+			assertEquals("onLockSuccess must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get-ctx: with null onLockSuccess supplier")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullOnLockSuccessSupplierCtx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithContext(new Lock[]{lock1, lock2, lock3, lock4}, null, 0, MINUTES, null, ctx -> Assertions.fail()));
+			assertEquals("onLockSuccess must not be null", exception.getMessage());
 		}
 	}
 
 	@DisplayName("multi-tryLock-timeout-duration-get: with null onLockFail supplier")
 	@Test
 	default void testMultiTryLockTimeoutDurationGet_NullOnLockFailSupplier() {
-		try (StubbedLock lock = new StubbedLock()) {
-			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(lock, Duration.ZERO, Assertions::fail, null));
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithoutContext(new Lock[]{lock1, lock2, lock3, lock4}, null, Duration.ZERO, Assertions::fail, null));
 			assertEquals("onLockFail must not be null", exception.getMessage());
-			assertEquals(Collections.emptyList(), lock.getActualEvents());
 		}
 	}
 
-	@DisplayName("multi-tryLock-timeout-long/unit-get: with null lock")
+	@DisplayName("multi-tryLock-timeout-duration-get-ctx: with null onLockFail supplier")
 	@Test
-	default void testMultiTryLockTimeoutLongUnitGet_NullLock() {
-		NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(null, 0, TimeUnit.NANOSECONDS, Assertions::fail, Assertions::fail));
-		assertEquals("lock must not be null", exception.getMessage());
-	}
-
-	@DisplayName("multi-tryLock-timeout-long/unit-get: with null TimeUnit")
-	@Test
-	default void testMultiTryLockTimeoutLongUnitGet_NullTimeUnit() {
-		try (StubbedLock lock = new StubbedLock()) {
-			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(lock, 0, null, Assertions::fail, Assertions::fail));
-			assertEquals("unit must not be null", exception.getMessage());
-		}
-	}
-
-	@DisplayName("multi-tryLock-timeout-long/unit-get: with negative time")
-	@Test
-	default void testMultiTryLockTimeoutLongUnitGet_NegativeTime() {
-		try (StubbedLock lock = new StubbedLock()) {
-			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(lock, -1, TimeUnit.NANOSECONDS, Assertions::fail, Assertions::fail));
-			assertEquals("time must be non-negative", exception.getMessage());
-		}
-	}
-
-	@DisplayName("multi-tryLock-timeout-long/unit-get: with null onLockSuccess supplier")
-	@Test
-	default void testMultiTryLockTimeoutLongUnitGet_NullOnLockSuccessSupplier() {
-		try (StubbedLock lock = new StubbedLock()) {
-			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(lock, 0, TimeUnit.NANOSECONDS, null, Assertions::fail));
-			assertEquals("onLockSuccess must not be null", exception.getMessage());
-			assertEquals(Collections.emptyList(), lock.getActualEvents());
-		}
-	}
-
-	@DisplayName("multi-tryLock-timeout-long/unit-get: with null onLockFail supplier")
-	@Test
-	default void testMultiTryLockTimeoutLongUnitGet_NullOnLockFailSupplier() {
-		try (StubbedLock lock = new StubbedLock()) {
-			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(lock, 0, TimeUnit.NANOSECONDS, Assertions::fail, null));
+	default void testMultiTryLockTimeoutDurationGet_NullOnLockFailSupplierCtx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetDurationWithContext(new Lock[]{lock1, lock2, lock3, lock4}, null, Duration.ZERO, Assertions::fail, null));
 			assertEquals("onLockFail must not be null", exception.getMessage());
-			assertEquals(Collections.emptyList(), lock.getActualEvents());
 		}
-	}*/
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get: with null onLockFail supplier")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullOnLockFailSupplier() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithoutContext(new Lock[]{lock1, lock2, lock3, lock4}, null, 0, MINUTES, Assertions::fail, null));
+			assertEquals("onLockFail must not be null", exception.getMessage());
+		}
+	}
+
+	@DisplayName("multi-tryLock-timeout-timeunit-get-ctx: with null onLockFail supplier")
+	@Test
+	default void testMultiTryLockTimeoutTimeUnitGet_NullOnLockFailSupplierCtx() {
+		try (StubbedLock lock1 = new StubbedLock(); StubbedLock lock2 = new StubbedLock(); StubbedLock lock3 = new StubbedLock(); StubbedLock lock4 = new StubbedLock()) {
+			NullPointerException exception = assertThrows(NullPointerException.class, () -> performTryLockAndGetLongAndTimeUnitWithContext(new Lock[]{lock1, lock2, lock3, lock4}, null, 0, MINUTES, Assertions::fail, null));
+			assertEquals("onLockFail must not be null", exception.getMessage());
+		}
+	}
 
 	@DisplayName("multi-tryLock-timeout-get: successful lock with 4 locks (max)")
 	@TestFactory
