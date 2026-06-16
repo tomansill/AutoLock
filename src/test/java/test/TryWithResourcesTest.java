@@ -15,7 +15,7 @@ import java.util.concurrent.locks.Lock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SuppressWarnings("DataFlowIssue")
+@SuppressWarnings({"DataFlowIssue", "try"})
 class TryWithResourcesTest implements LockRunTest, LockInterruptiblyRunTest, MultiLockRunTest, MultiLockGetTest, MultiLockInterruptiblyRunTest, MultiLockInterruptiblyGetTest {
 
 	@Test

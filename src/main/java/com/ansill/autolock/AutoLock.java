@@ -958,6 +958,7 @@ public final class AutoLock {
 		/**
 		 * {@inheritDoc}
 		 */
+		@SuppressWarnings("try")
 		public <T extends Throwable> void run(@NonNull ThrowableRunnable<T> runnable) throws T {
 			Objects.requireNonNull(runnable, "runnable must not be null");
 			lock.lock();
@@ -969,6 +970,7 @@ public final class AutoLock {
 		/**
 		 * {@inheritDoc}
 		 */
+		@SuppressWarnings("try")
 		public <R, T extends Throwable> R get(@NonNull ThrowableSupplier<R, T> supplier) throws T {
 			Objects.requireNonNull(supplier, "supplier must not be null");
 			lock.lock();
@@ -1024,6 +1026,7 @@ public final class AutoLock {
 			/**
 			 * {@inheritDoc}
 			 */
+			@SuppressWarnings("try")
 			public <T extends Throwable> void run(@NonNull ThrowableRunnable<T> runnable) throws T, InterruptedException {
 				Objects.requireNonNull(runnable, "runnable must not be null");
 				lock.lockInterruptibly();
@@ -1035,6 +1038,7 @@ public final class AutoLock {
 			/**
 			 * {@inheritDoc}
 			 */
+			@SuppressWarnings("try")
 			public <R, T extends Throwable> R get(@NonNull ThrowableSupplier<R, T> supplier) throws T, InterruptedException {
 				Objects.requireNonNull(supplier, "supplier must not be null");
 				lock.lockInterruptibly();
@@ -1052,6 +1056,7 @@ public final class AutoLock {
 			/**
 			 * {@inheritDoc}
 			 */
+			@SuppressWarnings("try")
 			public <T1 extends Throwable, T2 extends Throwable> void run(@NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableRunnable<T2> onLockFail) throws T1, T2 {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
@@ -1067,6 +1072,7 @@ public final class AutoLock {
 			/**
 			 * {@inheritDoc}
 			 */
+			@SuppressWarnings("try")
 			public <R, T1 extends Throwable, T2 extends Throwable> R get(@NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableSupplier<R, T2> onLockFail) throws T1, T2 {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
@@ -1096,6 +1102,7 @@ public final class AutoLock {
 			/**
 			 * {@inheritDoc}
 			 */
+			@SuppressWarnings("try")
 			public <T1 extends Throwable, T2 extends Throwable> void run(@NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableRunnable<T2> onLockFail) throws T1, T2, InterruptedException {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
@@ -1111,6 +1118,7 @@ public final class AutoLock {
 			/**
 			 * {@inheritDoc}
 			 */
+			@SuppressWarnings("try")
 			public <R, T1 extends Throwable, T2 extends Throwable> R get(@NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableSupplier<R, T2> onLockFail) throws T1, T2, InterruptedException {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
@@ -1160,6 +1168,7 @@ public final class AutoLock {
 		/**
 		 * {@inheritDoc}
 		 */
+		@SuppressWarnings("try")
 		public <T extends Throwable> void run(@NonNull ThrowableRunnable<T> runnable) throws T {
 			Objects.requireNonNull(runnable, "runnable must not be null");
 			try (LockedAutoLock ignored = multipleLock(fullLocks)) {
@@ -1170,6 +1179,7 @@ public final class AutoLock {
 		/**
 		 * {@inheritDoc}
 		 */
+		@SuppressWarnings("try")
 		public <R, T extends Throwable> R get(@NonNull ThrowableSupplier<R, T> supplier) throws T {
 			Objects.requireNonNull(supplier, "supplier must not be null");
 			try (LockedAutoLock ignored = multipleLock(fullLocks)) {
@@ -1282,6 +1292,7 @@ public final class AutoLock {
 			/**
 			 * {@inheritDoc}
 			 */
+			@SuppressWarnings("try")
 			public <T extends Throwable> void run(@NonNull ThrowableRunnable<T> runnable) throws T, InterruptedException {
 				Objects.requireNonNull(runnable, "runnable must not be null");
 				try (LockedAutoLock ignored = multipleLockInterruptibly(fullLocks)) {
@@ -1292,6 +1303,7 @@ public final class AutoLock {
 			/**
 			 * {@inheritDoc}
 			 */
+			@SuppressWarnings("try")
 			public <R, T extends Throwable> R get(@NonNull ThrowableSupplier<R, T> supplier) throws T, InterruptedException {
 				Objects.requireNonNull(supplier, "supplier must not be null");
 				try (LockedAutoLock ignored = multipleLockInterruptibly(fullLocks)) {
@@ -1350,6 +1362,7 @@ public final class AutoLock {
 				}
 			}
 
+			@SuppressWarnings("try")
 			private <T1 extends Throwable> void innerRun(int lockIndex, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1 {
 				Lock lock = fullLocks[lockIndex++];
 				if (lock.tryLock()) {
@@ -1414,6 +1427,7 @@ public final class AutoLock {
 				}
 			}
 
+			@SuppressWarnings("try")
 			private <R, T1 extends Throwable> R innerGet(int lockIndex, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1 {
 				Lock lock = fullLocks[lockIndex++];
 				if (lock.tryLock()) {
@@ -1473,6 +1487,7 @@ public final class AutoLock {
 				}
 			}
 
+			@SuppressWarnings("try")
 			private <T1 extends Throwable> void innerRun(int lockIndex, final long timeoutNanos, final long epochInNanos, @NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
 				Lock lock = fullLocks[lockIndex++];
 				long budget = timeoutNanos - (stubGetNanos.getAsLong() - epochInNanos);
@@ -1518,6 +1533,7 @@ public final class AutoLock {
 				}
 			}
 
+			@SuppressWarnings("try")
 			private <R, T1 extends Throwable> R innerGet(int lockIndex, final long timeoutNanos, final long epochInNanos, @NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull MutableReference<TryLockFailContext> mutableRef) throws T1, InterruptedException {
 				Lock lock = fullLocks[lockIndex++];
 				long budget = timeoutNanos - (stubGetNanos.getAsLong() - epochInNanos);
