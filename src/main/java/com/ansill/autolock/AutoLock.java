@@ -157,36 +157,35 @@ public final class AutoLock {
 	/**
 	 * Creates a {@link WithLock} builder from a collection of {@link Lock} instances.
 	 *
-	 * <p><b>No locking is performed by this method.</b> This method only validates and collects the provided locks and
-	 * returns a builder used to configure how they should be acquired and how work should be executed while holding
+	 * <p><b>No locking is performed by this method.</b> This method only validates and collects the provided locks
+	 * and returns a builder used to configure how they should be acquired and how work should be executed while holding
 	 * them.</p>
 	 *
 	 * <p>This overload is intended for cases where locks are already available as a {@link Collection}, and avoids the
 	 * need for varargs construction.</p>
 	 *
-	 * <p><b>Validation rules:</b>
+	 * <p><b>Validation rules:</b></p>
 	 * <ul>
 	 *   <li>The collection must not be {@code null}</li>
 	 *   <li>It must not be empty</li>
 	 *   <li>It must not contain {@code null} elements</li>
 	 * </ul>
-	 * </p>
 	 *
-	 * <p><b>Behavior:</b>
+	 * <p><b>Behavior:</b></p>
 	 * <ul>
 	 *   <li>If the collection contains a single lock, a {@link SingleLock} builder is returned</li>
 	 *   <li>If the collection contains multiple locks, a {@link MultipleLocks} builder is returned</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * <p><b>Ordering guarantee:</b><br>
-	 * Lock acquisition order depends on the iteration order of the provided {@link Collection} and its {@code toArray}
-	 * implementation. Therefore:
+	 * Lock acquisition order depends on the iteration order of the provided {@link Collection}
+	 * and its {@code toArray} implementation. Therefore:</p>
 	 * <ul>
 	 *   <li>Ordered collections (e.g., {@link java.util.List}) preserve deterministic ordering</li>
 	 *   <li>Unordered collections (e.g., {@link java.util.Set}) do not guarantee stable ordering</li>
 	 * </ul>
-	 * Callers are responsible for ensuring a consistent global lock ordering strategy to avoid deadlocks.</p>
+	 *
+	 * <p>Callers are responsible for ensuring a consistent global lock ordering strategy to avoid deadlocks.</p>
 	 *
 	 * <p><b>Lazy execution:</b><br>
 	 * No interaction with the underlying locks occurs until a terminal operation is invoked
@@ -243,32 +242,26 @@ public final class AutoLock {
 
 	/**
 	 * Acquires multiple {@link Lock}s and returns an {@link LockedAutoLock} that will release them when closed.
-	 * <p>
-	 * This overload accepts at least two required locks followed by an optional varargs array of additional locks.
-	 * It is a convenience method for callers who already have multiple lock references without needing to
-	 * construct a collection or array explicitly.
-	 * </p>
 	 *
-	 * <p>
-	 * All locks are validated before acquisition:
+	 * <p>This overload accepts at least two required locks followed by an optional varargs array of additional locks.
+	 * It is a convenience method for callers who already have multiple lock references without needing to
+	 * construct a collection or array explicitly.</p>
+	 *
+	 * <p><b>Validation rules:</b></p>
 	 * <ul>
 	 *   <li>{@code lock1} must not be {@code null}</li>
 	 *   <li>{@code lock2} must not be {@code null}</li>
 	 *   <li>{@code locks} array must not be {@code null}</li>
 	 *   <li>None of the elements in {@code locks} may be {@code null}</li>
 	 * </ul>
-	 * </p>
 	 *
-	 * <p>
-	 * Lock acquisition order is defined by the argument order:
+	 * <p><b>Lock acquisition order:</b><br>
 	 * {@code lock1} → {@code lock2} → {@code locks[0..n]}.
-	 * This ordering is preserved when delegating to the underlying multi-lock implementation.
-	 * </p>
+	 * This ordering is preserved when delegating to the underlying multi-lock implementation.</p>
 	 *
-	 * <p>
+	 * <p><b>Deadlock safety:</b><br>
 	 * This method does not perform any reordering or deduplication of locks. Callers are responsible
-	 * for ensuring a consistent lock ordering strategy across the application to avoid deadlocks.
-	 * </p>
+	 * for ensuring a consistent global lock ordering strategy to avoid deadlocks.</p>
 	 *
 	 * @param lock1 the first lock to acquire; must not be null
 	 * @param lock2 the second lock to acquire; must not be null
@@ -299,25 +292,24 @@ public final class AutoLock {
 
 	/**
 	 * Acquires a set of {@link Lock}s and returns an {@link LockedAutoLock} that will release them when closed.
-	 * <p>
-	 * This method enforces strict validation of the input collection:
+	 *
+	 * <p>This method enforces strict validation of the input collection:</p>
 	 * <ul>
 	 *   <li>The collection itself must not be {@code null}</li>
 	 *   <li>It must not contain {@code null} elements</li>
 	 *   <li>It must not be empty</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * <p><strong>Ordering guarantee:</strong><br>
 	 * Lock acquisition order depends on the iteration order of the input {@link Collection}
-	 * and its {@code toArray} implementation. Therefore:
+	 * and its {@code toArray} implementation. Therefore:</p>
 	 * <ul>
 	 *   <li>Ordered collections (e.g., {@link java.util.List}) will preserve lock order.</li>
 	 *   <li>Unordered collections (e.g., {@link java.util.Set}) do not guarantee a stable ordering.</li>
 	 * </ul>
-	 * Passing an unordered collection may result in non-deterministic lock ordering, which is discouraged
-	 * when consistent locking order is required to avoid potential deadlocks.
-	 * </p>
+	 *
+	 * <p>Passing an unordered collection may result in non-deterministic lock ordering, which is discouraged
+	 * when consistent locking order is required to avoid potential deadlocks.</p>
 	 *
 	 * @param locks the collection of locks to acquire; must be non-null, non-empty, and contain no null elements
 	 * @return a {@link LockedAutoLock} that will release all acquired locks when closed
@@ -337,36 +329,32 @@ public final class AutoLock {
 	}
 
 	/**
-	 * Acquires a set of {@link Lock}s interruptibly and returns an {@link LockedAutoLock} that will release them when
-	 * closed.
-	 * <p>
-	 * This method is equivalent in behavior to {@link #lock(Collection)}, except that it responds to thread interruption
-	 * while attempting to acquire the locks.
-	 * </p>
+	 * Acquires a set of {@link Lock}s interruptibly and returns an {@link LockedAutoLock}
+	 * that will release them when closed.
 	 *
-	 * <p>
-	 * If the current thread is interrupted while waiting to acquire any of the locks, an {@link InterruptedException}
-	 * is thrown and any locks already acquired during the attempt are released before returning.
-	 * </p>
+	 * <p>This method is equivalent in behavior to {@link #lock(Collection)}, except that it responds to thread
+	 * interruption while attempting to acquire the locks.</p>
 	 *
-	 * <p>
-	 * Input validation rules are identical to {@link #lock(Collection)}:
+	 * <p>If the current thread is interrupted while waiting to acquire any of the locks, an
+	 * {@link InterruptedException} is thrown and any locks already acquired during the attempt are released
+	 * before returning.</p>
+	 *
+	 * <p>Input validation rules are identical to {@link #lock(Collection)}:</p>
 	 * <ul>
 	 *   <li>The collection must not be {@code null}</li>
 	 *   <li>It must not contain {@code null} elements</li>
 	 *   <li>It must not be empty</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * <p><strong>Ordering guarantee:</strong><br>
-	 * Lock acquisition order depends on the iteration order of the input {@link Collection} and its {@code toArray}
-	 * implementation. Therefore:
+	 * Lock acquisition order depends on the iteration order of the input {@link Collection}
+	 * and its {@code toArray} implementation. Therefore:</p>
 	 * <ul>
 	 *   <li>Ordered collections (e.g., {@link java.util.List}) preserve lock ordering</li>
 	 *   <li>Unordered collections (e.g., {@link java.util.Set}) do not guarantee deterministic ordering</li>
 	 * </ul>
-	 * Passing an unordered collection is discouraged when consistent lock ordering is required.
-	 * </p>
+	 *
+	 * <p>Passing an unordered collection is discouraged when consistent lock ordering is required.</p>
 	 *
 	 * @param locks the collection of locks to acquire interruptibly; must be non-null,
 	 *              non-empty, and contain no null elements
@@ -440,42 +428,32 @@ public final class AutoLock {
 	/**
 	 * Acquires multiple {@link Lock}s interruptibly and returns an {@link LockedAutoLock}
 	 * that will release them when closed.
-	 * <p>
-	 * This overload accepts at least two required locks followed by an optional varargs array of additional locks. It
-	 * is a convenience method for callers who already have multiple lock references without needing to construct a
-	 * collection or array explicitly.
-	 * </p>
 	 *
-	 * <p>
-	 * This method behaves like {@link #lock(Lock, Lock, Lock...)} except that it responds to thread interruption
-	 * while acquiring locks.
-	 * </p>
+	 * <p>This overload accepts at least two required locks followed by an optional varargs array of additional locks.
+	 * It is a convenience method for callers who already have multiple lock references without needing to construct a
+	 * collection or array explicitly.</p>
 	 *
-	 * <p>
-	 * If the current thread is interrupted while attempting to acquire any lock, an {@link InterruptedException} is
-	 * thrown and any locks already acquired during the attempt are released before the exception is propagated.
-	 * </p>
+	 * <p>This method behaves like {@link #lock(Lock, Lock, Lock...)} except that it responds to thread interruption
+	 * while acquiring locks.</p>
 	 *
-	 * <p>
-	 * All locks are validated before acquisition:
+	 * <p>If the current thread is interrupted while attempting to acquire any lock, an {@link InterruptedException}
+	 * is thrown and any locks already acquired during the attempt are released before the exception is propagated.</p>
+	 *
+	 * <p><b>Validation rules:</b></p>
 	 * <ul>
 	 *   <li>{@code lock1} must not be {@code null}</li>
 	 *   <li>{@code lock2} must not be {@code null}</li>
 	 *   <li>{@code locks} array must not be {@code null}</li>
 	 *   <li>None of the elements in {@code locks} may be {@code null}</li>
 	 * </ul>
-	 * </p>
 	 *
-	 * <p>
-	 * Lock acquisition order is defined by the argument order:
+	 * <p><b>Lock acquisition order:</b><br>
 	 * {@code lock1} → {@code lock2} → {@code locks[0..n]}.
-	 * This ordering is preserved when delegating to the underlying interruptible multi-lock implementation.
-	 * </p>
+	 * This ordering is preserved when delegating to the underlying interruptible multi-lock implementation.</p>
 	 *
-	 * <p>
+	 * <p><b>Deadlock safety:</b><br>
 	 * No reordering or deduplication is performed. Callers are responsible for ensuring
-	 * a consistent lock ordering strategy across the system to avoid deadlocks.
-	 * </p>
+	 * a consistent global lock ordering strategy across the system to avoid deadlocks.</p>
 	 *
 	 * @param lock1 the first lock to acquire; must not be null
 	 * @param lock2 the second lock to acquire; must not be null
@@ -994,6 +972,7 @@ public final class AutoLock {
 		 * before execution of the provided runnable.</p>
 		 *
 		 * @param runnable the operation to execute under lock
+		 * @param <T> the type of exception that may be thrown by the runnable
 		 * @throws T if the runnable throws a checked or unchecked exception
 		 */
 		<T extends Throwable> void run(@NonNull ThrowableRunnable<T> runnable) throws T;
@@ -1005,6 +984,8 @@ public final class AutoLock {
 		 * before execution of the supplier.</p>
 		 *
 		 * @param supplier the computation to execute under lock
+		 * @param <R> the return type of the supplier
+		 * @param <T> the type of exception that may be thrown by the runnable
 		 * @return result of the computation
 		 * @throws T if the supplier throws a checked or unchecked exception
 		 */
@@ -1045,7 +1026,20 @@ public final class AutoLock {
 		 */
 		@NonNull TryWithTimeout tryAcquire(@NonNull Duration timeout);
 
-
+		/**
+		 * Configures timed lock acquisition.
+		 *
+		 * <p>The lock will be attempted for the given timeout duration. If the lock
+		 * cannot be acquired within the time limit, the failure branch will be executed.</p>
+		 *
+		 * <p>This overload is equivalent to {@link #tryAcquire(Duration)} but accepts
+		 * a numeric timeout and {@link TimeUnit} for interoperability with legacy APIs.</p>
+		 *
+		 * @param time maximum time to wait for lock acquisition
+		 * @param unit the time unit of the {@code time} argument
+		 * @return timed try-lock execution strategy
+		 * @throws NullPointerException if {@code unit} is null
+		 */
 		@NonNull TryWithTimeout tryAcquire(long time, @NonNull TimeUnit unit);
 
 		/**
@@ -1066,6 +1060,7 @@ public final class AutoLock {
 			 * before execution of the provided runnable.</p>
 			 *
 			 * @param runnable the operation to execute under lock
+			 * @param <T> the type of exception that may be thrown by the runnable
 			 * @throws T                    if the runnable throws a checked or unchecked exception
 			 * @throws InterruptedException if the thread is interrupted during interruptible lock acquisition
 			 */
@@ -1078,6 +1073,8 @@ public final class AutoLock {
 			 * before execution of the supplier.</p>
 			 *
 			 * @param supplier the computation to execute under lock
+			 * @param <R> return type of the operation
+			 * @param <T> the type of exception that may be thrown by the runnable
 			 * @return result of the computation
 			 * @throws T                    if the supplier throws a checked or unchecked exception
 			 * @throws InterruptedException if the thread is interrupted during interruptible lock acquisition
@@ -1109,6 +1106,8 @@ public final class AutoLock {
 			 *
 			 * @param onLockSuccess operation executed if the lock is successfully acquired
 			 * @param onLockFail    operation executed if the lock cannot be acquired immediately
+			 * @param <T1> exception type thrown by the success operation
+			 * @param <T2> exception type thrown by the failure operation
 			 * @throws T1 if the success operation throws an exception
 			 * @throws T2 if the failure operation throws an exception
 			 */
@@ -1125,6 +1124,9 @@ public final class AutoLock {
 			 *
 			 * @param onLockSuccess supplier executed if the lock is successfully acquired
 			 * @param onLockFail    supplier executed if the lock cannot be acquired immediately
+			 * @param <R> return type of the operation
+			 * @param <T1> exception type thrown by the success operation
+			 * @param <T2> exception type thrown by the failure operation
 			 * @return the result of either the success or failure supplier
 			 * @throws T1 if the success supplier throws an exception
 			 * @throws T2 if the failure supplier throws an exception
@@ -1154,8 +1156,11 @@ public final class AutoLock {
 			 *
 			 * @param onLockSuccess operation executed if the lock is successfully acquired
 			 * @param onLockFail    operation executed if the lock cannot be acquired immediately
+			 * @param <T1> exception type thrown by the success operation
+			 * @param <T2> exception type thrown by the failure operation
 			 * @throws T1 if the success operation throws an exception
 			 * @throws T2 if the failure operation throws an exception
+			 * @throws InterruptedException if the thread is interrupted while attempting to acquire locks
 			 */
 			<T1 extends Throwable, T2 extends Throwable> void run(@NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableRunnable<T2> onLockFail) throws T1, T2, InterruptedException;
 
@@ -1170,9 +1175,13 @@ public final class AutoLock {
 			 *
 			 * @param onLockSuccess supplier executed if the lock is successfully acquired
 			 * @param onLockFail    supplier executed if the lock cannot be acquired immediately
+			 * @param <R> return type of the operation
+			 * @param <T1> exception type thrown by the success operation
+			 * @param <T2> exception type thrown by the failure operation
 			 * @return the result of either the success or failure supplier
 			 * @throws T1 if the success supplier throws an exception
 			 * @throws T2 if the failure supplier throws an exception
+			 * @throws InterruptedException if the thread is interrupted while attempting to acquire locks
 			 */
 			<R, T1 extends Throwable, T2 extends Throwable> R get(@NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableSupplier<R, T2> onLockFail) throws T1, T2, InterruptedException;
 		}
@@ -1293,7 +1302,15 @@ public final class AutoLock {
 		}
 
 		/**
-		 * {@inheritDoc}
+		 * Immediate try-lock execution mode.
+		 *
+		 * <p>The operation is split into two branches:</p>
+		 * <ul>
+		 *   <li>onLockSuccess → executed if lock is acquired</li>
+		 *   <li>onLockFail → executed if lock is not acquired</li>
+		 * </ul>
+		 *
+		 * <p>No blocking occurs in this mode.</p>
 		 */
 		private final class TryInstant implements WithLock.TryInstant {
 
@@ -1331,7 +1348,13 @@ public final class AutoLock {
 		}
 
 		/**
-		 * {@inheritDoc}
+		 * Timed try-lock execution mode.
+		 *
+		 * <p>Allows execution of separate success and failure branches depending on
+		 * whether the lock was acquired within the specified timeout.</p>
+		 *
+		 * <p>If the thread is interrupted while waiting, {@link InterruptedException}
+		 * is thrown.</p>
 		 */
 		private final class TryWithTimeout implements WithLock.TryWithTimeout {
 			private final long timeout;
@@ -1529,9 +1552,19 @@ public final class AutoLock {
 		}
 
 		/**
-		 * {@inheritDoc}
+		 * Interruptible execution mode for lock acquisition.
+		 *
+		 * <p>Lock acquisition is performed using interruptible semantics
+		 * (e.g. {@link java.util.concurrent.locks.Lock#lockInterruptibly()}).</p>
+		 *
+		 * <p>If the thread is interrupted while waiting for the lock,
+		 * operations will terminate with {@link InterruptedException}.</p>
 		 */
 		public final class Interruptibly implements WithLock.Interruptibly {
+
+			private Interruptibly(){
+
+			}
 
 			/**
 			 * {@inheritDoc}
@@ -1557,7 +1590,15 @@ public final class AutoLock {
 		}
 
 		/**
-		 * {@inheritDoc}
+		 * Immediate try-lock execution mode.
+		 *
+		 * <p>The operation is split into two branches:</p>
+		 * <ul>
+		 *   <li>onLockSuccess → executed if lock is acquired</li>
+		 *   <li>onLockFail → executed if lock is not acquired</li>
+		 * </ul>
+		 *
+		 * <p>No blocking occurs in this mode.</p>
 		 */
 		public final class TryInstant implements WithLock.TryInstant {
 
@@ -1592,6 +1633,8 @@ public final class AutoLock {
 			 *
 			 * @param onLockSuccess operation executed if all locks are successfully acquired
 			 * @param onLockFail    operation executed if lock acquisition fails, receiving failure context
+			 * @param <T1> exception type thrown by the success operation
+			 * @param <T2> exception type thrown by the failure operation
 			 * @throws T1 if the success operation throws an exception
 			 * @throws T2 if the failure operation throws an exception
 			 */
@@ -1654,6 +1697,9 @@ public final class AutoLock {
 			 * @param onLockSuccess supplier executed if all locks are successfully acquired
 			 * @param onLockFail    function executed if lock acquisition fails, receiving failure context
 			 *                      and producing a fallback result
+			 * @param <R> return type of the operation
+			 * @param <T1> exception type thrown by the success operation
+			 * @param <T2> exception type thrown by the failure operation
 			 * @return result from either the success or failure branch
 			 * @throws T1 if the success supplier throws an exception
 			 * @throws T2 if the failure function throws an exception
@@ -1690,7 +1736,13 @@ public final class AutoLock {
 		}
 
 		/**
-		 * {@inheritDoc}
+		 * Timed try-lock execution mode.
+		 *
+		 * <p>Allows execution of separate success and failure branches depending on
+		 * whether the lock was acquired within the specified timeout.</p>
+		 *
+		 * <p>If the thread is interrupted while waiting, {@link InterruptedException}
+		 * is thrown.</p>
 		 */
 		public final class TryWithTimeout implements WithLock.TryWithTimeout {
 			private final long time;
@@ -1723,20 +1775,21 @@ public final class AutoLock {
 			/**
 			 * Executes one of two operations depending on whether all locks can be acquired immediately.
 			 *
-			 * <p>This method attempts to acquire all managed locks using a non-blocking {@code tryLock} strategy. If all
-			 * locks are successfully acquired, the {@code onLockSuccess} branch is executed.</p>
+			 * <p>This method attempts to acquire all managed locks using a non-blocking {@code tryLock} strategy.
+			 * If all locks are successfully acquired, the {@code onLockSuccess} branch is executed.</p>
 			 *
 			 * <p>If any lock cannot be acquired immediately, the attempt is aborted and the {@code onLockFail} branch is
 			 * executed instead. No waiting or retrying occurs.</p>
 			 *
 			 * <p><b>Failure context:</b><br>
 			 * When the failure branch is executed, a {@link TryLockFailContext} is provided to the {@code onLockFail}
-			 * consumer. This context contains diagnostic information about the failed acquisition attempt, including:
+			 * consumer. This context contains diagnostic information about the failed acquisition attempt, including:</p>
 			 * <ul>
 			 *   <li>Which specific {@link Lock} caused the failure</li>
-			 *   <li>The time at which the try-lock attempt expired or failed</li>
+			 *   <li>The time at which the try-lock attempt failed</li>
 			 * </ul>
-			 * This allows callers to implement detailed logging, metrics, or fallback behavior based on the exact point of
+			 *
+			 * <p>This allows callers to implement detailed logging, metrics, or fallback behavior based on the exact point of
 			 * contention.</p>
 			 *
 			 * @param onLockSuccess operation executed if all locks are successfully acquired
