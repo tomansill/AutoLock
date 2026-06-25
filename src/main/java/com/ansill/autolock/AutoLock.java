@@ -21,6 +21,13 @@ import java.util.function.LongSupplier;
  */
 public final class AutoLock {
 
+	/**
+	 * Prevent instantiation.
+	 */
+	private AutoLock() {
+		throw new UnsupportedOperationException(String.format("%s is a utility class and cannot be instantiated", AutoLock.class.getSimpleName()));
+	}
+
 	@SuppressWarnings("resource")
 	@NonNull
 	private static LockedAutoLock multipleLock(@NonNull Lock[] locks) {
@@ -74,13 +81,6 @@ public final class AutoLock {
 			// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
 			if (!success.value) locks[0].unlock();
 		}
-	}
-
-	/**
-	 * Prevent instantiation.
-	 */
-	private AutoLock() {
-		throw new UnsupportedOperationException(String.format("%s is a utility class and cannot be instantiated", AutoLock.class.getSimpleName()));
 	}
 
 	/**
@@ -193,31 +193,31 @@ public final class AutoLock {
 	 *
 	 * @param locks the collection of locks to coordinate; must not be null, empty, or contain null elements
 	 * @return a {@link WithLock} builder for configuring coordinated lock execution
-	 * @throws NullPointerException if {@code locks} is null or contains null elements
+	 * @throws NullPointerException     if {@code locks} is null or contains null elements
 	 * @throws IllegalArgumentException if {@code locks} is empty
 	 */
 	@NonNull
 	public static WithLock with(@NonNull Collection<? extends Lock> locks) {
 		// Ensure input collection is valid
 		requireNonNullElements(locks);
-		if(locks.size() == 1){
+		if (locks.size() == 1) {
 			return new SingleLock(locks.iterator().next());
 		}
 		return new MultipleLocks(locks.toArray(new Lock[0]));
 	}
 
-	private static void requireNonNullElements(@NonNull Collection<? extends Lock> locks){
+	private static void requireNonNullElements(@NonNull Collection<? extends Lock> locks) {
 		Objects.requireNonNull(locks, "locks must not be null");
-		if(locks.isEmpty()){
+		if (locks.isEmpty()) {
 			throw new IllegalArgumentException("locks must not be empty");
 		}
-		if(locks instanceof List){
+		if (locks instanceof List) {
 			List<? extends Lock> list = (List<? extends Lock>) locks;
 			for (int i = 0; i < list.size(); i++) {
-				Objects.requireNonNull(list.get(i), String.format("lock%s must not be null", i+1));
+				Objects.requireNonNull(list.get(i), String.format("lock%s must not be null", i + 1));
 			}
-		}else{
-			if(locks.stream().anyMatch(Objects::isNull)){
+		} else {
+			if (locks.stream().anyMatch(Objects::isNull)) {
 				throw new NullPointerException("locks must not contain null elements");
 			}
 		}
@@ -313,14 +313,14 @@ public final class AutoLock {
 	 *
 	 * @param locks the collection of locks to acquire; must be non-null, non-empty, and contain no null elements
 	 * @return a {@link LockedAutoLock} that will release all acquired locks when closed
-	 * @throws NullPointerException if {@code locks} is null or contains null elements
+	 * @throws NullPointerException     if {@code locks} is null or contains null elements
 	 * @throws IllegalArgumentException if {@code locks} is empty
 	 */
 	@NonNull
 	public static LockedAutoLock lock(@NonNull Collection<? extends Lock> locks) {
 		// Ensure input collection is valid
 		requireNonNullElements(locks);
-		if(locks.size() == 1){
+		if (locks.size() == 1) {
 			Lock lock = locks.iterator().next();
 			lock.lock();
 			return new LockedAutoLock(lock::unlock);
@@ -359,15 +359,15 @@ public final class AutoLock {
 	 * @param locks the collection of locks to acquire interruptibly; must be non-null,
 	 *              non-empty, and contain no null elements
 	 * @return a {@link LockedAutoLock} that will release all acquired locks when closed
-	 * @throws NullPointerException if {@code locks} is null or contains null elements
+	 * @throws NullPointerException     if {@code locks} is null or contains null elements
 	 * @throws IllegalArgumentException if {@code locks} is empty
-	 * @throws InterruptedException if the current thread is interrupted while acquiring locks
+	 * @throws InterruptedException     if the current thread is interrupted while acquiring locks
 	 */
 	@NonNull
 	public static LockedAutoLock lockInterruptibly(@NonNull Collection<? extends Lock> locks) throws InterruptedException {
 		// Ensure input collection is valid
 		requireNonNullElements(locks);
-		if(locks.size() == 1){
+		if (locks.size() == 1) {
 			Lock lock = locks.iterator().next();
 			lock.lockInterruptibly();
 			return new LockedAutoLock(lock::unlock);
@@ -404,24 +404,6 @@ public final class AutoLock {
 		} finally {
 			// Unlock only if inner locking process fails because there'd be no LockedAutoLock returned
 			if (!success.value) currentLock.unlock();
-		}
-	}
-
-	/* Mutable Boolean */
-	private static class MutableBoolean {
-		private boolean value;
-
-		private MutableBoolean(boolean value) {
-			this.value = value;
-		}
-	}
-
-	/* Mutable Reference */
-	private static class MutableReference<Type> {
-		private Type value;
-
-		private MutableReference(Type initialValue) {
-			this.value = initialValue;
 		}
 	}
 
@@ -972,7 +954,7 @@ public final class AutoLock {
 		 * before execution of the provided runnable.</p>
 		 *
 		 * @param runnable the operation to execute under lock
-		 * @param <T> the type of exception that may be thrown by the runnable
+		 * @param <T>      the type of exception that may be thrown by the runnable
 		 * @throws T if the runnable throws a checked or unchecked exception
 		 */
 		<T extends Throwable> void run(@NonNull ThrowableRunnable<T> runnable) throws T;
@@ -984,8 +966,8 @@ public final class AutoLock {
 		 * before execution of the supplier.</p>
 		 *
 		 * @param supplier the computation to execute under lock
-		 * @param <R> the return type of the supplier
-		 * @param <T> the type of exception that may be thrown by the runnable
+		 * @param <R>      the return type of the supplier
+		 * @param <T>      the type of exception that may be thrown by the runnable
 		 * @return result of the computation
 		 * @throws T if the supplier throws a checked or unchecked exception
 		 */
@@ -1060,7 +1042,7 @@ public final class AutoLock {
 			 * before execution of the provided runnable.</p>
 			 *
 			 * @param runnable the operation to execute under lock
-			 * @param <T> the type of exception that may be thrown by the runnable
+			 * @param <T>      the type of exception that may be thrown by the runnable
 			 * @throws T                    if the runnable throws a checked or unchecked exception
 			 * @throws InterruptedException if the thread is interrupted during interruptible lock acquisition
 			 */
@@ -1073,8 +1055,8 @@ public final class AutoLock {
 			 * before execution of the supplier.</p>
 			 *
 			 * @param supplier the computation to execute under lock
-			 * @param <R> return type of the operation
-			 * @param <T> the type of exception that may be thrown by the runnable
+			 * @param <R>      return type of the operation
+			 * @param <T>      the type of exception that may be thrown by the runnable
 			 * @return result of the computation
 			 * @throws T                    if the supplier throws a checked or unchecked exception
 			 * @throws InterruptedException if the thread is interrupted during interruptible lock acquisition
@@ -1106,8 +1088,8 @@ public final class AutoLock {
 			 *
 			 * @param onLockSuccess operation executed if the lock is successfully acquired
 			 * @param onLockFail    operation executed if the lock cannot be acquired immediately
-			 * @param <T1> exception type thrown by the success operation
-			 * @param <T2> exception type thrown by the failure operation
+			 * @param <T1>          exception type thrown by the success operation
+			 * @param <T2>          exception type thrown by the failure operation
 			 * @throws T1 if the success operation throws an exception
 			 * @throws T2 if the failure operation throws an exception
 			 */
@@ -1124,9 +1106,9 @@ public final class AutoLock {
 			 *
 			 * @param onLockSuccess supplier executed if the lock is successfully acquired
 			 * @param onLockFail    supplier executed if the lock cannot be acquired immediately
-			 * @param <R> return type of the operation
-			 * @param <T1> exception type thrown by the success operation
-			 * @param <T2> exception type thrown by the failure operation
+			 * @param <R>           return type of the operation
+			 * @param <T1>          exception type thrown by the success operation
+			 * @param <T2>          exception type thrown by the failure operation
 			 * @return the result of either the success or failure supplier
 			 * @throws T1 if the success supplier throws an exception
 			 * @throws T2 if the failure supplier throws an exception
@@ -1156,10 +1138,10 @@ public final class AutoLock {
 			 *
 			 * @param onLockSuccess operation executed if the lock is successfully acquired
 			 * @param onLockFail    operation executed if the lock cannot be acquired immediately
-			 * @param <T1> exception type thrown by the success operation
-			 * @param <T2> exception type thrown by the failure operation
-			 * @throws T1 if the success operation throws an exception
-			 * @throws T2 if the failure operation throws an exception
+			 * @param <T1>          exception type thrown by the success operation
+			 * @param <T2>          exception type thrown by the failure operation
+			 * @throws T1                   if the success operation throws an exception
+			 * @throws T2                   if the failure operation throws an exception
 			 * @throws InterruptedException if the thread is interrupted while attempting to acquire locks
 			 */
 			<T1 extends Throwable, T2 extends Throwable> void run(@NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableRunnable<T2> onLockFail) throws T1, T2, InterruptedException;
@@ -1175,15 +1157,33 @@ public final class AutoLock {
 			 *
 			 * @param onLockSuccess supplier executed if the lock is successfully acquired
 			 * @param onLockFail    supplier executed if the lock cannot be acquired immediately
-			 * @param <R> return type of the operation
-			 * @param <T1> exception type thrown by the success operation
-			 * @param <T2> exception type thrown by the failure operation
+			 * @param <R>           return type of the operation
+			 * @param <T1>          exception type thrown by the success operation
+			 * @param <T2>          exception type thrown by the failure operation
 			 * @return the result of either the success or failure supplier
-			 * @throws T1 if the success supplier throws an exception
-			 * @throws T2 if the failure supplier throws an exception
+			 * @throws T1                   if the success supplier throws an exception
+			 * @throws T2                   if the failure supplier throws an exception
 			 * @throws InterruptedException if the thread is interrupted while attempting to acquire locks
 			 */
 			<R, T1 extends Throwable, T2 extends Throwable> R get(@NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableSupplier<R, T2> onLockFail) throws T1, T2, InterruptedException;
+		}
+	}
+
+	/* Mutable Boolean */
+	private static class MutableBoolean {
+		private boolean value;
+
+		private MutableBoolean(boolean value) {
+			this.value = value;
+		}
+	}
+
+	/* Mutable Reference */
+	private static class MutableReference<Type> {
+		private Type value;
+
+		private MutableReference(Type initialValue) {
+			this.value = initialValue;
 		}
 	}
 
@@ -1562,7 +1562,7 @@ public final class AutoLock {
 		 */
 		public final class Interruptibly implements WithLock.Interruptibly {
 
-			private Interruptibly(){
+			private Interruptibly() {
 
 			}
 
@@ -1633,8 +1633,8 @@ public final class AutoLock {
 			 *
 			 * @param onLockSuccess operation executed if all locks are successfully acquired
 			 * @param onLockFail    operation executed if lock acquisition fails, receiving failure context
-			 * @param <T1> exception type thrown by the success operation
-			 * @param <T2> exception type thrown by the failure operation
+			 * @param <T1>          exception type thrown by the success operation
+			 * @param <T2>          exception type thrown by the failure operation
 			 * @throws T1 if the success operation throws an exception
 			 * @throws T2 if the failure operation throws an exception
 			 */
@@ -1697,9 +1697,9 @@ public final class AutoLock {
 			 * @param onLockSuccess supplier executed if all locks are successfully acquired
 			 * @param onLockFail    function executed if lock acquisition fails, receiving failure context
 			 *                      and producing a fallback result
-			 * @param <R> return type of the operation
-			 * @param <T1> exception type thrown by the success operation
-			 * @param <T2> exception type thrown by the failure operation
+			 * @param <R>           return type of the operation
+			 * @param <T1>          exception type thrown by the success operation
+			 * @param <T2>          exception type thrown by the failure operation
 			 * @return result from either the success or failure branch
 			 * @throws T1 if the success supplier throws an exception
 			 * @throws T2 if the failure function throws an exception
@@ -1793,11 +1793,11 @@ public final class AutoLock {
 			 * contention.</p>
 			 *
 			 * @param onLockSuccess operation executed if all locks are successfully acquired
-			 * @param onLockFail operation executed if lock acquisition fails; receives contextual failure information
-			 * @param <T1> exception type thrown by the success operation
-			 * @param <T2> exception type thrown by the failure operation
-			 * @throws T1 if the success operation throws an exception
-			 * @throws T2 if the failure operation throws an exception
+			 * @param onLockFail    operation executed if lock acquisition fails; receives contextual failure information
+			 * @param <T1>          exception type thrown by the success operation
+			 * @param <T2>          exception type thrown by the failure operation
+			 * @throws T1                   if the success operation throws an exception
+			 * @throws T2                   if the failure operation throws an exception
 			 * @throws InterruptedException if the thread is interrupted while attempting to acquire locks
 			 */
 			public <T1 extends Throwable, T2 extends Throwable> void run(@NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableConsumer<TryLockFailContext, T2> onLockFail) throws T1, T2, InterruptedException {
@@ -1859,13 +1859,13 @@ public final class AutoLock {
 			 * acquisition sequence), enabling targeted diagnostics, logging, or fallback behavior.</p>
 			 *
 			 * @param onLockSuccess supplier executed if all locks are successfully acquired
-			 * @param onLockFail function executed if lock acquisition fails; receives failure context and returns a fallback value
-			 * @param <R> return type of the operation
-			 * @param <T1> exception type thrown by the success supplier
-			 * @param <T2> exception type thrown by the failure function
+			 * @param onLockFail    function executed if lock acquisition fails; receives failure context and returns a fallback value
+			 * @param <R>           return type of the operation
+			 * @param <T1>          exception type thrown by the success supplier
+			 * @param <T2>          exception type thrown by the failure function
 			 * @return the result of either the success or failure supplier
-			 * @throws T1 if the success supplier throws an exception
-			 * @throws T2 if the failure function throws an exception
+			 * @throws T1                   if the success supplier throws an exception
+			 * @throws T2                   if the failure function throws an exception
 			 * @throws InterruptedException if the thread is interrupted while attempting to acquire locks
 			 */
 			public <R, T1 extends Throwable, T2 extends Throwable> R get(@NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableFunction<TryLockFailContext, R, T2> onLockFail) throws T1, T2, InterruptedException {
