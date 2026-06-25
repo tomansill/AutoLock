@@ -97,8 +97,9 @@ LockedAutoLock ignored = AutoLock.lock(lock)){
 
 When using AutoLock with try-with-resources, the returned LockedAutoLock does not need to be used directly. It is only
 there to bind the lock lifecycle to the scope, so that the lock is automatically released when the block exits. For
-this reason, it is common to name the variable `ignored` to make it clear that it is not meant to be used. You can
-also use any variable name if you prefer, for example lockHandle, but the object itself is not intended for direct use.
+this reason, it is common to name the variable `ignored` or `_` in Java 22 to make it clear that it is not meant to be 
+used. You can also use any variable name if you prefer, for example lockHandle, but the object itself is not intended 
+for direct use.
 
 There are 2 available static methods you can use: `lock(Lock)` and `lockInterruptibly(Lock)`. These correspond to the
 standard `Lock.lock()` and `Lock.lockInterruptibly()` methods respectively.
@@ -106,7 +107,7 @@ standard `Lock.lock()` and `Lock.lockInterruptibly()` methods respectively.
 Unfortunately, there are no `tryLock` or `newCondition` equivalents available for use inside a try-with-resources
 statement.
 
-### Lambda methods
+### Immediate Execution API methods
 
 Try-with-resources can be avoided entirely while still getting the same guarantees by using lambda-based methods such as
 `AutoLock.lockAndRun(Lock,ThrowableRunnable<T>)`:
@@ -114,7 +115,7 @@ Try-with-resources can be avoided entirely while still getting the same guarante
 ```java
 Lock lock = new ReentrantLock();
 
-// Will lock, run, then unlock when this method exits
+// Will lock, run the lambda function, then unlock when this method exits
 AutoLock.lockAndRun(lock, () ->{
   // Do stuff here
 });
@@ -130,7 +131,7 @@ Use `AutoLock.lockAndGet(Lock,ThrowableSupplier<R,T>)` instead like this.
 ```java
 Lock lock = new ReentrantLock();
 
-// Will lock, retrieve, unlock, then return (if no exception) when this method exits
+// Will lock, run the lambda function to retrieve and return, unlock, then return (if no exception) when this method exits
 int value = AutoLock.lockAndGet(lock, () -> {
 
   // Do stuff here
@@ -156,23 +157,93 @@ unchecked exceptions and serious errors such as `OutOfMemoryError` or `StackOver
 does not introduce or transform exceptions. It simply ensures the lock is released and then propagates the original
 exception as-is.
 
-`AutoLock` has several static lambda locking methods available:
+`AutoLock` has several static immediate execution lambda locking methods available:
 
 #### Blocking
 
-- `void lockAndRun(Lock,ThrowableRunnable<T>)`
-- `<R> R lockAndGet(Lock,ThrowableSupplier<R, T>)`
-- `void lockInterruptiblyAndRun(Lock,ThrowableRunnable<T>)`
-- `<R> R lockInterruptiblyAndGet(Lock,ThrowableSupplier<R, T>)`
+- `<,T extends Throwable> void lockAndRun(Lock,ThrowableRunnable<T>)`
+- `<R,T extends Throwable> R lockAndGet(Lock,ThrowableSupplier<R, T>)`
+- `<,T extends Throwable> void lockInterruptiblyAndRun(Lock,ThrowableRunnable<T>)`
+- `<R,T extends Throwable> R lockInterruptiblyAndGet(Lock,ThrowableSupplier<R, T>)`
 
 #### Non-blocking
 
-- `void tryLockAndRun(Lock,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
-- `<R> R tryLockAndGet(Lock,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
+- `<T1 extends Throwable,T2 extends Throwable> void tryLockAndRun(Lock,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
+- `<R,T1 extends Throwable,T2 extends Throwable> R tryLockAndGet(Lock,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
 
 #### Timed
 
-- `void tryLockAndRun(Lock,long,TimeUnit,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
-- `<R> R tryLockAndGet(Lock,long,TimeUnit,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
-- `void tryLockAndRun(Lock,Duration,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
-- `<R> R tryLockAndGet(Lock,Duration,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
+- `<T1 extends Throwable,T2 extends Throwable> void tryLockAndRun(Lock,long,TimeUnit,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
+- `<R,T1 extends Throwable,T2 extends Throwable> R tryLockAndGet(Lock,long,TimeUnit,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
+- `<T1 extends Throwable,T2 extends Throwable> void tryLockAndRun(Lock,Duration,ThrowableRunnable<T1>,ThrowableRunnable<T2>)`
+- `<R,T1 extends Throwable,T2 extends Throwable> R tryLockAndGet(Lock,Duration,ThrowableSupplier<R, T1>,ThrowableSupplier<R, T2>)`
+
+### Fluent API methods
+
+In addition to the Immediate Execution API, Fluent API methods are available to allow the chaining of lock operations
+in a more expressive and composable way.
+
+Instead of executing immediately, these methods return a builder-like structure that lets you define what should happen
+once the lock is acquired.
+
+```java
+Lock lock = new ReentrantLock();
+
+// Will lock, run, then unlock when this method exits
+AutoLock.with(lock).run(() ->{
+	// Do stuff here
+});
+```
+
+The Fluent API separates lock acquisition from execution, allowing additional behaviors to be composed in a readable
+manner. LockInterruptibly and tryLocks can be accessed this way:
+
+```java
+AutoLock.WithLock withLock = AutoLock.with(lock); // Has no effect, doesn't lock
+AutoLock.WithLock.Interruptibly interruptiblyDemo = withLock.interruptibly(); // Demonstration, has no effect, doesn't do anything to the lock
+AutoLock.WithLock.TryInstant tryInstantDemo = withLock.tryLock(); // Demonstration, has no effect, doesn't do anything to the lock
+AutoLock.WithLock.TryTimeout tryTimeoutDemo = withLock.tryLock(Duration.ofMinutes(1)); // Demonstration, has no effect, doesn't do anything to the lock
+
+// On invocation of get method, it acquires the lock interruptibly, runs the lambda, then unlocks
+int value = interruptiblyDemo.get(() -> {
+	// Do stuff here
+	return 100;
+});
+
+// Calling .get on TryInstant *will* actually tryLock, if success, then success lambda is invoked, then unlock, otherwise runs failure lambda
+String state = tryInstantDemo.get(() -> {
+	// Do stuff here
+	return "success"
+}, () -> "failure");
+
+// Calling .run on TryTimeout *will* actually tryLock, if success, then success lambda is invoked, then unlock, otherwise runs failure lambda
+tryTimeoutDemo.run(() -> handleSuccessLock(), () -> handleFailedLock());
+```
+
+### Multiple Locks
+
+Multiple locks are supported in both the Try-With-Resources API and the Fluent API. Locks are acquired sequentially and 
+released in reverse order. If acquisition of any lock fails, all previously acquired locks are automatically released 
+to ensure no partial lock state is left behind.
+
+```java
+// Try-with-Resources example
+try(LockedAutoLock ignored = AutoLock.lock(lock1, lock2, lock3)){ // Locks all 3 sequentially
+  // Do stuff here	
+} // Automatically unlocks all 3 in reverse order
+        
+// Fluent API example        
+AutoLock.with(lock1, lock2, lock3, lock4, lock5).run(() -> doStuff());
+```
+
+For `tryLock` with timeout on multiple locks, the provided duration applies to the total time spent attempting to 
+acquire all locks (not per lock). The library also provides an overloaded method that exposes context data describing
+which lock failed during the `tryLock` acquisition.
+
+```java
+// Fluent API with specific tryLock example
+AutoLock.with(List.of(lock1, lock2, lock3)).tryLock(Duration.ofMinutes(1)).run(() -> doStuff(), lockFailContext -> {
+  System.out.println("lock #" + lockFailContext.getSequenceIndex() + " failed to acquire");
+  Lock offendingLock = lockFailContext.getFailedLock();
+});
+```

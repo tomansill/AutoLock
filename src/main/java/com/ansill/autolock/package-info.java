@@ -25,6 +25,12 @@
  *
  *   <li><b>{@link com.ansill.autolock.ThrowableSupplier}</b> – A {@code Supplier}-like functional interface that
  *   can throw checked exceptions.</li>
+ *
+ *   <li><b>{@link com.ansill.autolock.ThrowableConsumer}</b> – A {@code Consumer}-like functional interface that
+ *   can throw checked exceptions.</li>
+ *
+ *   <li><b>{@link com.ansill.autolock.ThrowableFunction}</b> – A {@code Function}-like functional interface that
+ *   can throw checked exceptions.</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
