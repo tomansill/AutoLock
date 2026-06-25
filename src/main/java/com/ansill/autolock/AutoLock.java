@@ -3,6 +3,8 @@ package com.ansill.autolock;
 import org.jspecify.annotations.NonNull;
 
 import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -153,6 +155,76 @@ public final class AutoLock {
 	}
 
 	/**
+	 * Creates a {@link WithLock} builder from a collection of {@link Lock} instances.
+	 *
+	 * <p><b>No locking is performed by this method.</b> This method only validates and collects the provided locks and
+	 * returns a builder used to configure how they should be acquired and how work should be executed while holding
+	 * them.</p>
+	 *
+	 * <p>This overload is intended for cases where locks are already available as a {@link Collection}, and avoids the
+	 * need for varargs construction.</p>
+	 *
+	 * <p><b>Validation rules:</b>
+	 * <ul>
+	 *   <li>The collection must not be {@code null}</li>
+	 *   <li>It must not be empty</li>
+	 *   <li>It must not contain {@code null} elements</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * <p><b>Behavior:</b>
+	 * <ul>
+	 *   <li>If the collection contains a single lock, a {@link SingleLock} builder is returned</li>
+	 *   <li>If the collection contains multiple locks, a {@link MultipleLocks} builder is returned</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * <p><b>Ordering guarantee:</b><br>
+	 * Lock acquisition order depends on the iteration order of the provided {@link Collection} and its {@code toArray}
+	 * implementation. Therefore:
+	 * <ul>
+	 *   <li>Ordered collections (e.g., {@link java.util.List}) preserve deterministic ordering</li>
+	 *   <li>Unordered collections (e.g., {@link java.util.Set}) do not guarantee stable ordering</li>
+	 * </ul>
+	 * Callers are responsible for ensuring a consistent global lock ordering strategy to avoid deadlocks.</p>
+	 *
+	 * <p><b>Lazy execution:</b><br>
+	 * No interaction with the underlying locks occurs until a terminal operation is invoked
+	 * on the returned {@link WithLock} (e.g., {@code run(...)} or {@code get(...)}).</p>
+	 *
+	 * @param locks the collection of locks to coordinate; must not be null, empty, or contain null elements
+	 * @return a {@link WithLock} builder for configuring coordinated lock execution
+	 * @throws NullPointerException if {@code locks} is null
+	 * @throws IllegalArgumentException if {@code locks} is empty or contains null elements
+	 */
+	@NonNull
+	public static WithLock with(@NonNull Collection<? extends Lock> locks) {
+		// Ensure input collection is valid
+		requireNonNullElements(locks);
+		if(locks.size() == 1){
+			return new SingleLock(locks.iterator().next());
+		}
+		return new MultipleLocks(locks.toArray(new Lock[0]));
+	}
+
+	private static void requireNonNullElements(@NonNull Collection<? extends Lock> locks){
+		Objects.requireNonNull(locks, "locks must not be null");
+		if(locks.isEmpty()){
+			throw new IllegalArgumentException("locks must not be empty");
+		}
+		if(locks instanceof List){
+			List<? extends Lock> list = (List<? extends Lock>) locks;
+			for (int i = 0; i < list.size(); i++) {
+				Objects.requireNonNull(list.get(i), String.format("lock%s must not be null", i+1));
+			}
+		}else{
+			if(locks.stream().anyMatch(Objects::isNull)){
+				throw new NullPointerException("locks must not contain null elements");
+			}
+		}
+	}
+
+	/**
 	 * Acquires the given lock and returns an {@link LockedAutoLock} that will release the lock
 	 * when closed.
 	 *
@@ -169,6 +241,41 @@ public final class AutoLock {
 		return new LockedAutoLock(lock::unlock);
 	}
 
+	/**
+	 * Acquires multiple {@link Lock}s and returns an {@link LockedAutoLock} that will release them when closed.
+	 * <p>
+	 * This overload accepts at least two required locks followed by an optional varargs array of additional locks.
+	 * It is a convenience method for callers who already have multiple lock references without needing to
+	 * construct a collection or array explicitly.
+	 * </p>
+	 *
+	 * <p>
+	 * All locks are validated before acquisition:
+	 * <ul>
+	 *   <li>{@code lock1} must not be {@code null}</li>
+	 *   <li>{@code lock2} must not be {@code null}</li>
+	 *   <li>{@code locks} array must not be {@code null}</li>
+	 *   <li>None of the elements in {@code locks} may be {@code null}</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * <p>
+	 * Lock acquisition order is defined by the argument order:
+	 * {@code lock1} → {@code lock2} → {@code locks[0..n]}.
+	 * This ordering is preserved when delegating to the underlying multi-lock implementation.
+	 * </p>
+	 *
+	 * <p>
+	 * This method does not perform any reordering or deduplication of locks. Callers are responsible
+	 * for ensuring a consistent lock ordering strategy across the application to avoid deadlocks.
+	 * </p>
+	 *
+	 * @param lock1 the first lock to acquire; must not be null
+	 * @param lock2 the second lock to acquire; must not be null
+	 * @param locks additional locks to acquire (optional); must not be null and must not contain null elements
+	 * @return a {@link LockedAutoLock} that will release all acquired locks when closed
+	 * @throws NullPointerException if {@code lock1}, {@code lock2}, {@code locks}, or any element in {@code locks} is null
+	 */
 	@NonNull
 	public static LockedAutoLock lock(@NonNull Lock lock1, @NonNull Lock lock2, @NonNull Lock... locks) {
 
@@ -188,6 +295,96 @@ public final class AutoLock {
 
 		// Lock and return
 		return multipleLock(fullLocks);
+	}
+
+	/**
+	 * Acquires a set of {@link Lock}s and returns an {@link LockedAutoLock} that will release them when closed.
+	 * <p>
+	 * This method enforces strict validation of the input collection:
+	 * <ul>
+	 *   <li>The collection itself must not be {@code null}</li>
+	 *   <li>It must not contain {@code null} elements</li>
+	 *   <li>It must not be empty</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * <p><strong>Ordering guarantee:</strong><br>
+	 * Lock acquisition order depends on the iteration order of the input {@link Collection}
+	 * and its {@code toArray} implementation. Therefore:
+	 * <ul>
+	 *   <li>Ordered collections (e.g., {@link java.util.List}) will preserve lock order.</li>
+	 *   <li>Unordered collections (e.g., {@link java.util.Set}) do not guarantee a stable ordering.</li>
+	 * </ul>
+	 * Passing an unordered collection may result in non-deterministic lock ordering, which is discouraged
+	 * when consistent locking order is required to avoid potential deadlocks.
+	 * </p>
+	 *
+	 * @param locks the collection of locks to acquire; must be non-null, non-empty, and contain no null elements
+	 * @return a {@link LockedAutoLock} that will release all acquired locks when closed
+	 * @throws NullPointerException if {@code locks} is null
+	 * @throws IllegalArgumentException if {@code locks} is empty or contains null elements
+	 */
+	@NonNull
+	public static LockedAutoLock lock(@NonNull Collection<? extends Lock> locks) {
+		// Ensure input collection is valid
+		requireNonNullElements(locks);
+		if(locks.size() == 1){
+			Lock lock = locks.iterator().next();
+			lock.lock();
+			return new LockedAutoLock(lock::unlock);
+		}
+		return multipleLock(locks.toArray(new Lock[0]));
+	}
+
+	/**
+	 * Acquires a set of {@link Lock}s interruptibly and returns an {@link LockedAutoLock} that will release them when
+	 * closed.
+	 * <p>
+	 * This method is equivalent in behavior to {@link #lock(Collection)}, except that it responds to thread interruption
+	 * while attempting to acquire the locks.
+	 * </p>
+	 *
+	 * <p>
+	 * If the current thread is interrupted while waiting to acquire any of the locks, an {@link InterruptedException}
+	 * is thrown and any locks already acquired during the attempt are released before returning.
+	 * </p>
+	 *
+	 * <p>
+	 * Input validation rules are identical to {@link #lock(Collection)}:
+	 * <ul>
+	 *   <li>The collection must not be {@code null}</li>
+	 *   <li>It must not contain {@code null} elements</li>
+	 *   <li>It must not be empty</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * <p><strong>Ordering guarantee:</strong><br>
+	 * Lock acquisition order depends on the iteration order of the input {@link Collection} and its {@code toArray}
+	 * implementation. Therefore:
+	 * <ul>
+	 *   <li>Ordered collections (e.g., {@link java.util.List}) preserve lock ordering</li>
+	 *   <li>Unordered collections (e.g., {@link java.util.Set}) do not guarantee deterministic ordering</li>
+	 * </ul>
+	 * Passing an unordered collection is discouraged when consistent lock ordering is required.
+	 * </p>
+	 *
+	 * @param locks the collection of locks to acquire interruptibly; must be non-null,
+	 *              non-empty, and contain no null elements
+	 * @return a {@link LockedAutoLock} that will release all acquired locks when closed
+	 * @throws NullPointerException if {@code locks} is null
+	 * @throws IllegalArgumentException if {@code locks} is empty or contains null elements
+	 * @throws InterruptedException if the current thread is interrupted while acquiring locks
+	 */
+	@NonNull
+	public static LockedAutoLock lockInterruptibly(@NonNull Collection<? extends Lock> locks) throws InterruptedException {
+		// Ensure input collection is valid
+		requireNonNullElements(locks);
+		if(locks.size() == 1){
+			Lock lock = locks.iterator().next();
+			lock.lockInterruptibly();
+			return new LockedAutoLock(lock::unlock);
+		}
+		return multipleLockInterruptibly(locks.toArray(new Lock[0]));
 	}
 
 	@SuppressWarnings("resource")
@@ -240,6 +437,53 @@ public final class AutoLock {
 		}
 	}
 
+	/**
+	 * Acquires multiple {@link Lock}s interruptibly and returns an {@link LockedAutoLock}
+	 * that will release them when closed.
+	 * <p>
+	 * This overload accepts at least two required locks followed by an optional varargs array of additional locks. It
+	 * is a convenience method for callers who already have multiple lock references without needing to construct a
+	 * collection or array explicitly.
+	 * </p>
+	 *
+	 * <p>
+	 * This method behaves like {@link #lock(Lock, Lock, Lock...)} except that it responds to thread interruption
+	 * while acquiring locks.
+	 * </p>
+	 *
+	 * <p>
+	 * If the current thread is interrupted while attempting to acquire any lock, an {@link InterruptedException} is
+	 * thrown and any locks already acquired during the attempt are released before the exception is propagated.
+	 * </p>
+	 *
+	 * <p>
+	 * All locks are validated before acquisition:
+	 * <ul>
+	 *   <li>{@code lock1} must not be {@code null}</li>
+	 *   <li>{@code lock2} must not be {@code null}</li>
+	 *   <li>{@code locks} array must not be {@code null}</li>
+	 *   <li>None of the elements in {@code locks} may be {@code null}</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * <p>
+	 * Lock acquisition order is defined by the argument order:
+	 * {@code lock1} → {@code lock2} → {@code locks[0..n]}.
+	 * This ordering is preserved when delegating to the underlying interruptible multi-lock implementation.
+	 * </p>
+	 *
+	 * <p>
+	 * No reordering or deduplication is performed. Callers are responsible for ensuring
+	 * a consistent lock ordering strategy across the system to avoid deadlocks.
+	 * </p>
+	 *
+	 * @param lock1 the first lock to acquire; must not be null
+	 * @param lock2 the second lock to acquire; must not be null
+	 * @param locks additional locks to acquire (optional); must not be null and must not contain null elements
+	 * @return a {@link LockedAutoLock} that will release all acquired locks when closed
+	 * @throws NullPointerException if {@code lock1}, {@code lock2}, {@code locks}, or any element in {@code locks} is null
+	 * @throws InterruptedException if the current thread is interrupted while acquiring locks
+	 */
 	@NonNull
 	public static LockedAutoLock lockInterruptibly(@NonNull Lock lock1, @NonNull Lock lock2, @NonNull Lock... locks) throws InterruptedException {
 
@@ -1476,6 +1720,33 @@ public final class AutoLock {
 				}
 			}
 
+			/**
+			 * Executes one of two operations depending on whether all locks can be acquired immediately.
+			 *
+			 * <p>This method attempts to acquire all managed locks using a non-blocking {@code tryLock} strategy. If all
+			 * locks are successfully acquired, the {@code onLockSuccess} branch is executed.</p>
+			 *
+			 * <p>If any lock cannot be acquired immediately, the attempt is aborted and the {@code onLockFail} branch is
+			 * executed instead. No waiting or retrying occurs.</p>
+			 *
+			 * <p><b>Failure context:</b><br>
+			 * When the failure branch is executed, a {@link TryLockFailContext} is provided to the {@code onLockFail}
+			 * consumer. This context contains diagnostic information about the failed acquisition attempt, including:
+			 * <ul>
+			 *   <li>Which specific {@link Lock} caused the failure</li>
+			 *   <li>The time at which the try-lock attempt expired or failed</li>
+			 * </ul>
+			 * This allows callers to implement detailed logging, metrics, or fallback behavior based on the exact point of
+			 * contention.</p>
+			 *
+			 * @param onLockSuccess operation executed if all locks are successfully acquired
+			 * @param onLockFail operation executed if lock acquisition fails; receives contextual failure information
+			 * @param <T1> exception type thrown by the success operation
+			 * @param <T2> exception type thrown by the failure operation
+			 * @throws T1 if the success operation throws an exception
+			 * @throws T2 if the failure operation throws an exception
+			 * @throws InterruptedException if the thread is interrupted while attempting to acquire locks
+			 */
 			public <T1 extends Throwable, T2 extends Throwable> void run(@NonNull ThrowableRunnable<T1> onLockSuccess, @NonNull ThrowableConsumer<TryLockFailContext, T2> onLockFail) throws T1, T2, InterruptedException {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
@@ -1520,6 +1791,30 @@ public final class AutoLock {
 				}
 			}
 
+			/**
+			 * Attempts to acquire all managed locks and returns a value from either a success or failure path.
+			 *
+			 * <p>This method uses a non-blocking {@code tryLock} strategy. If all locks are successfully  acquired, the
+			 * {@code onLockSuccess} supplier is executed and its result is returned.</p>
+			 *
+			 * <p>If any lock cannot be acquired immediately, the attempt is aborted and the {@code onLockFail} function is
+			 * executed instead. No waiting or retrying occurs.</p>
+			 *
+			 * <p><b>Failure context:</b><br>
+			 * When the failure branch is executed, a {@link TryLockFailContext} is provided to the {@code onLockFail}
+			 * function. This context can be used to determine which lock caused the failure (e.g., by index in the
+			 * acquisition sequence), enabling targeted diagnostics, logging, or fallback behavior.</p>
+			 *
+			 * @param onLockSuccess supplier executed if all locks are successfully acquired
+			 * @param onLockFail function executed if lock acquisition fails; receives failure context and returns a fallback value
+			 * @param <R> return type of the operation
+			 * @param <T1> exception type thrown by the success supplier
+			 * @param <T2> exception type thrown by the failure function
+			 * @return the result of either the success or failure supplier
+			 * @throws T1 if the success supplier throws an exception
+			 * @throws T2 if the failure function throws an exception
+			 * @throws InterruptedException if the thread is interrupted while attempting to acquire locks
+			 */
 			public <R, T1 extends Throwable, T2 extends Throwable> R get(@NonNull ThrowableSupplier<R, T1> onLockSuccess, @NonNull ThrowableFunction<TryLockFailContext, R, T2> onLockFail) throws T1, T2, InterruptedException {
 				Objects.requireNonNull(onLockSuccess, "onLockSuccess must not be null");
 				Objects.requireNonNull(onLockFail, "onLockFail must not be null");
