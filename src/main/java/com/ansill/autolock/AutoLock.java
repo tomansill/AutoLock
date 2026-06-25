@@ -194,8 +194,8 @@ public final class AutoLock {
 	 *
 	 * @param locks the collection of locks to coordinate; must not be null, empty, or contain null elements
 	 * @return a {@link WithLock} builder for configuring coordinated lock execution
-	 * @throws NullPointerException if {@code locks} is null
-	 * @throws IllegalArgumentException if {@code locks} is empty or contains null elements
+	 * @throws NullPointerException if {@code locks} is null or contains null elements
+	 * @throws IllegalArgumentException if {@code locks} is empty
 	 */
 	@NonNull
 	public static WithLock with(@NonNull Collection<? extends Lock> locks) {
@@ -321,8 +321,8 @@ public final class AutoLock {
 	 *
 	 * @param locks the collection of locks to acquire; must be non-null, non-empty, and contain no null elements
 	 * @return a {@link LockedAutoLock} that will release all acquired locks when closed
-	 * @throws NullPointerException if {@code locks} is null
-	 * @throws IllegalArgumentException if {@code locks} is empty or contains null elements
+	 * @throws NullPointerException if {@code locks} is null or contains null elements
+	 * @throws IllegalArgumentException if {@code locks} is empty
 	 */
 	@NonNull
 	public static LockedAutoLock lock(@NonNull Collection<? extends Lock> locks) {
@@ -371,8 +371,8 @@ public final class AutoLock {
 	 * @param locks the collection of locks to acquire interruptibly; must be non-null,
 	 *              non-empty, and contain no null elements
 	 * @return a {@link LockedAutoLock} that will release all acquired locks when closed
-	 * @throws NullPointerException if {@code locks} is null
-	 * @throws IllegalArgumentException if {@code locks} is empty or contains null elements
+	 * @throws NullPointerException if {@code locks} is null or contains null elements
+	 * @throws IllegalArgumentException if {@code locks} is empty
 	 * @throws InterruptedException if the current thread is interrupted while acquiring locks
 	 */
 	@NonNull
